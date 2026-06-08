@@ -14,8 +14,12 @@ export function PageHeader({
   return (
     <div className="page-header">
       <div>
-        <h1>{title}</h1>
-        <p>{description}</p>
+        <h1 className="text-3xl font-semibold tracking-tight text-slate-950">
+          {title}
+        </h1>
+        <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-500">
+          {description}
+        </p>
       </div>
       {actions ?? null}
     </div>

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter, Noto_Sans_Thai } from "next/font/google";
+import { Inter } from "next/font/google";
 import type { ReactNode } from "react";
 
 import "./globals.css";
@@ -10,15 +10,9 @@ const inter = Inter({
   variable: "--font-inter",
 });
 
-const notoSansThai = Noto_Sans_Thai({
-  subsets: ["thai"],
-  display: "swap",
-  variable: "--font-noto-sans-thai",
-});
-
 export const metadata: Metadata = {
-  title: "Chatto Dashboard",
-  description: "Merchant dashboard for the Chatto AI Commerce Assistant",
+  title: "Chatto | AI Commerce Assistant",
+  description: "Public homepage and merchant workspace for the Chatto AI Commerce Assistant",
 };
 
 export default function RootLayout({
@@ -28,9 +22,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="th">
-      <body
-        className={`${inter.variable} ${notoSansThai.variable} bg-background text-foreground antialiased`}
-      >
+      <body className={`${inter.variable} bg-background text-foreground antialiased`}>
         {children}
       </body>
     </html>

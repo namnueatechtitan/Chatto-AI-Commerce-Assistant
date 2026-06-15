@@ -2,7 +2,7 @@
 
 ## `apps/web`
 
-Next.js frontend for merchant authentication, dashboard pages, product management, FAQ management, conversation monitoring, and handover UI scaffolds.
+Next.js frontend for the public Chatto homepage, merchant authentication, dashboard pages, product management, FAQ management, conversation monitoring, and handover UI scaffolds. The web app now includes reusable `components/homepage` and `components/dashboard` layers alongside shared UI primitives.
 
 ## `apps/api`
 

@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    --font-sans: var(--font-inter), var(--font-noto-sans-thai), sans-serif;
+    --font-sans: var(--font-inter), sans-serif;
     --background: 255 255 255;
     --foreground: 15 23 42;
     --card: 255 255 255;

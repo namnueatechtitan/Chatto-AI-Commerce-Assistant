@@ -1,27 +1,24 @@
 const fs = require("node:fs");
 const path = require("node:path");
-const { spawnSync } = require("node:child_process");
+const Module = require("node:module");
 
 const apiRoot = path.resolve(__dirname, "..");
 const repoRoot = path.resolve(apiRoot, "../..");
+const seedPath = path.join(apiRoot, "prisma", "seed.ts");
 
 loadEnvFile(path.join(repoRoot, ".env"));
 loadEnvFile(path.join(apiRoot, ".env"));
-process.env.CHECKPOINT_DISABLE ??= "1";
+runSeedFile(seedPath);
 
-const prismaCliPath = require.resolve("prisma/build/index.js");
-const result = spawnSync(process.execPath, [prismaCliPath, ...process.argv.slice(2)], {
-  cwd: apiRoot,
-  env: process.env,
-  stdio: "inherit",
-});
+function runSeedFile(filePath) {
+  const source = fs.readFileSync(filePath, "utf8");
+  const SeedModule = module.constructor;
+  const seedModule = new SeedModule(filePath, module.parent ?? module);
 
-if (result.error) {
-  console.error("Failed to launch Prisma CLI.", result.error);
-  process.exit(1);
+  seedModule.filename = filePath;
+  seedModule.paths = Module._nodeModulePaths(path.dirname(filePath));
+  seedModule._compile(source, filePath);
 }
-
-process.exit(result.status ?? 0);
 
 function loadEnvFile(filePath) {
   if (!fs.existsSync(filePath)) {

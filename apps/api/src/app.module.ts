@@ -16,6 +16,7 @@ import { HandoverMessagesModule } from "./modules/handover-messages.module";
 import { HandoverTicketsModule } from "./modules/handover-tickets.module";
 import { KnowledgeBaseDocumentsModule } from "./modules/knowledge-base-documents.module";
 import { LineWebhookEventsModule } from "./modules/line-webhook-events.module";
+import { LineWebhooksModule } from "./modules/line-webhooks/line-webhooks.module";
 import { MerchantUsersModule } from "./modules/merchant-users.module";
 import { MerchantsModule } from "./modules/merchants.module";
 import { MessagesModule } from "./modules/messages.module";
@@ -50,6 +51,7 @@ import { InternalAiModule } from "./modules/internal-ai/internal-ai.module";
     PlatformsModule,
     ChannelsModule,
     LineWebhookEventsModule,
+    LineWebhooksModule,
     ProductsModule,
     ProductVariantsModule,
     ProductImagesModule,

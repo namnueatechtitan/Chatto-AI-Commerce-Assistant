@@ -6,7 +6,9 @@ export const envKeys = {
   JWT_SECRET: "JWT_SECRET",
   LINE_CHANNEL_SECRET: "LINE_CHANNEL_SECRET",
   LINE_CHANNEL_ACCESS_TOKEN: "LINE_CHANNEL_ACCESS_TOKEN",
+  LINE_CHANNEL_ID: "LINE_CHANNEL_ID",
   OPENAI_API_KEY: "OPENAI_API_KEY",
+  CHECKPOINT_DISABLE: "CHECKPOINT_DISABLE",
   NODE_ENV: "NODE_ENV",
 } as const;
 
@@ -18,7 +20,9 @@ export const envExample = {
   JWT_SECRET: "change-me-for-local-development",
   LINE_CHANNEL_SECRET: "phase-2-placeholder-secret",
   LINE_CHANNEL_ACCESS_TOKEN: "phase-2-placeholder-token",
+  LINE_CHANNEL_ID: "2010446906",
   OPENAI_API_KEY: "phase-2-placeholder-key",
+  CHECKPOINT_DISABLE: "1",
   NODE_ENV: "development",
 } as const;
 

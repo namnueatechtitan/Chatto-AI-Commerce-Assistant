@@ -3,6 +3,9 @@
   "private": true,
   "version": "0.1.0",
   "packageManager": "pnpm@9.12.0",
+  "prisma": {
+    "schema": "apps/api/prisma/schema.prisma"
+  },
   "scripts": {
     "dev": "pnpm --parallel --filter @chatto/web --filter @chatto/api --filter @chatto/ai-service dev",
     "dev:web": "pnpm --filter @chatto/web dev",
@@ -10,6 +13,11 @@
     "dev:ai-service": "pnpm --filter @chatto/ai-service dev",
     "build": "pnpm --filter @chatto/shared build && pnpm --filter @chatto/config build && pnpm --filter @chatto/api build && pnpm --filter @chatto/ai-service build && pnpm --filter @chatto/web build",
     "prisma:generate": "pnpm --filter @chatto/api prisma generate",
-    "prisma:migrate": "pnpm --filter @chatto/api prisma migrate dev --name phase-2-foundation"
+    "prisma:migrate": "pnpm --filter @chatto/api prisma migrate dev --name phase-2-foundation",
+    "prisma:seed": "pnpm --filter @chatto/api prisma:seed",
+    "prisma:studio": "pnpm --filter @chatto/api prisma:studio"
+  },
+  "devDependencies": {
+    "prisma": "^5.22.0"
   }
 }

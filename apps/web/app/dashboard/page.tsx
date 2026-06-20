@@ -13,6 +13,7 @@ import { AIPerformanceCard } from "../../components/dashboard/ai-performance-car
 import { ChannelDistributionChart } from "../../components/dashboard/channel-distribution-chart";
 import { CustomerIssuesCard } from "../../components/dashboard/customer-issues-card";
 import { FooterBanner } from "../../components/dashboard/footer-banner";
+import { LiveMessagesFeed } from "../../components/dashboard/LiveMessagesFeed";
 import { MessageOverviewChart } from "../../components/dashboard/message-overview-chart";
 import { RecentOrdersCard } from "../../components/dashboard/recent-orders-card";
 import { StatCard } from "../../components/dashboard/stat-card";
@@ -97,6 +98,10 @@ export default function DashboardPage() {
           highlights={assistantHighlights}
           widgets={assistantWidgets}
         />
+      </section>
+
+      <section>
+        <LiveMessagesFeed />
       </section>
 
       <FooterBanner benefits={footerBenefits} />

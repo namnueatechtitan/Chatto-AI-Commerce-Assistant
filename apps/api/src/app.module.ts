@@ -28,6 +28,8 @@ import { PromptVersionsModule } from "./modules/prompt-versions.module";
 import { RolesModule } from "./modules/roles.module";
 import { UsersModule } from "./modules/users.module";
 import { VectorDocumentsModule } from "./modules/vector-documents.module";
+import { AiIntegrationModule } from "./modules/ai-integration/ai-integration.module";
+import { InternalAiModule } from "./modules/internal-ai/internal-ai.module";
 
 @Module({
   imports: [
@@ -38,6 +40,8 @@ import { VectorDocumentsModule } from "./modules/vector-documents.module";
     PrismaModule,
     HealthModule,
     AuthModule,
+    AiIntegrationModule,
+    InternalAiModule,
     UsersModule,
     MerchantsModule,
     RolesModule,
@@ -62,6 +66,7 @@ import { VectorDocumentsModule } from "./modules/vector-documents.module";
     HandoverTicketsModule,
     HandoverMessagesModule,
     HandoverAssignmentsModule,
+    
   ],
 })
 export class AppModule {}

@@ -6,7 +6,7 @@ Next.js frontend for the public Chatto homepage, merchant authentication, dashbo
 
 ## `apps/api`
 
-NestJS backend for authentication, merchants, RBAC scaffolds, channels, webhook storage, product and knowledge APIs, conversation models, AI settings, and handover modules.
+NestJS backend for authentication, merchants, RBAC scaffolds, channels, LINE webhook intake, webhook storage, product and knowledge APIs, conversation models, AI settings, and handover modules.
 
 ## `apps/ai-service`
 
@@ -22,4 +22,4 @@ Shared configuration helpers and environment key examples used to keep service c
 
 ## `docs`
 
-Living documentation for API contracts, database scope, architecture, sprint planning, and team responsibilities.
+Living documentation for API contracts, database scope, architecture, integration guides, sprint planning, and team responsibilities.

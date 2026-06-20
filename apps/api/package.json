@@ -8,7 +8,12 @@
     "start": "node dist/main.js",
     "prisma": "node ./scripts/prisma-runner.cjs",
     "prisma:generate": "node ./scripts/prisma-runner.cjs generate",
-    "prisma:migrate": "node ./scripts/prisma-runner.cjs migrate dev"
+    "prisma:migrate": "node ./scripts/prisma-runner.cjs migrate dev",
+    "prisma:seed": "node ./scripts/prisma-runner.cjs db seed",
+    "prisma:studio": "node ./scripts/prisma-runner.cjs studio --browser none"
+  },
+  "prisma": {
+    "seed": "node ./scripts/seed-runner.cjs"
   },
   "dependencies": {
     "@nestjs/common": "^10.4.2",

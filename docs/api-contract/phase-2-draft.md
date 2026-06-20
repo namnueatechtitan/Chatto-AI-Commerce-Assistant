@@ -46,7 +46,7 @@
 
 ## LINE Webhook
 
-- `POST /line-webhook-events`
+- `POST /webhooks/line`
 - `GET /line-webhook-events`
 - `GET /line-webhook-events/:id`
 

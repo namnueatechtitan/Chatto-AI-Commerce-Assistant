@@ -80,6 +80,8 @@ docker compose up -d postgres
 ```bash
 pnpm prisma:generate
 pnpm prisma:migrate
+pnpm prisma:seed
+pnpm exec prisma studio
 ```
 
 ## Run Web

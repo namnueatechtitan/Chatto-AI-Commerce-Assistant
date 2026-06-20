@@ -27,6 +27,7 @@ services:
       JWT_SECRET: change-me-for-local-development
       LINE_CHANNEL_SECRET: phase-2-placeholder-secret
       LINE_CHANNEL_ACCESS_TOKEN: phase-2-placeholder-token
+      LINE_CHANNEL_ID: ""
       OPENAI_API_KEY: phase-2-placeholder-key
     ports:
       - "4000:4000"

@@ -2,10 +2,12 @@ import { Injectable, NotFoundException } from "@nestjs/common";
 import { DocumentStatus, ProductStatus } from "@prisma/client";
 import type {
   KnowledgeBaseExportResponse,
+  AiConversationMessage,
   MerchantSettingsForAi,
   ProductExportResponse,
   ProductForAi,
   ProductVariantForAi,
+  VectorDocumentForAi,
 } from "../ai-integration/ai-contract.types";
 
 import { PrismaService } from "../../prisma/prisma.service";
@@ -165,6 +167,67 @@ export class InternalAiService {
         updated_at: toIso(document.updatedAt),
       })),
     };
+  }
+
+  async exportVectorDocuments(merchantId: string): Promise<VectorDocumentForAi[]> {
+    const documents = await this.prisma.vectorDocument.findMany({
+      where: {
+        merchantId,
+        status: DocumentStatus.ACTIVE,
+      },
+      orderBy: {
+        updatedAt: "desc",
+      },
+    });
+
+    return documents.map((document) => ({
+      id: document.id,
+      merchant_id: document.merchantId,
+      source_type: document.sourceType,
+      source_id: document.sourceId,
+      chunk_text: document.chunkText,
+      embedding: Array.isArray(document.embedding)
+        ? document.embedding.filter(
+            (value): value is number => typeof value === "number",
+          )
+        : null,
+      metadata:
+        typeof document.metadata === "object" &&
+        document.metadata !== null &&
+        !Array.isArray(document.metadata)
+          ? (document.metadata as Record<string, unknown>)
+          : null,
+      status: enumToApiStatus(document.status),
+    }));
+  }
+
+  async exportConversationHistory(
+    merchantId: string,
+    conversationId: string,
+    excludeMessageId?: string,
+  ): Promise<AiConversationMessage[]> {
+    const messages = await this.prisma.message.findMany({
+      where: {
+        merchantId,
+        conversationId,
+        ...(excludeMessageId ? { id: { not: excludeMessageId } } : {}),
+      },
+      orderBy: {
+        createdAt: "desc",
+      },
+      take: 12,
+      select: {
+        senderType: true,
+        content: true,
+        createdAt: true,
+      },
+    });
+
+    return messages.reverse().map((message) => ({
+      sender_type: message.senderType.toLowerCase(),
+      content: message.content,
+      created_at: message.createdAt.toISOString(),
+    }));
   }
 
   async exportMerchantSettings(merchantId: string): Promise<MerchantSettingsForAi> {

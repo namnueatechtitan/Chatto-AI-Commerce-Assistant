@@ -7,6 +7,7 @@ export type AiIntent =
   | "shipping_question"
   | "payment_question"
   | "return_question"
+  | "language_preference"
   | "small_talk"
   | "unknown";
 
@@ -39,6 +40,7 @@ export interface AiChatRequest {
     language?: string;
     top_k?: number;
   };
+  ai_context?: AiContextForRequest;
 }
 
 export interface AiChatResponse {
@@ -55,8 +57,22 @@ export interface AiChatResponse {
     source_id: string;
     title: string;
   }>;
+  generation?: {
+    provider: "mock" | "gemini" | "openai" | string;
+    model: string | null;
+    used_external_provider: boolean;
+    fallback_used: boolean;
+    fallback_reason?: string;
+    latency_ms: number;
+    timed_out?: boolean;
+  };
   actions?: Array<Record<string, unknown>>;
   handover_required: boolean;
+  mcp?: {
+    server: string;
+    resources_used: McpResourceName[];
+    tools_called: McpToolName[];
+  };
 }
 
 export interface ProductVariantForAi {
@@ -158,4 +174,107 @@ export interface VectorDocumentForAi {
   embedding?: number[] | null;
   metadata?: Record<string, unknown> | null;
   status: string;
+}
+
+export interface AiContextForRequest {
+  merchant_settings?: MerchantSettingsForAi;
+  products?: ProductExportResponse;
+  knowledge_base?: KnowledgeBaseExportResponse;
+  vector_documents?: VectorDocumentForAi[];
+  conversation_history?: AiConversationMessage[];
+}
+
+export interface AiConversationMessage {
+  sender_type: "customer" | "ai" | "human" | string;
+  content: string;
+  created_at: string;
+}
+
+export interface VectorDocumentRowForAi {
+  merchantId: string;
+  sourceType: string;
+  sourceId: string;
+  chunkText: string;
+  embedding: number[] | null;
+  metadata: Record<string, unknown>;
+  status: "ACTIVE" | "INACTIVE";
+}
+
+export type McpResourceName =
+  | "merchant_profile"
+  | "channel_configuration"
+  | "conversation_history"
+  | "knowledge_documents"
+  | "vector_documents"
+  | "customer_memory"
+  | "guardrail_policy"
+  | "handover_policy";
+
+export type McpToolName =
+  | "chatto.classify_intent"
+  | "chatto.build_context"
+  | "chatto.retrieve_knowledge"
+  | "chatto.load_customer_memory"
+  | "chatto.evaluate_guardrails"
+  | "chatto.draft_mock_reply"
+  | "chatto.evaluate_reply"
+  | "chatto.create_embedding_placeholder";
+
+export interface McpResourceDescriptor {
+  name: McpResourceName;
+  uri_template: string;
+  description: string;
+  phase: "phase-2";
+}
+
+export interface McpToolDescriptor {
+  name: McpToolName;
+  description: string;
+  read_only: boolean;
+  phase: "phase-2";
+}
+
+export interface McpManifest {
+  name: "chatto-phase-2-mcp";
+  version: string;
+  phase: "phase-2";
+  transport: "http-json";
+  resources: McpResourceDescriptor[];
+  tools: McpToolDescriptor[];
+}
+
+export interface McpToolCall {
+  name: McpToolName;
+  input: Record<string, unknown>;
+}
+
+export interface McpToolResult<TOutput = unknown> {
+  name: McpToolName;
+  ok: boolean;
+  output?: TOutput;
+  error?: string;
+}
+
+export interface RagRetrieveRequest {
+  merchant_id?: string;
+  intent?: string;
+  query?: string;
+  top_k?: number;
+  documents?: VectorDocumentForAi[];
+}
+
+export interface RagRetrievedChunk {
+  source_type: string;
+  source_id: string;
+  title: string;
+  chunk_text: string;
+  score: number;
+  metadata: Record<string, unknown>;
+}
+
+export interface RagRetrieveResult {
+  mode: "mcp_phase_2_placeholder";
+  query: string;
+  top_k: number;
+  chunks: RagRetrievedChunk[];
 }

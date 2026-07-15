@@ -14,6 +14,10 @@ export interface BuildAiChatRequestInput {
 }
 
 export function buildAiChatRequest(input: BuildAiChatRequestInput): AiChatRequest {
+  const detectedLanguage = /[\u0E00-\u0E7F]/u.test(input.messageText)
+    ? "th"
+    : "en";
+
   return {
     request_id: input.requestId,
     merchant_id: input.merchantId,
@@ -29,7 +33,7 @@ export function buildAiChatRequest(input: BuildAiChatRequestInput): AiChatReques
       timestamp: input.timestamp,
     },
     ai_options: {
-      language: input.language ?? "en",
+      language: input.language ?? detectedLanguage,
       top_k: 5,
     },
   };

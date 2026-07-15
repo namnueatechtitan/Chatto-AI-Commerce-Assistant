@@ -50,6 +50,8 @@
 - `GET /line-webhook-events`
 - `GET /line-webhook-events/:id`
 
+`POST /webhooks/line` verifies the LINE signature, stores the customer message, calls the MCP AI service, replies to LINE OA, and stores the AI message.
+
 ## Conversations
 
 - `GET /customers`
@@ -66,12 +68,17 @@
 
 ## AI
 
+- AI service internal: `GET /mcp/manifest`
+- AI service internal: `POST /mcp/chat`
+- AI service internal: `POST /mcp/tools/:toolName/call`
 - `GET /ai-settings`
 - `POST /ai-settings`
 - `GET /prompt-versions`
 - `GET /ai-action-logs`
 - `GET /guardrail-events`
 - `GET /customer-memories`
+
+The API AI integration calls the AI service through MCP. These endpoints stay in Phase 2 scaffold scope and do not call real OpenAI, external RAG, order, payment, subscription, or inventory logic.
 
 ## Handover
 

@@ -6,11 +6,11 @@ Next.js frontend for the public Chatto homepage, merchant authentication, dashbo
 
 ## `apps/api`
 
-NestJS backend for authentication, merchants, RBAC scaffolds, channels, LINE webhook intake, webhook storage, product and knowledge APIs, conversation models, AI settings, and handover modules.
+NestJS backend for authentication, merchants, RBAC scaffolds, channels, LINE webhook intake, webhook storage, product and knowledge APIs, conversation models, AI settings, handover modules, and the API-to-AI MCP integration service.
 
 ## `apps/ai-service`
 
-TypeScript AI service scaffold for mock replies, prompt management, context building, future OpenAI integration, RAG, embeddings, memory, guardrails, and evaluation.
+TypeScript AI service scaffold for MCP-based mock replies, prompt management, context building, future OpenAI integration, RAG, embeddings, memory, guardrails, and evaluation.
 
 ## `packages/shared`
 

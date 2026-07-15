@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
-import { DocumentStatus, ProductStatus } from "@prisma/client";
+import { DocumentStatus, Prisma, ProductStatus } from "@prisma/client";
 import type {
   KnowledgeBaseExportResponse,
   AiConversationMessage,
@@ -8,6 +8,7 @@ import type {
   ProductForAi,
   ProductVariantForAi,
   VectorDocumentForAi,
+  VectorDocumentSyncResponse,
 } from "../ai-integration/ai-contract.types";
 
 import { PrismaService } from "../../prisma/prisma.service";
@@ -199,6 +200,97 @@ export class InternalAiService {
           : null,
       status: enumToApiStatus(document.status),
     }));
+  }
+
+  async syncVectorDocuments(
+    merchantId: string,
+    documents: VectorDocumentForAi[],
+  ): Promise<VectorDocumentSyncResponse> {
+    const managedDocuments = documents.filter(
+      (document) =>
+        document.id &&
+        document.merchant_id === merchantId &&
+        document.metadata?.managed_by === "chatto-live-chunker" &&
+        Array.isArray(document.embedding) &&
+        document.embedding.length > 0,
+    );
+
+    if (managedDocuments.length === 0) {
+      return {
+        merchant_id: merchantId,
+        upserted: 0,
+        deleted: 0,
+      };
+    }
+
+    const result = await this.prisma.$transaction(async (transaction) => {
+      for (const document of managedDocuments) {
+        await transaction.vectorDocument.upsert({
+          where: {
+            id: document.id,
+          },
+          create: {
+            id: document.id,
+            merchantId,
+            sourceType: document.source_type,
+            sourceId: document.source_id,
+            chunkText: document.chunk_text,
+            embedding: document.embedding as Prisma.InputJsonValue,
+            metadata: (document.metadata ?? {}) as Prisma.InputJsonValue,
+            status: DocumentStatus.ACTIVE,
+          },
+          update: {
+            merchantId,
+            sourceType: document.source_type,
+            sourceId: document.source_id,
+            chunkText: document.chunk_text,
+            embedding: document.embedding as Prisma.InputJsonValue,
+            metadata: (document.metadata ?? {}) as Prisma.InputJsonValue,
+            status: DocumentStatus.ACTIVE,
+          },
+        });
+      }
+
+      const sourceGroups = new Map<string, typeof managedDocuments>();
+
+      for (const document of managedDocuments) {
+        const key = `${document.source_type}:${document.source_id}`;
+        const group = sourceGroups.get(key) ?? [];
+        group.push(document);
+        sourceGroups.set(key, group);
+      }
+
+      let deleted = 0;
+
+      for (const group of sourceGroups.values()) {
+        const first = group[0];
+        const stale = await transaction.vectorDocument.deleteMany({
+          where: {
+            merchantId,
+            sourceType: first.source_type,
+            sourceId: first.source_id,
+            id: {
+              notIn: group
+                .map((document) => document.id)
+                .filter((id): id is string => Boolean(id)),
+            },
+            metadata: {
+              path: ["managed_by"],
+              equals: "chatto-live-chunker",
+            },
+          },
+        });
+        deleted += stale.count;
+      }
+
+      return deleted;
+    });
+
+    return {
+      merchant_id: merchantId,
+      upserted: managedDocuments.length,
+      deleted: result,
+    };
   }
 
   async exportConversationHistory(

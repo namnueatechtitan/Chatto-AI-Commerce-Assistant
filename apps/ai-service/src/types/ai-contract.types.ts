@@ -191,6 +191,7 @@ export interface AiConversationMessage {
 }
 
 export interface VectorDocumentRowForAi {
+  id: string;
   merchantId: string;
   sourceType: string;
   sourceId: string;
@@ -218,7 +219,7 @@ export type McpToolName =
   | "chatto.evaluate_guardrails"
   | "chatto.draft_mock_reply"
   | "chatto.evaluate_reply"
-  | "chatto.create_embedding_placeholder";
+  | "chatto.create_embedding";
 
 export interface McpResourceDescriptor {
   name: McpResourceName;
@@ -259,6 +260,7 @@ export interface RagRetrieveRequest {
   merchant_id?: string;
   intent?: string;
   query?: string;
+  query_embedding?: number[];
   top_k?: number;
   documents?: VectorDocumentForAi[];
 }
@@ -269,11 +271,14 @@ export interface RagRetrievedChunk {
   title: string;
   chunk_text: string;
   score: number;
+  semantic_score?: number;
+  lexical_score: number;
+  intent_score: number;
   metadata: Record<string, unknown>;
 }
 
 export interface RagRetrieveResult {
-  mode: "mcp_phase_2_placeholder";
+  mode: "hybrid_semantic" | "hybrid_lexical_fallback";
   query: string;
   top_k: number;
   chunks: RagRetrievedChunk[];

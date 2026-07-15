@@ -1,11 +1,14 @@
 import {
+  Body,
   Controller,
   Get,
   Headers,
   Param,
+  Post,
   Query,
   UnauthorizedException,
 } from "@nestjs/common";
+import type { VectorDocumentSyncRequest } from "../ai-integration/ai-contract.types";
 import { InternalAiService } from "./internal-ai.service";
 
 function assertInternalToken(authHeader?: string): void {
@@ -51,6 +54,18 @@ export class InternalAiController {
   ) {
     assertInternalToken(authorization);
     return this.internalAiService.exportVectorDocuments(merchantId);
+  }
+
+  @Post("vector-documents/sync")
+  async syncVectorDocuments(
+    @Headers("authorization") authorization: string | undefined,
+    @Body() body: VectorDocumentSyncRequest,
+  ) {
+    assertInternalToken(authorization);
+    return this.internalAiService.syncVectorDocuments(
+      body.merchant_id,
+      body.documents,
+    );
   }
 
   @Get("merchant-settings/:merchantId")

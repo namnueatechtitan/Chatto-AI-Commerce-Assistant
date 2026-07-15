@@ -6,6 +6,13 @@ const {
 } = require("../dist/modules/llm/gemini-client.js");
 const { MockAiReplyService } = require("../dist/modules/mock-ai-reply/index.js");
 const { RagService } = require("../dist/modules/rag/index.js");
+const {
+  chunkKnowledgeDocuments,
+} = require("../dist/modules/rag/document-chunker.js");
+const {
+  cosineSimilarity,
+  scoreLexicalSimilarity,
+} = require("../dist/modules/rag/index.js");
 const { IntentClassifier } = require("../dist/modules/intent-classifier/index.js");
 
 test("extractGeminiText reads the current Interactions model_output shape", () => {
@@ -59,6 +66,64 @@ test("RAG selects merchant product data for a Thai product question", () => {
   assert.equal(result.chunks[0].chunk_text, "Product: Tote bag.");
 });
 
+test("chunking is deterministic, bounded, and preserves overlap metadata", () => {
+  const source = {
+    merchant_id: "merchant-a",
+    source_type: "faq",
+    source_id: "faq-1",
+    title: "Returns",
+    content: "First sentence explains returns. Second sentence has more detail. Third sentence closes the policy.",
+    metadata: {},
+  };
+  const first = chunkKnowledgeDocuments([source], {
+    maxCharacters: 48,
+    overlapCharacters: 12,
+  });
+  const second = chunkKnowledgeDocuments([source], {
+    maxCharacters: 48,
+    overlapCharacters: 12,
+  });
+
+  assert.ok(first.length > 1);
+  assert.deepEqual(first, second);
+  assert.match(first[0].id, /^[0-9a-f-]{36}$/);
+  assert.equal(first[0].metadata.chunk_count, first.length);
+  assert.equal(first[0].metadata.managed_by, "chatto-live-chunker");
+  assert.equal(first[1].metadata.chunk_index, 1);
+  assert.ok(first[1].chunk_text.length <= 60);
+});
+
+test("hybrid RAG ranks semantic similarity ahead of unrelated chunks", () => {
+  const rag = new RagService();
+  const matching = {
+    ...document("merchant-a", "product", "Canvas shoulder bag"),
+    source_id: "matching",
+    embedding: [1, 0, 0],
+  };
+  const unrelated = {
+    ...document("merchant-a", "product", "Ceramic coffee cup"),
+    source_id: "unrelated",
+    embedding: [0, 1, 0],
+  };
+  const result = rag.retrieve({
+    merchant_id: "merchant-a",
+    intent: "product_question",
+    query: "Which bag should I buy?",
+    query_embedding: [1, 0, 0],
+    documents: [unrelated, matching],
+  });
+
+  assert.equal(result.mode, "hybrid_semantic");
+  assert.equal(result.chunks[0].source_id, "matching");
+  assert.ok(result.chunks[0].semantic_score > result.chunks[1].semantic_score);
+});
+
+test("cosine and multilingual lexical scoring expose stable primitives", () => {
+  assert.equal(cosineSimilarity([1, 0], [1, 0]), 1);
+  assert.equal(cosineSimilarity([1, 0], [0, 1]), 0);
+  assert.ok(scoreLexicalSimilarity("ส่งกี่วัน", "จัดส่งภายใน 2 วัน") > 0);
+});
+
 test("Thai small talk fallback never dumps product or policy context", () => {
   const service = new MockAiReplyService();
   const reply = service.generateReply({
@@ -87,6 +152,11 @@ test("Thai greetings, language requests, and product questions are classified", 
   assert.equal(classifier.classify("สวัสดี").intent, "small_talk");
   assert.equal(classifier.classify("กรุณาพูดไทย").intent, "language_preference");
   assert.equal(classifier.classify("มีสินค้าอะไรบ้าง").intent, "product_question");
+  assert.equal(
+    classifier.classify("How much is the tote bag and which variant is available?").intent,
+    "product_question",
+  );
+  assert.notEqual(classifier.classify("which option?").intent, "small_talk");
 });
 
 test("Thai product fallback uses only the retrieved DB product in Thai", () => {

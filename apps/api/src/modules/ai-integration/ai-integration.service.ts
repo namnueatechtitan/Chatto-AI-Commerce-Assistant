@@ -12,7 +12,7 @@ export class AiIntegrationService {
 
   private readonly aiServiceTimeoutMs = this.resolveTimeoutMs(
     "AI_SERVICE_TIMEOUT_MS",
-    12000,
+    20000,
   );
 
   constructor(private readonly internalAiService: InternalAiService) {}

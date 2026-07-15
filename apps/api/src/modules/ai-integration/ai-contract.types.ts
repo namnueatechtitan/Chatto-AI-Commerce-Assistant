@@ -176,6 +176,17 @@ export interface VectorDocumentForAi {
   status: string;
 }
 
+export interface VectorDocumentSyncRequest {
+  merchant_id: string;
+  documents: VectorDocumentForAi[];
+}
+
+export interface VectorDocumentSyncResponse {
+  merchant_id: string;
+  upserted: number;
+  deleted: number;
+}
+
 export interface AiContextForRequest {
   merchant_settings?: MerchantSettingsForAi;
   products?: ProductExportResponse;

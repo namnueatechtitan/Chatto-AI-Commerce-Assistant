@@ -5,6 +5,7 @@ import type {
   ProductForAi,
   VectorDocumentRowForAi,
 } from "../../types/ai-contract.types";
+import { chunkKnowledgeDocuments } from "./document-chunker";
 
 function joinNonEmpty(parts: Array<string | null | undefined>): string {
   return parts.filter((part) => Boolean(part && part.trim())).join(" ");
@@ -89,16 +90,14 @@ export function buildKnowledgeBaseDocuments(
 export function toVectorDocumentRows(
   documents: AiKnowledgeDocument[],
 ): VectorDocumentRowForAi[] {
-  return documents.map((document) => ({
+  return chunkKnowledgeDocuments(documents).map((document) => ({
+    id: document.id!,
     merchantId: document.merchant_id,
     sourceType: document.source_type,
     sourceId: document.source_id,
-    chunkText: document.content,
-    embedding: null,
-    metadata: {
-      ...document.metadata,
-      title: document.title,
-    },
+    chunkText: document.chunk_text,
+    embedding: document.embedding ?? null,
+    metadata: document.metadata ?? {},
     status: "ACTIVE",
   }));
 }

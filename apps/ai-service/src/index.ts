@@ -14,6 +14,7 @@ import { MockAiReplyService } from "./modules/mock-ai-reply";
 import { OpenAiClientStub } from "./modules/openai-client";
 import { PromptManager } from "./modules/prompt-manager";
 import { RagService } from "./modules/rag";
+import { VectorStoreClient } from "./modules/vector-store";
 import {
   buildKnowledgeBaseDocuments,
   buildProductKnowledgeDocuments,
@@ -92,6 +93,7 @@ const guardrailService = new GuardrailService();
 const evaluationService = new EvaluationService();
 const mockAiReplyService = new MockAiReplyService();
 const llmReplyService = new LlmReplyService();
+const vectorStoreClient = new VectorStoreClient();
 
 const mcpResources: McpResourceDescriptor[] = [
   {
@@ -109,7 +111,7 @@ const mcpResources: McpResourceDescriptor[] = [
   {
     name: "conversation_history",
     uri_template: "chatto://conversations/{conversation_id}/messages",
-    description: "Conversation history placeholder for future context replay.",
+    description: "Recent conversation history supplied to the AI pipeline.",
     phase: "phase-2",
   },
   {
@@ -121,7 +123,7 @@ const mcpResources: McpResourceDescriptor[] = [
   {
     name: "vector_documents",
     uri_template: "chatto://merchants/{merchant_id}/vector-documents",
-    description: "Phase 2 vector-document rows with null embeddings.",
+    description: "Chunked Phase 2 documents with reusable Gemini embeddings.",
     phase: "phase-2",
   },
   {
@@ -153,13 +155,13 @@ const mcpTools: McpToolDescriptor[] = [
   },
   {
     name: "chatto.build_context",
-    description: "Build message context from MCP resource placeholders.",
+    description: "Build merchant-scoped context from supplied MCP resources.",
     read_only: true,
     phase: "phase-2",
   },
   {
     name: "chatto.retrieve_knowledge",
-    description: "Run placeholder RAG over supplied vector-document rows.",
+    description: "Run merchant-scoped hybrid semantic and lexical retrieval.",
     read_only: true,
     phase: "phase-2",
   },
@@ -188,8 +190,8 @@ const mcpTools: McpToolDescriptor[] = [
     phase: "phase-2",
   },
   {
-    name: "chatto.create_embedding_placeholder",
-    description: "Return the Phase 2 embedding placeholder.",
+    name: "chatto.create_embedding",
+    description: "Create a Gemini retrieval embedding for supplied text.",
     read_only: true,
     phase: "phase-2",
   },
@@ -197,7 +199,7 @@ const mcpTools: McpToolDescriptor[] = [
 
 const mcpManifest: McpManifest = {
   name: "chatto-phase-2-mcp",
-  version: "0.1.0",
+  version: "0.2.0",
   phase: "phase-2",
   transport: "http-json",
   resources: mcpResources,
@@ -219,6 +221,17 @@ function getOptionalNumber(
 ): number | undefined {
   const value = input[key];
   return typeof value === "number" ? value : undefined;
+}
+
+function getOptionalNumberArray(
+  input: Record<string, unknown>,
+  key: string,
+): number[] | undefined {
+  const value = input[key];
+
+  return Array.isArray(value) && value.every((item) => typeof item === "number")
+    ? value
+    : undefined;
 }
 
 function resolveReplyLanguage(
@@ -256,6 +269,7 @@ function buildVectorDocumentsFromContext(
     ...knowledgeDocuments,
   ]).map(
     (row) => ({
+      id: row.id,
       merchant_id: row.merchantId,
       source_type: row.sourceType,
       source_id: row.sourceId,
@@ -266,17 +280,79 @@ function buildVectorDocumentsFromContext(
     }),
   );
 
-  const liveSourceKeys = new Set(
-    liveDocuments.map(
-      (document) => `${document.source_type}:${document.source_id}`,
-    ),
+  const storedById = new Map(
+    (aiContext.vector_documents ?? [])
+      .filter((document) => Boolean(document.id))
+      .map((document) => [document.id!, document]),
   );
+  const mergedLiveDocuments = liveDocuments.map((document) => {
+    const stored = document.id ? storedById.get(document.id) : undefined;
+    const contentUnchanged =
+      stored?.metadata?.content_hash === document.metadata?.content_hash;
+
+    if (!stored || !contentUnchanged || !Array.isArray(stored.embedding)) {
+      return document;
+    }
+
+    return {
+      ...document,
+      embedding: stored.embedding,
+      metadata: {
+        ...(document.metadata ?? {}),
+        embedding_model: stored.metadata?.embedding_model,
+        embedding_dimensions: stored.metadata?.embedding_dimensions,
+        embedded_at: stored.metadata?.embedded_at,
+      },
+    };
+  });
+  const liveIds = new Set(mergedLiveDocuments.map((document) => document.id));
   const additionalStoredDocuments = (aiContext.vector_documents ?? []).filter(
     (document) =>
-      !liveSourceKeys.has(`${document.source_type}:${document.source_id}`),
+      document.metadata?.managed_by !== "chatto-live-chunker" &&
+      (!document.id || !liveIds.has(document.id)),
   );
 
-  return [...liveDocuments, ...additionalStoredDocuments];
+  return [...mergedLiveDocuments, ...additionalStoredDocuments];
+}
+
+function readMcpResource(
+  uri: string,
+  aiContext: AiContextForRequest | undefined,
+  channel?: string,
+): unknown {
+  if (uri.includes("/knowledge-base")) {
+    return aiContext?.knowledge_base ?? { knowledge_base: [] };
+  }
+
+  if (uri.includes("/vector-documents")) {
+    return buildVectorDocumentsFromContext(aiContext);
+  }
+
+  if (uri.startsWith("chatto://conversations/")) {
+    return aiContext?.conversation_history ?? [];
+  }
+
+  if (uri.startsWith("chatto://merchants/") && uri.includes("/channels/")) {
+    return { channel: channel ?? uri.split("/channels/")[1] ?? "unknown" };
+  }
+
+  if (uri.startsWith("chatto://merchants/")) {
+    return aiContext?.merchant_settings ?? {};
+  }
+
+  if (uri.startsWith("chatto://customers/")) {
+    return { memories: memoryService.loadCustomerMemories() };
+  }
+
+  if (uri === "chatto://ai/guardrails/default") {
+    return { policy: "phase-2-safe-reply", commerce_actions_allowed: false };
+  }
+
+  if (uri === "chatto://handover/policy/default") {
+    return { handover_on_low_confidence: true, threshold: 0.5 };
+  }
+
+  throw new Error(`Unknown MCP resource URI: ${uri}`);
 }
 
 function hasValidServiceToken(request: Request): boolean {
@@ -316,7 +392,7 @@ function isAiChatRequest(body: Partial<AiChatRequest>): body is AiChatRequest {
   );
 }
 
-function callMcpTool(call: McpToolCall): McpToolResult {
+async function callMcpTool(call: McpToolCall): Promise<McpToolResult> {
   switch (call.name) {
     case "chatto.classify_intent":
       return {
@@ -342,8 +418,11 @@ function callMcpTool(call: McpToolCall): McpToolResult {
           merchant_id: getString(call.input, "merchant_id"),
           intent: getString(call.input, "intent"),
           query: getString(call.input, "query"),
+          query_embedding: getOptionalNumberArray(call.input, "query_embedding"),
           top_k: getOptionalNumber(call.input, "top_k"),
-          documents: buildVectorDocumentsFromContext(getAiContext(call.input)),
+          documents: Array.isArray(call.input.documents)
+            ? (call.input.documents as VectorDocumentForAi[])
+            : buildVectorDocumentsFromContext(getAiContext(call.input)),
         }),
       };
     case "chatto.load_customer_memory":
@@ -379,11 +458,13 @@ function callMcpTool(call: McpToolCall): McpToolResult {
           }),
         ),
       };
-    case "chatto.create_embedding_placeholder":
+    case "chatto.create_embedding":
       return {
         name: call.name,
         ok: true,
-        output: embeddingsService.createEmbedding(),
+        output: await embeddingsService.createEmbedding(
+          getString(call.input, "text") || "health check",
+        ),
       };
   }
 }
@@ -400,14 +481,14 @@ async function buildAiChatResponse(body: AiChatRequest) {
   const message = body.message.text;
   const aiContext = body.ai_context;
   const classification = requireMcpOutput<{ intent: string; confidence: number }>(
-    callMcpTool({
+    await callMcpTool({
       name: "chatto.classify_intent",
       input: { message },
     }),
   );
   const prompt = promptManager.getPrompt("default");
   const context = requireMcpOutput(
-    callMcpTool({
+    await callMcpTool({
       name: "chatto.build_context",
       input: {
         merchant_id: body.merchant_id,
@@ -418,26 +499,58 @@ async function buildAiChatResponse(body: AiChatRequest) {
       },
     }),
   );
+  const vectorDocuments = buildVectorDocumentsFromContext(aiContext);
+  const documentEmbeddings = await embeddingsService.enrichDocuments(
+    vectorDocuments,
+  );
+  let queryEmbedding: number[] | undefined;
+  let queryEmbeddingError: string | undefined;
+
+  try {
+    queryEmbedding = requireMcpOutput<{ values: number[] }>(
+      await callMcpTool({
+        name: "chatto.create_embedding",
+        input: { text: message },
+      }),
+    ).values;
+  } catch (error) {
+    queryEmbeddingError = error instanceof Error ? error.message : String(error);
+  }
+
+  let vectorSync: unknown;
+
+  try {
+    vectorSync = await vectorStoreClient.syncDocuments(
+      body.merchant_id,
+      documentEmbeddings.documents,
+    );
+  } catch (error) {
+    vectorSync = {
+      error: error instanceof Error ? error.message : String(error),
+    };
+  }
+
   const retrievedKnowledge = requireMcpOutput<RagRetrieveResult>(
-    callMcpTool({
+    await callMcpTool({
       name: "chatto.retrieve_knowledge",
       input: {
         merchant_id: body.merchant_id,
         intent: classification.intent,
         query: message,
+        query_embedding: queryEmbedding,
         top_k: body.ai_options?.top_k,
-        ai_context: aiContext,
+        documents: documentEmbeddings.documents,
       },
     }),
   );
   const customerMemories = requireMcpOutput(
-    callMcpTool({
+    await callMcpTool({
       name: "chatto.load_customer_memory",
       input: { customer_id: body.customer.id },
     }),
   );
   const guardrail = requireMcpOutput(
-    callMcpTool({
+    await callMcpTool({
       name: "chatto.evaluate_guardrails",
       input: { message },
     }),
@@ -465,12 +578,16 @@ async function buildAiChatResponse(body: AiChatRequest) {
       fallbackReply.needs_handover && !llmReply.usedExternalProvider,
   };
   const evaluation = evaluationService.summarize(reply);
-  const embeddingsReady = requireMcpOutput(
-    callMcpTool({
-      name: "chatto.create_embedding_placeholder",
-      input: {},
-    }),
-  );
+  const embeddingsReady = {
+    configured: embeddingsService.isConfigured(),
+    model: embeddingsService.getModel(),
+    dimensions: embeddingsService.getDimensions(),
+    generated: documentEmbeddings.generated,
+    reused: documentEmbeddings.reused,
+    errors: documentEmbeddings.errors,
+    query_error: queryEmbeddingError,
+    vector_sync: vectorSync,
+  };
 
   const aiResponse: AiChatResponse = {
     request_id: body.request_id,
@@ -517,7 +634,7 @@ async function buildAiChatResponse(body: AiChatRequest) {
         "chatto.evaluate_guardrails",
         "chatto.draft_mock_reply",
         "chatto.evaluate_reply",
-        "chatto.create_embedding_placeholder",
+        "chatto.create_embedding",
       ],
     },
   };
@@ -538,13 +655,13 @@ async function buildAiChatResponse(body: AiChatRequest) {
 }
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: "5mb" }));
 
 app.get("/health", (_request, response) => {
   response.json({
     status: "ok",
     service: "chatto-ai-service",
-    mode: "mcp-mock",
+    mode: "mcp-hybrid-rag",
     mcpServer: mcpManifest.name,
     llmProvider: llmReplyService.getProvider(),
     externalLlmConfigured: llmReplyService.isExternalProviderConfigured(),
@@ -557,6 +674,7 @@ app.get("/health", (_request, response) => {
       "context-builder",
       "rag",
       "embeddings",
+      "vector-store",
       "memory",
       "guardrails",
       "evaluation",
@@ -566,7 +684,7 @@ app.get("/health", (_request, response) => {
   });
 });
 
-app.post("/mock-reply", (request, response) => {
+app.post("/mock-reply", async (request, response) => {
   const message =
     typeof request.body?.message === "string" ? request.body.message : "";
   const merchantId =
@@ -595,7 +713,7 @@ app.post("/mock-reply", (request, response) => {
       customerMemories,
       guardrail,
       evaluation,
-      embeddingsReady: embeddingsService.createEmbedding(),
+      embeddingsReady: await embeddingsService.createEmbedding(message || "health check"),
       mcp: {
         server: mcpManifest.name,
         resources_used: ["knowledge_documents", "vector_documents"],
@@ -613,15 +731,40 @@ app.get("/mcp/resources", (_request, response) => {
   response.json({ resources: mcpResources });
 });
 
+app.post("/mcp/resources/read", (request, response) => {
+  const uri = typeof request.body?.uri === "string" ? request.body.uri : "";
+  const aiContext = isRecord(request.body?.ai_context)
+    ? (request.body.ai_context as AiContextForRequest)
+    : undefined;
+
+  try {
+    response.json({
+      contents: [
+        {
+          uri,
+          mimeType: "application/json",
+          text: JSON.stringify(
+            readMcpResource(uri, aiContext, request.body?.channel),
+          ),
+        },
+      ],
+    });
+  } catch (error) {
+    response.status(404).json({
+      error: error instanceof Error ? error.message : String(error),
+    });
+  }
+});
+
 app.get("/mcp/tools", (_request, response) => {
   response.json({ tools: mcpTools });
 });
 
-app.post("/mcp/tools/:toolName/call", (request, response) => {
+app.post("/mcp/tools/:toolName/call", async (request, response) => {
   const input = isRecord(request.body?.input) ? request.body.input : {};
 
   response.json(
-    callMcpTool({
+    await callMcpTool({
       name: request.params.toolName as McpToolName,
       input,
     }),
@@ -647,10 +790,20 @@ app.post("/mcp/chat", async (request, response) => {
     return;
   }
 
-  response.json(await buildAiChatResponse(body));
+  try {
+    response.json(await buildAiChatResponse(body));
+  } catch (error) {
+    response.status(500).json({
+      error: {
+        code: "AI_PIPELINE_FAILED",
+        message: error instanceof Error ? error.message : String(error),
+        request_id: body.request_id,
+      },
+    });
+  }
 });
 
-app.post("/mcp", (request, response) => {
+app.post("/mcp", async (request, response) => {
   const id = request.body?.id ?? null;
   const method = typeof request.body?.method === "string" ? request.body.method : "";
   const params = isRecord(request.body?.params) ? request.body.params : {};
@@ -662,6 +815,41 @@ app.post("/mcp", (request, response) => {
 
   if (method === "resources/list") {
     response.json({ jsonrpc: "2.0", id, result: { resources: mcpResources } });
+    return;
+  }
+
+  if (method === "resources/read") {
+    const uri = getString(params, "uri");
+    const aiContext = isRecord(params.ai_context)
+      ? (params.ai_context as AiContextForRequest)
+      : undefined;
+
+    try {
+      response.json({
+        jsonrpc: "2.0",
+        id,
+        result: {
+          contents: [
+            {
+              uri,
+              mimeType: "application/json",
+              text: JSON.stringify(
+                readMcpResource(uri, aiContext, getString(params, "channel")),
+              ),
+            },
+          ],
+        },
+      });
+    } catch (error) {
+      response.status(404).json({
+        jsonrpc: "2.0",
+        id,
+        error: {
+          code: -32002,
+          message: error instanceof Error ? error.message : String(error),
+        },
+      });
+    }
     return;
   }
 
@@ -677,7 +865,7 @@ app.post("/mcp", (request, response) => {
     response.json({
       jsonrpc: "2.0",
       id,
-      result: callMcpTool({ name, input }),
+      result: await callMcpTool({ name, input }),
     });
     return;
   }
@@ -711,7 +899,17 @@ app.post("/ai/chat", async (request, response) => {
     return;
   }
 
-  response.json(await buildAiChatResponse(body));
+  try {
+    response.json(await buildAiChatResponse(body));
+  } catch (error) {
+    response.status(500).json({
+      error: {
+        code: "AI_PIPELINE_FAILED",
+        message: error instanceof Error ? error.message : String(error),
+        request_id: body.request_id,
+      },
+    });
+  }
 });
 
 app.listen(port, () => {

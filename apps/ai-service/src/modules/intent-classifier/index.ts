@@ -9,28 +9,42 @@ export class IntentClassifier {
       };
     }
 
-    if (this.includesAny(normalizedMessage, ["price", "สินค้า", "ราคา", "มีไหม", "แนะนำ"])) {
+    if (
+      /\b(product|products|price|cost|variant|variants|item|items|catalog|recommend|available)\b|\bhow much\b/u.test(
+        normalizedMessage,
+      ) ||
+      this.includesAny(normalizedMessage, ["สินค้า", "ราคา", "มีไหม", "แนะนำ"])
+    ) {
       return {
         intent: "product_question",
         confidence: 0.82,
       };
     }
 
-    if (this.includesAny(normalizedMessage, ["ship", "delivery", "ส่ง", "จัดส่ง"])) {
+    if (
+      /\b(ship|shipping|delivery|deliver)\b/u.test(normalizedMessage) ||
+      this.includesAny(normalizedMessage, ["ส่ง", "จัดส่ง"])
+    ) {
       return {
         intent: "shipping_question",
         confidence: 0.8,
       };
     }
 
-    if (this.includesAny(normalizedMessage, ["pay", "payment", "จ่าย", "ชำระ"])) {
+    if (
+      /\b(pay|payment|payments)\b/u.test(normalizedMessage) ||
+      this.includesAny(normalizedMessage, ["จ่าย", "ชำระ"])
+    ) {
       return {
         intent: "payment_question",
         confidence: 0.8,
       };
     }
 
-    if (this.includesAny(normalizedMessage, ["return", "refund", "คืน", "เคลม"])) {
+    if (
+      /\b(return|returns|refund|refunds)\b/u.test(normalizedMessage) ||
+      this.includesAny(normalizedMessage, ["คืน", "เคลม"])
+    ) {
       return {
         intent: "return_question",
         confidence: 0.8,
@@ -52,7 +66,12 @@ export class IntentClassifier {
       };
     }
 
-    if (this.includesAny(normalizedMessage, ["hello", "hi", "สวัสดี", "หวัดดี"])) {
+    if (
+      /^(hello|hi|hey|good morning|good afternoon|good evening)[\s!,.?]*$/u.test(
+        normalizedMessage,
+      ) ||
+      this.includesAny(normalizedMessage, ["สวัสดี", "หวัดดี"])
+    ) {
       return {
         intent: "small_talk",
         confidence: 0.76,

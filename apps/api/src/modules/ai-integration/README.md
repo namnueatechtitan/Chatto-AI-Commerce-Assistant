@@ -3,13 +3,13 @@
 Direction:
 
 ```txt
-apps/api → apps/ai-service
+apps/api -> apps/ai-service MCP endpoint
 ```
 
 This module calls:
 
 ```txt
-POST /ai/chat
+POST /mcp/chat
 ```
 
 Environment:

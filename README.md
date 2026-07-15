@@ -15,7 +15,8 @@ Phase 2 currently includes:
 - Product and FAQ management foundations
 - LINE channel and webhook storage structure
 - Customer, conversation, and message persistence structure
-- Mock AI reply pipeline with future-ready AI service modules
+- MCP-based AI reply pipeline with DB-backed product and knowledge context
+- LINE text webhook flow from customer message to AI reply
 - Human handover scaffold
 
 Out of scope for this phase: payment, orders, subscriptions, inventory reservation, advanced analytics, and production monitoring.
@@ -26,6 +27,7 @@ Out of scope for this phase: payment, orders, subscriptions, inventory reservati
 - Frontend: Next.js + TypeScript
 - Backend: NestJS + TypeScript
 - AI Service: Node.js + TypeScript
+- AI orchestration: MCP-style resources and tools for Phase 2 mock flows
 - Database: PostgreSQL
 - ORM: Prisma
 - API docs: Swagger / OpenAPI
@@ -68,6 +70,12 @@ pnpm install
 4. Start services individually or with Docker Compose.
 
 Prisma commands in this repository load environment variables from the root `.env` file through the API workspace wrapper script.
+
+The API reaches the AI service through `AI_SERVICE_BASE_URL` and calls the MCP-backed `POST /mcp/chat` endpoint. See `docs/architecture/mcp-phase-2.md`.
+
+For Gemini development testing, set `AI_LLM_PROVIDER=gemini`, `GEMINI_API_KEY`, and `GEMINI_MODEL` in `.env`, then restart the AI service. Leave `AI_LLM_PROVIDER=mock` for offline/local deterministic replies. Gemini calls fall back to DB-grounded Phase 2 replies after `GEMINI_TIMEOUT_MS` so LINE webhooks can stay responsive.
+
+For real LINE testing, expose the API with a public HTTPS tunnel such as `ngrok http 4000`, then set the LINE Developers webhook URL to `https://<tunnel-host>/webhooks/line` and enable `Use webhook`. Local signed webhook tests can validate DB and AI flow, but they cannot deliver a LINE reply because fake reply tokens are rejected by LINE.
 
 ## Run Database
 

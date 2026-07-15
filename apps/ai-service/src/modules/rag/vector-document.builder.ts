@@ -3,6 +3,7 @@ import type {
   KnowledgeBaseExportResponse,
   ProductExportResponse,
   ProductForAi,
+  VectorDocumentRowForAi,
 } from "../../types/ai-contract.types";
 
 function joinNonEmpty(parts: Array<string | null | undefined>): string {
@@ -85,7 +86,9 @@ export function buildKnowledgeBaseDocuments(
     }));
 }
 
-export function toVectorDocumentRows(documents: AiKnowledgeDocument[]) {
+export function toVectorDocumentRows(
+  documents: AiKnowledgeDocument[],
+): VectorDocumentRowForAi[] {
   return documents.map((document) => ({
     merchantId: document.merchant_id,
     sourceType: document.source_type,

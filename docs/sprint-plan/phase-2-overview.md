@@ -2,7 +2,7 @@
 
 ## Phase 2 Goal
 
-Build the development foundation for merchant onboarding, dashboard access, merchant knowledge management, LINE message intake, mock AI replies, conversation storage, and human handover scaffolding.
+Build the development foundation for merchant onboarding, dashboard access, merchant knowledge management, LINE message intake, MCP-based mock AI replies, conversation storage, and human handover scaffolding.
 
 ## Phase 2.1 Foundation
 
@@ -22,8 +22,12 @@ Build the development foundation for merchant onboarding, dashboard access, merc
 ## Phase 2.3 AI Integration
 
 - API to AI service gateway
+- MCP manifest, resources, tools, and chat endpoint for the mock AI pipeline
 - Prompt manager and intent pipeline activation
 - Mock AI replies evolve into real service orchestration
+- LINE text messages call the MCP AI service and send AI replies through LINE OA
+- AI requests include merchant settings, product data, knowledge base data, and vector document rows from the database
+- AI replies are stored as `messages.sender_type = ai`
 
 ## Phase 2.4 Knowledge Integration
 

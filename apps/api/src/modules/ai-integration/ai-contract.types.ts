@@ -7,6 +7,7 @@ export type AiIntent =
   | "shipping_question"
   | "payment_question"
   | "return_question"
+  | "language_preference"
   | "small_talk"
   | "unknown";
 
@@ -39,6 +40,7 @@ export interface AiChatRequest {
     language?: string;
     top_k?: number;
   };
+  ai_context?: AiContextForRequest;
 }
 
 export interface AiChatResponse {
@@ -55,8 +57,22 @@ export interface AiChatResponse {
     source_id: string;
     title: string;
   }>;
+  generation?: {
+    provider: "mock" | "gemini" | "openai" | string;
+    model: string | null;
+    used_external_provider: boolean;
+    fallback_used: boolean;
+    fallback_reason?: string;
+    latency_ms: number;
+    timed_out?: boolean;
+  };
   actions?: Array<Record<string, unknown>>;
   handover_required: boolean;
+  mcp?: {
+    server: string;
+    resources_used: string[];
+    tools_called: string[];
+  };
 }
 
 export interface ProductVariantForAi {
@@ -158,4 +174,18 @@ export interface VectorDocumentForAi {
   embedding?: number[] | null;
   metadata?: Record<string, unknown> | null;
   status: string;
+}
+
+export interface AiContextForRequest {
+  merchant_settings?: MerchantSettingsForAi;
+  products?: ProductExportResponse;
+  knowledge_base?: KnowledgeBaseExportResponse;
+  vector_documents?: VectorDocumentForAi[];
+  conversation_history?: AiConversationMessage[];
+}
+
+export interface AiConversationMessage {
+  sender_type: "customer" | "ai" | "human" | string;
+  content: string;
+  created_at: string;
 }

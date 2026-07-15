@@ -44,6 +44,15 @@ export class InternalAiController {
     return this.internalAiService.exportKnowledgeBase(merchantId);
   }
 
+  @Get("vector-documents/export")
+  async exportVectorDocuments(
+    @Headers("authorization") authorization: string | undefined,
+    @Query("merchant_id") merchantId: string,
+  ) {
+    assertInternalToken(authorization);
+    return this.internalAiService.exportVectorDocuments(merchantId);
+  }
+
   @Get("merchant-settings/:merchantId")
   async exportMerchantSettings(
     @Headers("authorization") authorization: string | undefined,

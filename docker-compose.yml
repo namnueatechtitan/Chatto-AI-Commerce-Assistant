@@ -11,71 +11,47 @@ services:
       - "5432:5432"
     volumes:
       - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d chatto_phase2"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
 
-  api:
-    image: node:20-alpine
-    container_name: chatto-api
-    working_dir: /workspace
-    command: >
-      sh -c "corepack enable &&
-      pnpm install &&
-      pnpm --filter @chatto/api dev"
+  db-init:
+    image: chatto-api:local
+    build:
+      context: .
+      target: api
+    restart: "no"
     environment:
-      NODE_ENV: development
-      API_PORT: 4000
-      AI_SERVICE_BASE_URL: http://ai-service:5000
-      AI_SERVICE_TOKEN: dev_internal_service_token
-      AI_SERVICE_TIMEOUT_MS: 20000
-      INTERNAL_SERVICE_TOKEN: dev_internal_service_token
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/chatto_phase2?schema=public
-      JWT_SECRET: change-me-for-local-development
-      LINE_CHANNEL_SECRET: phase-2-placeholder-secret
-      LINE_CHANNEL_ACCESS_TOKEN: phase-2-placeholder-token
-      LINE_CHANNEL_ID: ""
-      LINE_REPLY_TIMEOUT_MS: 5000
-      OPENAI_API_KEY: phase-2-placeholder-key
-    ports:
-      - "4000:4000"
-    depends_on:
-      - postgres
-      - ai-service
-    volumes:
-      - ./:/workspace
-
-  web:
-    image: node:20-alpine
-    container_name: chatto-web
-    working_dir: /workspace
+      LINE_CHANNEL_ID: ${LINE_CHANNEL_ID:-}
+      CHECKPOINT_DISABLE: "1"
     command: >
-      sh -c "corepack enable &&
-      pnpm install &&
-      pnpm --filter @chatto/web dev"
-    environment:
-      NODE_ENV: development
-      WEB_PORT: 3000
-      API_PORT: 4000
-    ports:
-      - "3000:3000"
+      sh -c "pnpm --filter @chatto/api prisma migrate deploy &&
+      if [ -n \"$$LINE_CHANNEL_ID\" ]; then
+        pnpm --filter @chatto/api prisma db seed;
+      else
+        echo 'LINE_CHANNEL_ID is empty; skipping optional demo seed.';
+      fi"
     depends_on:
-      - api
-    volumes:
-      - ./:/workspace
+      postgres:
+        condition: service_healthy
 
   ai-service:
-    image: node:20-alpine
+    image: chatto-ai-service:local
+    build:
+      context: .
+      target: ai-service
     container_name: chatto-ai-service
-    working_dir: /workspace
-    command: >
-      sh -c "corepack enable &&
-      pnpm install &&
-      pnpm --filter @chatto/ai-service dev"
+    restart: unless-stopped
     environment:
-      NODE_ENV: development
+      NODE_ENV: production
       AI_SERVICE_PORT: 5000
-      AI_SERVICE_TOKEN: dev_internal_service_token
-      INTERNAL_SERVICE_TOKEN: dev_internal_service_token
+      AI_SERVICE_TOKEN: ${AI_SERVICE_TOKEN:-dev_internal_service_token}
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-dev_internal_service_token}
       INTERNAL_API_BASE_URL: http://api:4000
-      AI_LLM_PROVIDER: gemini
+      AI_LLM_PROVIDER: ${AI_LLM_PROVIDER:-mock}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.1-flash-lite}
       GEMINI_API_BASE_URL: ${GEMINI_API_BASE_URL:-https://generativelanguage.googleapis.com/v1/interactions}
@@ -83,13 +59,105 @@ services:
       GEMINI_EMBEDDING_MODEL: ${GEMINI_EMBEDDING_MODEL:-gemini-embedding-2}
       GEMINI_EMBEDDING_DIMENSIONS: ${GEMINI_EMBEDDING_DIMENSIONS:-768}
       GEMINI_EMBEDDING_TIMEOUT_MS: ${GEMINI_EMBEDDING_TIMEOUT_MS:-10000}
-      OPENAI_API_KEY: phase-2-placeholder-key
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-}
     ports:
       - "5000:5000"
     depends_on:
-      - postgres
-    volumes:
-      - ./:/workspace
+      db-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:5000/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+
+  api:
+    image: chatto-api:local
+    build:
+      context: .
+      target: api
+    container_name: chatto-api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      API_PORT: 4000
+      AI_SERVICE_BASE_URL: http://ai-service:5000
+      AI_SERVICE_TOKEN: ${AI_SERVICE_TOKEN:-dev_internal_service_token}
+      AI_SERVICE_TIMEOUT_MS: ${AI_SERVICE_TIMEOUT_MS:-20000}
+      INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-dev_internal_service_token}
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/chatto_phase2?schema=public
+      JWT_SECRET: ${JWT_SECRET:-change-me-for-local-development}
+      LINE_CHANNEL_SECRET: ${LINE_CHANNEL_SECRET:-phase-2-placeholder-secret}
+      LINE_CHANNEL_ACCESS_TOKEN: ${LINE_CHANNEL_ACCESS_TOKEN:-phase-2-placeholder-token}
+      LINE_CHANNEL_ID: ${LINE_CHANNEL_ID:-}
+      LINE_REPLY_TIMEOUT_MS: ${LINE_REPLY_TIMEOUT_MS:-5000}
+    ports:
+      - "4000:4000"
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
+      ai-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:4000/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+
+  web:
+    image: chatto-web:local
+    build:
+      context: .
+      target: web
+      args:
+        NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:4000}
+    container_name: chatto-web
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+    ports:
+      - "3000:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+
+  prisma-studio:
+    image: chatto-api:local
+    container_name: chatto-prisma-studio
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/chatto_phase2?schema=public
+      CHECKPOINT_DISABLE: "1"
+    command:
+      - pnpm
+      - --filter
+      - "@chatto/api"
+      - exec
+      - prisma
+      - studio
+      - --schema
+      - prisma/schema.prisma
+      - --hostname
+      - 0.0.0.0
+      - --port
+      - "5555"
+      - --browser
+      - none
+    ports:
+      - "5555:5555"
+    depends_on:
+      db-init:
+        condition: service_completed_successfully
 
 volumes:
   postgres-data:

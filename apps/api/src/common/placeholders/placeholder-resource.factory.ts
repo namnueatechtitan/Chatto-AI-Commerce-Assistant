@@ -1,3 +1,11 @@
+// genereic placeholder resource module for frontend development, to be replaced with actual implementation later.
+/* GET    /resource
+GET    /resource/:id
+POST   /resource
+PATCH  /resource/:id
+DELETE /resource/:id */
+
+
 import {
   Body,
   Controller,

@@ -28,3 +28,5 @@ export class AuthController {
     return this.authService.profile();
   }
 }
+
+// current behavior is to return a placeholder response for all endpoints, as the actual implementation is not yet complete. The register endpoint accepts a RegisterDto payload, the login endpoint accepts a LoginDto payload, and the profile endpoint returns the current merchant profile.

@@ -1,3 +1,4 @@
+// composes all modules and providers for the API application
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 

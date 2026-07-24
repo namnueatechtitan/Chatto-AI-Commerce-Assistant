@@ -1,3 +1,7 @@
+/**
+ * หน้าที่ไฟล์: ไฟล์นี้เก็บคอมโพเนนต์ส่วน pricing ของหน้า landing page
+ */
+
 import { Check, Sparkles } from "lucide-react";
 
 import { pricingPlans } from "../../lib/homepage-data";
@@ -6,6 +10,9 @@ import { Button } from "../ui/Button";
 import { Card } from "../ui/Card";
 import { HomepageContainer } from "./container";
 
+/**
+ * หน้าที่: คอมโพเนนต์นี้เรนเดอร์ส่วน Pricing ตามข้อมูลที่รับเข้ามา
+ */
 export function Pricing() {
   return (
     <section className="pt-16 lg:pt-20" id="pricing">

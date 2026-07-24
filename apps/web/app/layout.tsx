@@ -1,3 +1,7 @@
+/**
+ * หน้าที่ไฟล์: ไฟล์นี้กำหนด root layout ของแอปเว็บ รวม metadata และโครงสร้างพื้นฐานที่ทุกหน้าต้องใช้ร่วมกัน
+ */
+
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import type { ReactNode } from "react";
@@ -15,6 +19,9 @@ export const metadata: Metadata = {
   description: "Public homepage and merchant workspace for the Chatto AI Commerce Assistant",
 };
 
+/**
+ * หน้าที่: คอมโพเนนต์นี้กำหนด layout ของ Root
+ */
 export default function RootLayout({
   children,
 }: Readonly<{

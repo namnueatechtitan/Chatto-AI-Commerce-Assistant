@@ -1,3 +1,7 @@
+/**
+ * หน้าที่ไฟล์: ไฟล์นี้เก็บคอมโพเนนต์ส่วน chat preview ของหน้า landing page
+ */
+
 import type { ReactNode } from "react";
 import {
   Camera,
@@ -22,6 +26,9 @@ interface ChatPreviewProps {
 const avatarUrl =
   "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=96&q=80";
 
+/**
+ * หน้าที่: เรนเดอร์ avatar ของลูกค้าในตัวอย่างบทสนทนาบนหน้าแรก
+ */
 function CustomerAvatar({ compact = false }: { compact?: boolean }) {
   return (
     <img
@@ -35,6 +42,9 @@ function CustomerAvatar({ compact = false }: { compact?: boolean }) {
   );
 }
 
+/**
+ * หน้าที่: เรนเดอร์เวลาประกอบข้อความในตัวอย่างบทสนทนา
+ */
 function TimeStamp({
   time,
   delivered = false,
@@ -50,6 +60,9 @@ function TimeStamp({
   );
 }
 
+/**
+ * หน้าที่: เรนเดอร์ bubble ของข้อความแต่ละก้อนในตัวอย่างบทสนทนา
+ */
 function MessageBubble({
   compact = false,
   outgoing = false,
@@ -74,6 +87,9 @@ function MessageBubble({
   );
 }
 
+/**
+ * หน้าที่: คอมโพเนนต์นี้เรนเดอร์ส่วน Chat Preview ตามข้อมูลที่รับเข้ามา
+ */
 export function ChatPreview({ compact = false, className }: ChatPreviewProps) {
   return (
     <div

@@ -1,3 +1,7 @@
+/**
+ * หน้าที่ไฟล์: ไฟล์นี้รวม enum และ interface กลางที่หลายแอปใน monorepo ใช้ร่วมกัน
+ */
+
 export type UserRole = "owner" | "admin" | "manager" | "support_agent" | "viewer";
 
 export enum UserStatus {

@@ -1,5 +1,10 @@
 "use client";
 
+/**
+ * หน้าที่ไฟล์: ไฟล์นี้เก็บคอมโพเนนต์ส่วน channel distribution chart ที่ใช้ประกอบหน้า dashboard
+ */
+
+
 import {
   Cell,
   Pie,
@@ -24,6 +29,9 @@ interface ChannelDistributionChartProps {
   className?: string;
 }
 
+/**
+ * หน้าที่: เรนเดอร์ tooltip ของกราฟสัดส่วนช่องทางบน dashboard
+ */
 function ChannelTooltip({
   active,
   payload,
@@ -42,6 +50,9 @@ function ChannelTooltip({
   );
 }
 
+/**
+ * หน้าที่: คอมโพเนนต์นี้เรนเดอร์กราฟ Channel Distribution สำหรับสรุปข้อมูลบนหน้าจอ
+ */
 export function ChannelDistributionChart({
   data,
   totalMessages,

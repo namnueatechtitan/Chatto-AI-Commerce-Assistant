@@ -1,3 +1,5 @@
+-- หน้าที่ไฟล์: ไฟล์นี้เก็บโค้ดของ migration และรวม logic ที่เกี่ยวข้องไว้ในจุดเดียว
+
 -- CreateEnum
 CREATE TYPE "UserStatus" AS ENUM ('active', 'inactive', 'suspended', 'deleted');
 

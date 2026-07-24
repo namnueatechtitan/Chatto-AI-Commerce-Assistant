@@ -1,9 +1,16 @@
+/**
+ * หน้าที่ไฟล์: ไฟล์นี้เก็บคอมโพเนนต์ส่วน testimonials ของหน้า landing page
+ */
+
 import { Star } from "lucide-react";
 
 import { testimonials } from "../../lib/homepage-data";
 import { Card } from "../ui/Card";
 import { HomepageContainer } from "./container";
 
+/**
+ * หน้าที่: คอมโพเนนต์นี้เรนเดอร์ส่วน Testimonials ตามข้อมูลที่รับเข้ามา
+ */
 export function Testimonials() {
   return (
     <section className="pt-16 lg:pt-20">

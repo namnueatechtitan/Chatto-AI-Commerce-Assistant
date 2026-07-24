@@ -1,3 +1,7 @@
+/**
+ * หน้าที่ไฟล์: ไฟล์นี้เก็บคอมโพเนนต์ส่วน how it works ของหน้า landing page
+ */
+
 import { Bot, Link2, LayoutPanelTop, PackagePlus } from "lucide-react";
 
 import type { StepItem } from "../../lib/homepage-data";
@@ -12,6 +16,9 @@ const iconMap: Record<StepItem["icon"], typeof Link2> = {
   layout: LayoutPanelTop,
 };
 
+/**
+ * หน้าที่: คอมโพเนนต์นี้เรนเดอร์ส่วน How It Works ตามข้อมูลที่รับเข้ามา
+ */
 export function HowItWorks() {
   return (
     <section className="pt-10" id="how-it-works">

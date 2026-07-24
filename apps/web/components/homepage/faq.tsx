@@ -1,9 +1,16 @@
+/**
+ * หน้าที่ไฟล์: ไฟล์นี้เก็บคอมโพเนนต์ส่วน FAQ ของหน้า landing page
+ */
+
 import { ChevronDown } from "lucide-react";
 
 import { faqs } from "../../lib/homepage-data";
 import { Button } from "../ui/Button";
 import { HomepageContainer } from "./container";
 
+/**
+ * หน้าที่: คอมโพเนนต์นี้เรนเดอร์ส่วน FAQ ตามข้อมูลที่รับเข้ามา
+ */
 export function FAQ() {
   return (
     <section className="pb-4 pt-16 lg:pt-20">

@@ -1,3 +1,7 @@
+/**
+ * หน้าที่ไฟล์: ไฟล์นี้เก็บ type และ mock data สำหรับหน้า dashboard เพื่อใช้แสดงผลใน Phase 2
+ */
+
 export type DashboardStatIcon =
   | "messages"
   | "customers"

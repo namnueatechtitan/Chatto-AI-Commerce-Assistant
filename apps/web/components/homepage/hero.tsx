@@ -1,3 +1,7 @@
+/**
+ * หน้าที่ไฟล์: ไฟล์นี้เก็บคอมโพเนนต์ส่วน hero ของหน้า landing page
+ */
+
 // Hero section layout and content controls live in this file.
 import Link from "next/link";
 import type { ComponentType } from "react";
@@ -89,6 +93,9 @@ const mobileParticles = [
 ] as const;
 
 // Reusable card UI for each floating desktop capability highlight.
+/**
+ * หน้าที่: เรนเดอร์การ์ดความสามารถที่ลอยรอบภาพหลักใน hero section
+ */
 function CapabilityCard({
   className,
   icon: Icon,
@@ -122,6 +129,9 @@ function CapabilityCard({
   );
 }
 
+/**
+ * หน้าที่: เรนเดอร์จุดตกแต่งลอย ๆ ตามตำแหน่งที่กำหนดไว้ในฉากของ hero
+ */
 function FloatingParticles({ particles }: { particles: readonly string[] }) {
   return (
     <>
@@ -132,6 +142,9 @@ function FloatingParticles({ particles }: { particles: readonly string[] }) {
   );
 }
 
+/**
+ * หน้าที่: เรนเดอร์ฐานแพลตฟอร์มตกแต่งใต้กล่องแชตใน hero section
+ */
 function ChatPlatform({
   className,
   compact = false,
@@ -170,6 +183,9 @@ function ChatPlatform({
 }
 
 // Decorative orbit lines behind the desktop hero visual.
+/**
+ * หน้าที่: เรนเดอร์เส้นวงโคจรตกแต่งด้านหลังภาพหลักของ hero
+ */
 function OrbitDecor() {
   return (
     <>
@@ -180,6 +196,9 @@ function OrbitDecor() {
   );
 }
 
+/**
+ * หน้าที่: คอมโพเนนต์นี้เรนเดอร์ส่วน Hero ตามข้อมูลที่รับเข้ามา
+ */
 export function Hero() {
   return (
     <section className="relative overflow-hidden pb-1 pt-4 lg:pt-6" id="home">

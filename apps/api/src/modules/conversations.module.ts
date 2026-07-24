@@ -1,3 +1,7 @@
+/**
+ * หน้าที่ไฟล์: ไฟล์นี้ประกาศโมดูล conversations และเชื่อม controller กับ service ของ feed ข้อความล่าสุด
+ */
+
 import { Module } from "@nestjs/common";
 
 import { createPlaceholderResourceModule } from "../common/placeholders/placeholder-resource.factory";
@@ -11,6 +15,9 @@ const PlaceholderConversationsModule = createPlaceholderResourceModule({
   description: "Conversation management",
 });
 
+/**
+ * หน้าที่: โมดูลนี้รวบรวม dependency ของ Conversations
+ */
 @Module({
   imports: [PlaceholderConversationsModule, PrismaModule],
   controllers: [ConversationsController],

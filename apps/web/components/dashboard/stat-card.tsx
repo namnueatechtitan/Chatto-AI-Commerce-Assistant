@@ -1,3 +1,7 @@
+/**
+ * หน้าที่ไฟล์: ไฟล์นี้เก็บคอมโพเนนต์ส่วน stat card ที่ใช้ประกอบหน้า dashboard
+ */
+
 import type { LucideIcon } from "lucide-react";
 import { ArrowDownRight, ArrowUpRight } from "lucide-react";
 
@@ -17,6 +21,9 @@ const toneClasses: Record<DashboardStat["tone"], string> = {
   danger: "bg-red-100 text-danger",
 };
 
+/**
+ * หน้าที่: คอมโพเนนต์นี้เรนเดอร์การ์ด Stat สำหรับแสดงข้อมูลใน UI
+ */
 export function StatCard({ stat, icon: Icon }: StatCardProps) {
   const TrendIcon =
     stat.trendDirection === "up" ? ArrowUpRight : ArrowDownRight;

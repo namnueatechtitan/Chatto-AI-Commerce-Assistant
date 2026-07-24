@@ -1,3 +1,7 @@
+/**
+ * หน้าที่ไฟล์: ไฟล์นี้เก็บคอมโพเนนต์ส่วน recent orders card ที่ใช้ประกอบหน้า dashboard
+ */
+
 import type { RecentOrder } from "../../lib/mock-data";
 import { Badge } from "../ui/Badge";
 import {
@@ -24,6 +28,9 @@ const statusLabelMap: Record<RecentOrder["status"], string> = {
   cancelled: "ยกเลิก",
 };
 
+/**
+ * หน้าที่: คอมโพเนนต์นี้เรนเดอร์การ์ด Recent Orders สำหรับแสดงข้อมูลใน UI
+ */
 export function RecentOrdersCard({
   orders,
   className,

@@ -1,3 +1,7 @@
+/**
+ * หน้าที่ไฟล์: ไฟล์นี้เก็บคอมโพเนนต์ส่วน AI assistant panel ที่ใช้ประกอบหน้า dashboard
+ */
+
 import {
   AlertTriangle,
   BookOpenText,
@@ -26,6 +30,9 @@ interface AIAssistantPanelProps {
   className?: string;
 }
 
+/**
+ * หน้าที่: คอมโพเนนต์นี้เรนเดอร์ส่วน AIAssistant Panel ตามข้อมูลที่รับเข้ามา
+ */
 export function AIAssistantPanel({
   highlights,
   widgets,

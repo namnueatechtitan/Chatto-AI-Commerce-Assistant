@@ -1,6 +1,13 @@
+/**
+ * หน้าที่ไฟล์: ไฟล์นี้ประกาศ DTO สำหรับรับข้อมูลการสมัครใช้งานจาก client
+ */
+
 import { ApiProperty } from "@nestjs/swagger";
 import { IsEmail, IsOptional, IsString, MinLength } from "class-validator";
 
+/**
+ * หน้าที่: คลาสนี้รับผิดชอบงานของ สมัครใช้งาน DTO ภายในไฟล์นี้
+ */
 export class RegisterDto {
   @ApiProperty({ example: "merchant@example.com" })
   @IsEmail()

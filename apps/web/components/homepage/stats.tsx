@@ -1,3 +1,7 @@
+/**
+ * หน้าที่ไฟล์: ไฟล์นี้เก็บคอมโพเนนต์ส่วน stats ของหน้า landing page
+ */
+
 import { Headphones, ShieldCheck, UsersRound, Zap } from "lucide-react";
 
 import { homepageAssets } from "../../lib/homepage-data";
@@ -56,6 +60,9 @@ const partners = [
   },
 ];
 
+/**
+ * หน้าที่: คอมโพเนนต์นี้เรนเดอร์ส่วน Stats ตามข้อมูลที่รับเข้ามา
+ */
 export function Stats() {
   return (
     <section className="pb-6">

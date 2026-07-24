@@ -1,3 +1,7 @@
+/**
+ * หน้าที่ไฟล์: ไฟล์นี้เก็บคอมโพเนนต์ UI แบบใช้ซ้ำชื่อ Page Header
+ */
+
 import type { ReactNode } from "react";
 
 interface PageHeaderProps {
@@ -6,6 +10,9 @@ interface PageHeaderProps {
   actions?: ReactNode;
 }
 
+/**
+ * หน้าที่: คอมโพเนนต์นี้เรนเดอร์ส่วนหัวของ Page
+ */
 export function PageHeader({
   title,
   description,

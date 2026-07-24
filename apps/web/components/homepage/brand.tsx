@@ -1,3 +1,7 @@
+/**
+ * หน้าที่ไฟล์: ไฟล์นี้เก็บคอมโพเนนต์ส่วน brand ของหน้า landing page
+ */
+
 import Link from "next/link";
 
 import { homepageAssets } from "../../lib/homepage-data";
@@ -9,6 +13,9 @@ interface BrandProps {
   href?: string;
 }
 
+/**
+ * หน้าที่: คอมโพเนนต์นี้เรนเดอร์ส่วน Brand ตามข้อมูลที่รับเข้ามา
+ */
 export function Brand({
   dark = false,
   className,

@@ -1,3 +1,7 @@
+/**
+ * หน้าที่ไฟล์: ไฟล์นี้เก็บคอมโพเนนต์ส่วน top products card ที่ใช้ประกอบหน้า dashboard
+ */
+
 import type { TopProduct } from "../../lib/mock-data";
 import { cn } from "../../lib/utils";
 import {
@@ -12,6 +16,9 @@ interface TopProductsCardProps {
   className?: string;
 }
 
+/**
+ * หน้าที่: คอมโพเนนต์นี้เรนเดอร์การ์ด Top Products สำหรับแสดงข้อมูลใน UI
+ */
 export function TopProductsCard({
   products,
   className,

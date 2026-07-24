@@ -1,3 +1,7 @@
+/**
+ * หน้าที่ไฟล์: ไฟล์นี้เป็นจุดเริ่มต้นของ NestJS API และทำหน้าที่ bootstrap แอปก่อนเปิดให้บริการ
+ */
+
 import "reflect-metadata";
 
 import { ValidationPipe } from "@nestjs/common";
@@ -6,6 +10,9 @@ import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 
 import { AppModule } from "./app.module";
 
+/**
+ * หน้าที่: สร้างและตั้งค่า NestJS application ก่อนเปิดพอร์ตให้บริการ
+ */
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     rawBody: true,

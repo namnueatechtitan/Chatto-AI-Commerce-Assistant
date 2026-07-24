@@ -1,3 +1,7 @@
+/**
+ * หน้าที่ไฟล์: ไฟล์นี้เก็บคอมโพเนนต์ส่วน footer banner ที่ใช้ประกอบหน้า dashboard
+ */
+
 import { Bot, CheckCircle2, MessageCircleMore, Sparkles } from "lucide-react";
 
 import { Button } from "../ui/Button";
@@ -6,6 +10,9 @@ interface FooterBannerProps {
   benefits: string[];
 }
 
+/**
+ * หน้าที่: คอมโพเนนต์นี้เรนเดอร์แบนเนอร์ Footer
+ */
 export function FooterBanner({ benefits }: FooterBannerProps) {
   return (
     <section className="relative overflow-hidden rounded-[28px] bg-[#06281A] px-6 py-7 text-white shadow-card sm:px-8 sm:py-8">

@@ -1,3 +1,5 @@
+// หน้าที่ไฟล์: ไฟล์นี้ประกาศโครงสร้างฐานข้อมูลหลักของโปรเจกต์ใน Phase 2 ด้วย Prisma schema
+
 generator client {
   provider = "prisma-client-js"
 }

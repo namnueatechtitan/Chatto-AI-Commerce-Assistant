@@ -1,3 +1,7 @@
+/**
+ * หน้าที่ไฟล์: ไฟล์นี้เก็บคอมโพเนนต์ส่วน welcome banner ที่ใช้ประกอบหน้า dashboard
+ */
+
 import { PackageSearch } from "lucide-react";
 
 import { Card } from "../ui/Card";
@@ -8,6 +12,9 @@ interface WelcomeBannerProps {
   inventoryAlert: string;
 }
 
+/**
+ * หน้าที่: คอมโพเนนต์นี้เรนเดอร์แบนเนอร์ Welcome
+ */
 export function WelcomeBanner({
   greeting,
   storeSummary,

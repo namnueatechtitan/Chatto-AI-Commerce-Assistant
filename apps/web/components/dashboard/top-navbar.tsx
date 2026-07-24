@@ -1,8 +1,15 @@
+/**
+ * หน้าที่ไฟล์: ไฟล์นี้เก็บคอมโพเนนต์ส่วน top navbar ที่ใช้ประกอบหน้า dashboard
+ */
+
 import Link from "next/link";
 import { Bell, ChevronDown, Menu } from "lucide-react";
 
 import { dashboardOverview } from "../../lib/mock-data";
 
+/**
+ * หน้าที่: คอมโพเนนต์นี้เรนเดอร์แถบนำทาง Top
+ */
 export function TopNavbar() {
   return (
     <header className="sticky top-0 z-20 border-b border-border/80 bg-white/95 backdrop-blur">

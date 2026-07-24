@@ -1,3 +1,7 @@
+/**
+ * หน้าที่ไฟล์: ไฟล์นี้เก็บคอมโพเนนต์ส่วน Live ข้อความ Error ที่ใช้ประกอบหน้า dashboard
+ */
+
 import { AlertCircle } from "lucide-react";
 
 import { Button } from "../ui/Button";
@@ -6,6 +10,9 @@ interface LiveMessagesErrorProps {
   onRetry: () => void;
 }
 
+/**
+ * หน้าที่: คอมโพเนนต์นี้เรนเดอร์สถานะ error ของ Live ข้อความ
+ */
 export function LiveMessagesError({ onRetry }: LiveMessagesErrorProps) {
   return (
     <div className="flex flex-col items-center justify-center rounded-[28px] border border-red-100 bg-red-50/80 px-6 py-12 text-center">

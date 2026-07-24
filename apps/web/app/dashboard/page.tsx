@@ -1,3 +1,7 @@
+/**
+ * หน้าที่ไฟล์: ไฟล์นี้เป็นหน้า dashboard หลักและทำหน้าที่ประกอบคอมโพเนนต์หลักที่ใช้แสดงผลในเส้นทางนี้
+ */
+
 import {
   CircleDollarSign,
   MessageCircleMore,
@@ -36,6 +40,9 @@ import {
   type DashboardStatIcon,
 } from "../../lib/mock-data";
 
+/**
+ * หน้าที่: คอมโพเนนต์หน้านี้เรนเดอร์หน้า dashboard หลักและประกอบส่วนย่อยที่เกี่ยวข้อง
+ */
 export default function DashboardPage() {
   const statIconMap: Record<
     DashboardStatIcon,

@@ -1,5 +1,12 @@
+/**
+ * หน้าที่ไฟล์: ไฟล์นี้เก็บคอมโพเนนต์ส่วน Live ข้อความ Empty ที่ใช้ประกอบหน้า dashboard
+ */
+
 import { Inbox } from "lucide-react";
 
+/**
+ * หน้าที่: คอมโพเนนต์นี้เรนเดอร์สถานะว่างของ Live ข้อความ
+ */
 export function LiveMessagesEmpty() {
   return (
     <div className="flex flex-col items-center justify-center rounded-[28px] border border-dashed border-emerald-200 bg-emerald-50/60 px-6 py-12 text-center">

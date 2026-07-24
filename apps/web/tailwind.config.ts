@@ -1,3 +1,7 @@
+/**
+ * หน้าที่ไฟล์: ไฟล์นี้กำหนด theme และการสแกน class ของ Tailwind สำหรับแอปเว็บ
+ */
+
 import type { Config } from "tailwindcss";
 import animate from "tailwindcss-animate";
 

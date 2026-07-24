@@ -1,3 +1,7 @@
+/**
+ * หน้าที่ไฟล์: ไฟล์นี้เก็บคอมโพเนนต์ส่วน footer ของหน้า landing page
+ */
+
 import { Clock3, Facebook, Mail, MapPin, PhoneCall, Youtube } from "lucide-react";
 import Link from "next/link";
 
@@ -5,6 +9,9 @@ import { footerLinkGroups } from "../../lib/homepage-data";
 import { Brand } from "./brand";
 import { HomepageContainer } from "./container";
 
+/**
+ * หน้าที่: คอมโพเนนต์นี้เรนเดอร์ส่วนท้ายของ หน้าเว็บ
+ */
 export function Footer() {
   return (
     <footer className="bg-[#061B11] pb-6 pt-14 text-white" id="contact">

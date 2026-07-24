@@ -1,3 +1,5 @@
+/* หน้าที่ไฟล์: ไฟล์นี้เก็บตัวแปรสี สไตล์พื้นฐาน และ utility ระดับ global ของแอปเว็บ */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;

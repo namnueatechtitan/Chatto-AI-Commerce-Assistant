@@ -1,3 +1,7 @@
+/**
+ * หน้าที่ไฟล์: ไฟล์นี้เก็บคอมโพเนนต์ UI แบบใช้ซ้ำชื่อ Progress
+ */
+
 import { cn } from "../../lib/utils";
 
 interface ProgressProps {
@@ -21,6 +25,9 @@ const widthClassMap: Record<number, string> = {
   100: "w-full",
 };
 
+/**
+ * หน้าที่: คอมโพเนนต์นี้เรนเดอร์แถบความคืบหน้าจากค่าร้อยละที่รับเข้ามา
+ */
 export function Progress({
   value,
   className,

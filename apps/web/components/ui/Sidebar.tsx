@@ -1,5 +1,10 @@
 "use client";
 
+/**
+ * หน้าที่ไฟล์: ไฟล์นี้เก็บคอมโพเนนต์ UI แบบใช้ซ้ำชื่อ Sidebar
+ */
+
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -12,6 +17,9 @@ const navItems = [
   { href: "/dashboard/settings", label: "Settings" },
 ];
 
+/**
+ * หน้าที่: คอมโพเนนต์นี้เรนเดอร์ sidebar ของส่วน นี้
+ */
 export function Sidebar() {
   const pathname = usePathname();
 

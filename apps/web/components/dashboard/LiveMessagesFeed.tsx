@@ -1,5 +1,10 @@
 "use client";
 
+/**
+ * หน้าที่ไฟล์: ไฟล์นี้เก็บคอมโพเนนต์ส่วน Live ข้อความ Feed ที่ใช้ประกอบหน้า dashboard
+ */
+
+
 import {
   Activity,
   ChevronRight,
@@ -26,10 +31,16 @@ interface LiveMessagesFeedProps {
   className?: string;
 }
 
+/**
+ * หน้าที่: สร้างอักษรย่อสำหรับใช้แทนรูปโปรไฟล์เมื่อไม่มี avatar ของลูกค้า
+ */
 function getAvatarFallback(name: string) {
   return name.trim().charAt(0).toUpperCase();
 }
 
+/**
+ * หน้าที่: แปลงเวลาให้อยู่ในรูปแบบที่อ่านง่ายสำหรับแสดงบนหน้า dashboard
+ */
 function formatTimestamp(timestamp: string) {
   const date = new Date(timestamp);
 
@@ -45,6 +56,9 @@ function formatTimestamp(timestamp: string) {
   });
 }
 
+/**
+ * หน้าที่: คอมโพเนนต์นี้เรนเดอร์ feed ของ Live ข้อความ
+ */
 export function LiveMessagesFeed({ className }: LiveMessagesFeedProps) {
   const { error, isLoading, messages, refresh } = useLatestMessages();
 

@@ -1,5 +1,12 @@
+/**
+ * หน้าที่ไฟล์: ไฟล์นี้ประกาศ DTO ของข้อความล่าสุดที่ส่งกลับไปให้หน้า dashboard
+ */
+
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 
+/**
+ * หน้าที่: คลาสนี้รับผิดชอบงานของ Latest ข้อความ DTO ภายในไฟล์นี้
+ */
 export class LatestMessageDto {
   @ApiProperty()
   id!: string;

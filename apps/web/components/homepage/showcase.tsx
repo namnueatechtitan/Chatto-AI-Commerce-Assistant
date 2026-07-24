@@ -1,3 +1,7 @@
+/**
+ * หน้าที่ไฟล์: ไฟล์นี้เก็บคอมโพเนนต์ส่วน showcase ของหน้า landing page
+ */
+
 import Link from "next/link";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
 
@@ -7,6 +11,9 @@ import { buttonVariants } from "../ui/Button";
 import { Card } from "../ui/Card";
 import { HomepageContainer } from "./container";
 
+/**
+ * หน้าที่: เรนเดอร์ตัวอย่างหน้าตา dashboard สำหรับ section showcase
+ */
 function DashboardPreview() {
   return (
     <div className="overflow-hidden rounded-[26px] border border-slate-200 bg-white shadow-[0_28px_70px_rgba(15,23,42,0.12)]">
@@ -127,6 +134,9 @@ function DashboardPreview() {
   );
 }
 
+/**
+ * หน้าที่: คอมโพเนนต์นี้เรนเดอร์ส่วน Showcase ตามข้อมูลที่รับเข้ามา
+ */
 export function Showcase() {
   return (
     <section className="pt-16 lg:pt-20">

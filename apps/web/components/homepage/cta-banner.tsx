@@ -1,3 +1,7 @@
+/**
+ * หน้าที่ไฟล์: ไฟล์นี้เก็บคอมโพเนนต์ส่วน cta banner ของหน้า landing page
+ */
+
 import Link from "next/link";
 import { ArrowRight, Play, ShoppingCart, TrendingUp } from "lucide-react";
 
@@ -7,6 +11,9 @@ import { buttonVariants } from "../ui/Button";
 import { ChatPreview } from "./chat-preview";
 import { HomepageContainer } from "./container";
 
+/**
+ * หน้าที่: คอมโพเนนต์นี้เรนเดอร์แบนเนอร์ Cta
+ */
 export function CtaBanner() {
   return (
     <section className="py-16 lg:py-20">

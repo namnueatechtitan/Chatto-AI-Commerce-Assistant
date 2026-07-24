@@ -1,3 +1,7 @@
+/**
+ * หน้าที่ไฟล์: ไฟล์นี้เก็บข้อมูลคงที่ทั้งหมดที่ใช้ประกอบหน้า landing page ของเว็บ
+ */
+
 export interface NavItem {
   label: string;
   href: string;

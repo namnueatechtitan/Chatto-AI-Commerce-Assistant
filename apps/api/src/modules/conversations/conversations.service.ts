@@ -1,15 +1,28 @@
+/**
+ * หน้าที่ไฟล์: ไฟล์นี้เก็บ logic สำหรับดึงข้อความลูกค้าล่าสุดจากฐานข้อมูลเพื่อแสดงบน dashboard
+ */
+
 import { Injectable } from "@nestjs/common";
 import { MessageType, SenderType } from "@prisma/client";
 
 import { PrismaService } from "../../prisma/prisma.service";
 import { LatestMessageDto } from "./dto/latest-message.dto";
 
+/**
+ * หน้าที่: service นี้รับผิดชอบ logic ของ Conversations
+ */
 @Injectable()
 export class ConversationsService {
   private readonly latestMessagesLimit = 20;
 
+  /**
+   * หน้าที่: ประกอบ dependency ที่คลาสนี้ต้องใช้ระหว่างการทำงาน
+   */
   constructor(private readonly prismaService: PrismaService) {}
 
+  /**
+   * หน้าที่: ดึงข้อความลูกค้าล่าสุดจากฐานข้อมูลและแปลงให้อยู่ในรูป DTO สำหรับ dashboard feed
+   */
   async findLatestMessages(): Promise<LatestMessageDto[]> {
     const messages = await this.prismaService.message.findMany({
       where: {

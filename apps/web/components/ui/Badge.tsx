@@ -1,3 +1,7 @@
+/**
+ * หน้าที่ไฟล์: ไฟล์นี้เก็บคอมโพเนนต์ UI แบบใช้ซ้ำชื่อ Badge
+ */
+
 import * as React from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 
@@ -26,6 +30,9 @@ export interface BadgeProps
   extends React.HTMLAttributes<HTMLDivElement>,
     VariantProps<typeof badgeVariants> {}
 
+/**
+ * หน้าที่: คอมโพเนนต์นี้เรนเดอร์ badge แบบใช้ซ้ำสำหรับแสดงสถานะหรือป้ายกำกับ
+ */
 function Badge({ className, variant, ...props }: BadgeProps) {
   return <div className={cn(badgeVariants({ variant }), className)} {...props} />;
 }

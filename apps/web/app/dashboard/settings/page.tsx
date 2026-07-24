@@ -1,7 +1,14 @@
+/**
+ * หน้าที่ไฟล์: ไฟล์นี้เป็นหน้าตั้งค่าระบบและทำหน้าที่ประกอบคอมโพเนนต์หลักที่ใช้แสดงผลในเส้นทางนี้
+ */
+
 import { Button } from "../../../components/ui/Button";
 import { Card } from "../../../components/ui/Card";
 import { PageHeader } from "../../../components/ui/PageHeader";
 
+/**
+ * หน้าที่: คอมโพเนนต์หน้านี้เรนเดอร์หน้าตั้งค่าระบบและประกอบส่วนย่อยที่เกี่ยวข้อง
+ */
 export default function SettingsPage() {
   return (
     <>

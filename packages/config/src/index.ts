@@ -1,3 +1,7 @@
+/**
+ * หน้าที่ไฟล์: ไฟล์นี้รวมชื่อ environment variable ค่าตัวอย่าง และพอร์ตตั้งต้นที่ใช้ร่วมกันทั้งโปรเจกต์
+ */
+
 export const envKeys = {
   DATABASE_URL: "DATABASE_URL",
   API_PORT: "API_PORT",

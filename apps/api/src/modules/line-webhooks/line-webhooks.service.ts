@@ -1,3 +1,7 @@
+/**
+ * หน้าที่ไฟล์: ไฟล์นี้เก็บ flow หลักของการรับ LINE webhook ตั้งแต่ยืนยันความถูกต้องไปจนถึงบันทึกข้อความลงฐานข้อมูล
+ */
+
 import {
   BadRequestException,
   Injectable,
@@ -39,6 +43,9 @@ type PrismaTransactionClient = Pick<
 
 type ProcessEventOutcome = "processed" | "ignored" | "duplicate";
 
+/**
+ * หน้าที่: service นี้รับผิดชอบ logic ของ LINE Webhooks
+ */
 @Injectable()
 export class LineWebhooksService {
   private readonly logger = new Logger(LineWebhooksService.name);
@@ -48,12 +55,18 @@ export class LineWebhooksService {
     ConversationStatus.HUMAN_ACTIVE,
   ];
 
+  /**
+   * หน้าที่: ประกอบ dependency ที่คลาสนี้ต้องใช้ระหว่างการทำงาน
+   */
   constructor(
     private readonly prismaService: PrismaService,
     private readonly configService: ConfigService,
     private readonly lineSignatureService: LineSignatureService,
   ) {}
 
+  /**
+   * หน้าที่: ประมวลผล LINE webhook ตั้งแต่ตรวจลายเซ็น ตรวจ payload ไปจนถึงบันทึก event และข้อความลงฐานข้อมูล
+   */
   async handleWebhook(
     payload: LineWebhookRequestBody,
     signature: string | undefined,
@@ -112,6 +125,9 @@ export class LineWebhooksService {
     return result;
   }
 
+  /**
+   * หน้าที่: หา channel LINE ที่ต้องใช้จาก environment และฐานข้อมูลเพื่อผูก webhook กับร้านค้าที่ถูกต้อง
+   */
   private async resolveLineChannelContext(): Promise<LineChannelContext> {
     const configuredExternalChannelId = this.configService
       .get<string>("LINE_CHANNEL_ID")
@@ -208,6 +224,9 @@ export class LineWebhooksService {
     };
   }
 
+  /**
+   * หน้าที่: ประมวลผล event เดี่ยวจาก LINE และสรุปผลว่า event นั้นถูกประมวลผล ถูกละเว้น หรือซ้ำ
+   */
   private async processEvent(
     channelContext: LineChannelContext,
     destination: string | undefined,
@@ -319,6 +338,9 @@ export class LineWebhooksService {
     }
   }
 
+  /**
+   * หน้าที่: ค้นหาลูกค้าจาก external user id ของ LINE หรือสร้างรายการใหม่เมื่อยังไม่มี
+   */
   private async findOrCreateCustomer(
     transaction: PrismaTransactionClient,
     channelContext: LineChannelContext,
@@ -365,6 +387,9 @@ export class LineWebhooksService {
     }
   }
 
+  /**
+   * หน้าที่: ค้นหา conversation ที่ยัง active ของลูกค้าคนนี้ หรือสร้างใหม่เมื่อจำเป็น
+   */
   private async findOrCreateActiveConversation(
     transaction: PrismaTransactionClient,
     channelContext: LineChannelContext,
@@ -405,6 +430,9 @@ export class LineWebhooksService {
     });
   }
 
+  /**
+   * หน้าที่: ตรวจสอบว่า event ที่รับมาเป็นข้อความ text ที่พร้อมนำไปบันทึกต่อหรือไม่
+   */
   private isTextMessageEvent(
     event: LineWebhookEvent,
   ): event is LineWebhookTextMessageEvent {
@@ -422,6 +450,9 @@ export class LineWebhooksService {
     );
   }
 
+  /**
+   * หน้าที่: ตรวจสอบว่า event นี้เป็น event ประเภท message หรือไม่
+   */
   private isMessageEvent(
     event: LineWebhookEvent,
   ): event is LineWebhookMessageEvent {
@@ -433,6 +464,9 @@ export class LineWebhooksService {
     );
   }
 
+  /**
+   * หน้าที่: ตรวจสอบโครงสร้างพื้นฐานของ event ก่อนประมวลผลในขั้นต่อไป
+   */
   private hasBasicEventShape(event: LineWebhookEvent): boolean {
     return (
       typeof event === "object" &&
@@ -445,6 +479,9 @@ export class LineWebhooksService {
     );
   }
 
+  /**
+   * หน้าที่: คืนค่า webhook event id จาก payload หรือสร้าง fallback id เมื่อ LINE ไม่ส่งค่ามาให้
+   */
   private resolveWebhookEventId(event: LineWebhookEvent): string {
     if (typeof event.webhookEventId === "string" && event.webhookEventId.trim()) {
       return event.webhookEventId.trim();
@@ -469,6 +506,9 @@ export class LineWebhooksService {
     return `fallback_${digest}`;
   }
 
+  /**
+   * หน้าที่: จัดรูป payload ดิบให้อยู่ในรูป JSON ที่บันทึกลงฐานข้อมูลได้ง่าย
+   */
   private buildRawPayload(
     destination: string | undefined,
     event: LineWebhookEvent,
@@ -481,6 +521,9 @@ export class LineWebhooksService {
     ) as Prisma.InputJsonValue;
   }
 
+  /**
+   * หน้าที่: สร้าง metadata ของข้อความ LINE เพื่อเก็บบริบทที่ใช้สำหรับอ้างอิงและดีบัก
+   */
   private buildMessageMetadata(
     destination: string | undefined,
     channelAccessTokenConfigured: boolean,
@@ -503,6 +546,9 @@ export class LineWebhooksService {
     ) as Prisma.InputJsonValue;
   }
 
+  /**
+   * หน้าที่: สรุปชนิดของ event ให้อยู่ในรูปข้อความสั้นสำหรับใช้กับ log
+   */
   private describeEvent(event: LineWebhookEvent): string {
     if (this.isMessageEvent(event)) {
       return `message:${event.message.type ?? "unknown"}`;
@@ -511,6 +557,9 @@ export class LineWebhooksService {
     return event.type;
   }
 
+  /**
+   * หน้าที่: ตรวจสอบว่า error ที่เกิดขึ้นเป็น unique constraint error ของ Prisma หรือไม่
+   */
   private isKnownUniqueConstraintError(error: unknown): boolean {
     return (
       error instanceof Prisma.PrismaClientKnownRequestError &&

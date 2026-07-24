@@ -1,3 +1,7 @@
+/**
+ * หน้าที่ไฟล์: ไฟล์นี้เป็นตัวช่วยรันคำสั่ง Prisma พร้อมโหลดค่า environment ให้พร้อมก่อนสั่งงานจริง
+ */
+
 const fs = require("node:fs");
 const path = require("node:path");
 const { spawnSync } = require("node:child_process");
@@ -23,6 +27,9 @@ if (result.error) {
 
 process.exit(result.status ?? 0);
 
+/**
+ * หน้าที่: อ่านไฟล์ .env แบบง่าย ๆ แล้วแปลงค่าที่อ่านได้ให้อยู่ในรูป object
+ */
 function loadEnvFile(filePath) {
   if (!fs.existsSync(filePath)) {
     return;
@@ -53,6 +60,9 @@ function loadEnvFile(filePath) {
   }
 }
 
+/**
+ * หน้าที่: ตัด quote ที่ครอบค่าจากไฟล์ environment ออกก่อนนำไปใช้งาน
+ */
 function stripQuotes(value) {
   if (
     (value.startsWith('"') && value.endsWith('"')) ||

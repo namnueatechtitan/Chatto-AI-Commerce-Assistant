@@ -1,5 +1,10 @@
 "use client";
 
+/**
+ * หน้าที่ไฟล์: ไฟล์นี้เก็บคอมโพเนนต์ส่วน navbar ของหน้า landing page
+ */
+
+
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
@@ -10,6 +15,9 @@ import { buttonVariants } from "../ui/Button";
 import { Brand } from "./brand";
 import { HomepageContainer } from "./container";
 
+/**
+ * หน้าที่: คอมโพเนนต์นี้เรนเดอร์แถบนำทาง ของหน้า
+ */
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
 

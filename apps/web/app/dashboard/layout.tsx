@@ -1,9 +1,16 @@
+/**
+ * หน้าที่ไฟล์: ไฟล์นี้กำหนด layout ของส่วน dashboard และจัดวางโครงสร้างหลักของหน้าหลังบ้าน
+ */
+
 import type { ReactNode } from "react";
 
 import { Sidebar } from "../../components/dashboard/sidebar";
 import { TopNavbar } from "../../components/dashboard/top-navbar";
 import { DashboardProviders } from "./providers";
 
+/**
+ * หน้าที่: คอมโพเนนต์นี้กำหนด layout ของ dashboard
+ */
 export default function DashboardLayout({
   children,
 }: Readonly<{

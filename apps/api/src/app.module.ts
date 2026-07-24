@@ -1,3 +1,7 @@
+/**
+ * หน้าที่ไฟล์: ไฟล์นี้เป็นโมดูลหลักของ API ที่รวมโมดูลย่อยทั้งหมดของระบบเข้าด้วยกัน
+ */
+
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
 
@@ -30,6 +34,9 @@ import { RolesModule } from "./modules/roles.module";
 import { UsersModule } from "./modules/users.module";
 import { VectorDocumentsModule } from "./modules/vector-documents.module";
 
+/**
+ * หน้าที่: โมดูลหลักนี้รวมโมดูลย่อยทั้งหมดของระบบ API เข้าด้วยกัน
+ */
 @Module({
   imports: [
     ConfigModule.forRoot({

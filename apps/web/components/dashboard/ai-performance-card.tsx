@@ -1,3 +1,7 @@
+/**
+ * หน้าที่ไฟล์: ไฟล์นี้เก็บคอมโพเนนต์ส่วน AI performance card ที่ใช้ประกอบหน้า dashboard
+ */
+
 import { ChevronDown } from "lucide-react";
 
 import type { PerformanceMetric } from "../../lib/mock-data";
@@ -16,6 +20,9 @@ interface AIPerformanceCardProps {
   className?: string;
 }
 
+/**
+ * หน้าที่: คอมโพเนนต์นี้เรนเดอร์การ์ด AIPerformance สำหรับแสดงข้อมูลใน UI
+ */
 export function AIPerformanceCard({
   metrics,
   periodLabel,

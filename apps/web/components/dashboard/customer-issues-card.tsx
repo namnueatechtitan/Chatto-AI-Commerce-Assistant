@@ -1,3 +1,7 @@
+/**
+ * หน้าที่ไฟล์: ไฟล์นี้เก็บคอมโพเนนต์ส่วน ลูกค้า issues card ที่ใช้ประกอบหน้า dashboard
+ */
+
 import type {
   CustomerIssueCategory,
   CustomerIssueMetric,
@@ -24,6 +28,9 @@ const metricToneClasses: Record<CustomerIssueMetric["tone"], string> = {
   success: "bg-emerald-50 text-emerald-700",
 };
 
+/**
+ * หน้าที่: คอมโพเนนต์นี้เรนเดอร์การ์ด ลูกค้า Issues สำหรับแสดงข้อมูลใน UI
+ */
 export function CustomerIssuesCard({
   metrics,
   categories,

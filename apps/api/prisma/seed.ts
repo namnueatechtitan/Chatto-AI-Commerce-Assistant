@@ -1,3 +1,7 @@
+/**
+ * หน้าที่ไฟล์: ไฟล์นี้ใช้ seed ข้อมูล merchant, platform และ channel ตัวอย่างสำหรับทดสอบ LINE integration ในเครื่อง
+ */
+
 const {
   ChannelStatus,
   MerchantStatus,
@@ -13,6 +17,9 @@ const DEMO_PLATFORM_NAME = "LINE";
 const DEMO_CHANNEL_NAME = "Chatto Demo Store LINE OA";
 const DEMO_CHANNEL_ID = "8f7be5bf-dc89-4c60-8540-a0903c1a4657";
 
+/**
+ * หน้าที่: รันขั้นตอนการ seed merchant, platform และ channel ตัวอย่างสำหรับการทดสอบ LINE integration
+ */
 async function main() {
   const externalChannelId = getRequiredEnv("LINE_CHANNEL_ID");
 
@@ -116,6 +123,9 @@ async function main() {
   );
 }
 
+/**
+ * หน้าที่: คืนค่า Required Env ตามข้อมูลหรือบริบทที่รับเข้ามา
+ */
 function getRequiredEnv(key) {
   const value = process.env[key]?.trim();
 

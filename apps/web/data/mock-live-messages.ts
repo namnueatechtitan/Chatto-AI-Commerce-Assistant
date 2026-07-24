@@ -1,3 +1,7 @@
+/**
+ * หน้าที่ไฟล์: ไฟล์นี้เก็บข้อมูลข้อความตัวอย่างสำหรับใช้จำลอง live message feed
+ */
+
 import type { LiveMessage } from "../types/live-message";
 
 export const mockLiveMessages: LiveMessage[] = [

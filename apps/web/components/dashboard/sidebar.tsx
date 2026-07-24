@@ -1,5 +1,10 @@
 "use client";
 
+/**
+ * หน้าที่ไฟล์: ไฟล์นี้เก็บคอมโพเนนต์ส่วน sidebar ที่ใช้ประกอบหน้า dashboard
+ */
+
+
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
@@ -30,6 +35,9 @@ const navigationItems = [
   { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 
+/**
+ * หน้าที่: คอมโพเนนต์นี้เรนเดอร์ sidebar ของส่วน นี้
+ */
 export function Sidebar({ mobile = false, className }: SidebarProps) {
   const pathname = usePathname();
 

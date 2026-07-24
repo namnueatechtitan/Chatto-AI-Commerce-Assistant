@@ -1,3 +1,7 @@
+/**
+ * หน้าที่ไฟล์: ไฟล์นี้เป็น entry point ของ AI service แบบ mock และเปิด endpoint สำหรับ health check กับ mock reply
+ */
+
 import cors from "cors";
 import express from "express";
 

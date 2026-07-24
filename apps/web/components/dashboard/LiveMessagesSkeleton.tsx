@@ -1,13 +1,23 @@
+/**
+ * หน้าที่ไฟล์: ไฟล์นี้เก็บคอมโพเนนต์ส่วน Live ข้อความ Skeleton ที่ใช้ประกอบหน้า dashboard
+ */
+
 import { cn } from "../../lib/utils";
 
 interface LiveMessagesSkeletonProps {
   rows?: number;
 }
 
+/**
+ * หน้าที่: เรนเดอร์บล็อก skeleton ย่อยสำหรับใช้ในสถานะกำลังโหลด
+ */
 function SkeletonBlock({ className }: { className?: string }) {
   return <div className={cn("animate-pulse rounded-full bg-slate-200", className)} />;
 }
 
+/**
+ * หน้าที่: คอมโพเนนต์นี้เรนเดอร์ skeleton loading ของ Live ข้อความ
+ */
 export function LiveMessagesSkeleton({
   rows = 5,
 }: LiveMessagesSkeletonProps) {

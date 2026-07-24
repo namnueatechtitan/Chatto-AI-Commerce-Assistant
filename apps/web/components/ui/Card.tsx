@@ -1,3 +1,7 @@
+/**
+ * หน้าที่ไฟล์: ไฟล์นี้เก็บคอมโพเนนต์ UI แบบใช้ซ้ำชื่อ Card
+ */
+
 import * as React from "react";
 
 import { cn } from "../../lib/utils";
@@ -7,6 +11,9 @@ interface LegacyCardProps extends React.HTMLAttributes<HTMLElement> {
   children: React.ReactNode;
 }
 
+/**
+ * หน้าที่: คอมโพเนนต์นี้เรนเดอร์การ์ด  สำหรับแสดงข้อมูลใน UI
+ */
 function Card({
   title,
   className,
@@ -43,6 +50,9 @@ function Card({
   );
 }
 
+/**
+ * หน้าที่: คอมโพเนนต์นี้เรนเดอร์ส่วนหัวของ Card
+ */
 const CardHeader = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
@@ -56,6 +66,9 @@ const CardHeader = React.forwardRef<
 
 CardHeader.displayName = "CardHeader";
 
+/**
+ * หน้าที่: คอมโพเนนต์นี้เรนเดอร์ส่วน Card Title ตามข้อมูลที่รับเข้ามา
+ */
 const CardTitle = React.forwardRef<
   HTMLHeadingElement,
   React.HTMLAttributes<HTMLHeadingElement>
@@ -69,6 +82,9 @@ const CardTitle = React.forwardRef<
 
 CardTitle.displayName = "CardTitle";
 
+/**
+ * หน้าที่: คอมโพเนนต์นี้เรนเดอร์ส่วน Card Description ตามข้อมูลที่รับเข้ามา
+ */
 const CardDescription = React.forwardRef<
   HTMLParagraphElement,
   React.HTMLAttributes<HTMLParagraphElement>
@@ -78,6 +94,9 @@ const CardDescription = React.forwardRef<
 
 CardDescription.displayName = "CardDescription";
 
+/**
+ * หน้าที่: คอมโพเนนต์นี้เรนเดอร์ส่วน Card Content ตามข้อมูลที่รับเข้ามา
+ */
 const CardContent = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>
@@ -87,6 +106,9 @@ const CardContent = React.forwardRef<
 
 CardContent.displayName = "CardContent";
 
+/**
+ * หน้าที่: คอมโพเนนต์นี้เรนเดอร์ส่วนท้ายของ Card
+ */
 const CardFooter = React.forwardRef<
   HTMLDivElement,
   React.HTMLAttributes<HTMLDivElement>

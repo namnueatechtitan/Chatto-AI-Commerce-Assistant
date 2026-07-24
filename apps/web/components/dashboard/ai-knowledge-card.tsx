@@ -1,3 +1,7 @@
+/**
+ * หน้าที่ไฟล์: ไฟล์นี้เก็บคอมโพเนนต์ส่วน AI knowledge card ที่ใช้ประกอบหน้า dashboard
+ */
+
 import type { ProgressMetric } from "../../lib/mock-data";
 import { Button } from "../ui/Button";
 import {
@@ -13,6 +17,9 @@ interface AIKnowledgeCardProps {
   className?: string;
 }
 
+/**
+ * หน้าที่: คอมโพเนนต์นี้เรนเดอร์การ์ด AIKnowledge สำหรับแสดงข้อมูลใน UI
+ */
 export function AIKnowledgeCard({
   metrics,
   className,

@@ -1,7 +1,14 @@
+/**
+ * หน้าที่ไฟล์: ไฟล์นี้เก็บคอมโพเนนต์ส่วน features ของหน้า landing page
+ */
+
 import { homepageFeatures } from "../../lib/homepage-data";
 import { Card } from "../ui/Card";
 import { HomepageContainer } from "./container";
 
+/**
+ * หน้าที่: คอมโพเนนต์นี้เรนเดอร์ส่วน Features ตามข้อมูลที่รับเข้ามา
+ */
 export function Features() {
   return (
     <section className="pt-16 lg:pt-20" id="features">

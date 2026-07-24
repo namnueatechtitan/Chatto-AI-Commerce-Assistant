@@ -1,5 +1,10 @@
 "use client";
 
+/**
+ * หน้าที่ไฟล์: ไฟล์นี้เก็บคอมโพเนนต์ส่วน ข้อความ overview chart ที่ใช้ประกอบหน้า dashboard
+ */
+
+
 import { ChevronDown } from "lucide-react";
 import {
   CartesianGrid,
@@ -27,6 +32,9 @@ interface MessageOverviewChartProps {
   className?: string;
 }
 
+/**
+ * หน้าที่: เรนเดอร์ tooltip ของกราฟสรุปข้อความบน dashboard
+ */
 function MessageOverviewTooltip({
   active,
   payload,
@@ -62,6 +70,9 @@ function MessageOverviewTooltip({
   );
 }
 
+/**
+ * หน้าที่: คอมโพเนนต์นี้เรนเดอร์กราฟ ข้อความ Overview สำหรับสรุปข้อมูลบนหน้าจอ
+ */
 export function MessageOverviewChart({
   data,
   periodLabel,

@@ -1,3 +1,7 @@
+/**
+ * หน้าที่ไฟล์: ไฟล์นี้ประกาศ type ที่ใช้แทน payload และผลลัพธ์ของ LINE webhook ในระบบ API
+ */
+
 export interface LineWebhookRequestBody {
   destination?: string;
   events: LineWebhookEvent[];

@@ -11,13 +11,13 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post("register")
-  @ApiOperation({ summary: "Register a merchant user placeholder" })
+  @ApiOperation({ summary: "Register a user with email and password" })
   register(@Body() payload: RegisterDto) {
     return this.authService.register(payload);
   }
 
   @Post("login")
-  @ApiOperation({ summary: "Login placeholder" })
+  @ApiOperation({ summary: "Login with email and password" })
   login(@Body() payload: LoginDto) {
     return this.authService.login(payload);
   }

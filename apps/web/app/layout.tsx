@@ -11,8 +11,8 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Chatto | AI Commerce Assistant",
-  description: "Public homepage and merchant workspace for the Chatto AI Commerce Assistant",
+  title: "Chatto Dashboard | AI Commerce Assistant",
+  description: "Merchant dashboard for the Chatto AI Commerce Assistant",
 };
 
 export default function RootLayout({

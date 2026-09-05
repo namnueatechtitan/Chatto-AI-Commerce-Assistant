@@ -56,13 +56,35 @@ chatto-platform/
 `- AGENTS.md
 ```
 
-## Install Dependencies
+## Docker Quick Start
+
+Docker is the only prerequisite for the default local stack. From a fresh clone:
+
+```bash
+docker compose up
+```
+
+Compose builds missing images automatically. Use `docker compose up --build` after changing dependencies or application source. The stack installs dependencies inside image layers, generates Prisma Client, waits for PostgreSQL, applies migrations, and starts the web app, API, AI service, and Prisma Studio. It does not mount or modify host `node_modules`.
+
+The stack works without an `.env` file using mock AI and no LINE demo seed. To enable Gemini or LINE, copy `.env.example` to `.env`, add the real credentials, and run `docker compose up --build` again. When `LINE_CHANNEL_ID` is set, startup also runs the idempotent LINE demo seed.
+
+Local URLs:
+
+- Web: `http://localhost:3000`
+- API: `http://localhost:4000`
+- API docs: `http://localhost:4000/api/docs`
+- AI service: `http://localhost:5000`
+- Prisma Studio: `http://localhost:5555`
+
+Stop the stack with `docker compose down`. Add `-v` only when you intentionally want to delete the local PostgreSQL data volume.
+
+## Install Dependencies Without Docker
 
 ```bash
 pnpm install
 ```
 
-## Run Locally
+## Run Locally Without Docker
 
 1. Copy `.env.example` to `.env` and adjust secrets if needed.
 2. Install dependencies with `pnpm install`.
@@ -116,11 +138,6 @@ pnpm dev:ai-service
 pnpm dev
 ```
 
-or
-
-```bash
-docker compose up --build
-```
 
 ## Branch Strategy
 

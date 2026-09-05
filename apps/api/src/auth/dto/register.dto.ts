@@ -24,3 +24,5 @@ export class RegisterDto {
   @IsString()
   businessCategory?: string;
 }
+
+// placehjolder DTO for register endpoint, with email, password, shopName, name, and optional businessCategory fields validated using class-validator decorators. The email field must be a valid email address, the password field must be a string with a minimum length of 8 characters, and the other fields must be strings.

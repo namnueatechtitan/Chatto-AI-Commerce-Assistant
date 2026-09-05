@@ -11,3 +11,4 @@ export class LoginDto {
   @MinLength(8)
   password!: string;
 }
+// placeholder DTO for login endpoint, with email and password fields validated using class-validator decorators. The email field must be a valid email address, and the password field must be a string with a minimum length of 8 characters.

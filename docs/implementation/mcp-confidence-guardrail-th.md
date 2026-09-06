@@ -1,25 +1,8 @@
-# คู่มืองานของคิว: MCP + Confidence + Guardrail
+# MCP + Confidence + Guardrail
 
 งานนี้พัฒนาต่อจาก `feature/ai-integration` ของ [Chatto-AI-Commerce-Assistant](https://github.com/namnueatechtitan/Chatto-AI-Commerce-Assistant/tree/feature/ai-integration)
-ที่ commit `8759b6f543aaf9432385364cbd5787a47c857f5e` วันที่ 5 กันยายน 2026
-ใช้ branch ทำงาน `feature/mcp-confidence-guardrail` อยู่ในขอบเขต Phase 2
 
-โค้ดที่ส่งมอบ build และทดสอบในเครื่องทดสอบแล้ว ยังไม่ได้ push เข้า GitHub เพราะบัญชีที่เชื่อมอยู่มีสิทธิ์อ่านอย่างเดียว
-ชุด ZIP เป็นชุดการเปลี่ยนแปลงสำหรับนำเข้า repo เดิม ไม่ใช่โปรเจกต์เต็ม
-
-## 1. งานของคิวทำอะไร
-
-| ส่วน | หน้าที่ | สิ่งที่เพิ่มจากเดิม |
-| --- | --- | --- |
-| MCP | ช่องทางมาตรฐานให้ระบบเรียกเครื่องมือ AI | ใช้ official SDK + Streamable HTTP; มี schema, authentication และตรวจขอบเขตร้าน |
-| Confidence | ประเมินว่ามีหลักฐานพอจะตอบหรือไม่ | แยกคะแนนเจตนาออกจากหลักฐาน; มี threshold และเหตุผลส่งต่อ |
-| Guardrail | ตรวจสิ่งที่เข้ามาและสิ่งที่จะตอบออกไป | ตรวจ input, context/history และ output; ตรวจรูปแบบ injection, credential, action claim และตัวเลขที่ไม่มีในหลักฐาน |
-| Backend integration | ทำให้ผลตัดสินมีผลในระบบจริง | บันทึก audit, guardrail events, สร้างหรือใช้ ticket เดิม และเปลี่ยนสถานะ conversation |
-
-โค้ดเดิมมี MCP routes และ RAG อยู่แล้ว แต่ Guardrail เป็น `allowed: true` ทุกครั้ง และใช้ confidence ของ intent เป็น confidence ของคำตอบ
-อีกจุดที่แก้คือ `needs_handover` เคยถูกยกเลิกเมื่อ Gemini ตอบสำเร็จ ตอนนี้การตอบสำเร็จของ provider ไม่สามารถลบผลตัดสินด้านความปลอดภัยได้
-
-## 2. Flow ใหม่
+## 1. Flow ใหม่
 
 ```mermaid
 flowchart TD
@@ -42,7 +25,7 @@ flowchart TD
 - ไม่คืน `debug` ที่เคยมี system prompt, ข้อมูลบริบท และคำตอบดิบของ provider
 - ถ้า AI Service timeout, ติดต่อไม่ได้ หรือคืน response ผิด contract, backend สร้างคำตอบสำรองและขอ handover
 
-## 3. ไฟล์ที่สร้างใหม่
+## 2. ไฟล์ที่สร้างใหม่
 
 ทุก path ในตารางเริ่มจาก root ของ repo
 
@@ -63,7 +46,7 @@ flowchart TD
 | `apps/api/scripts/ai-safety.test.cjs` | ทดสอบ validator, audit, handover และ integration ด้วย dependency mocks |
 | `docs/implementation/mcp-confidence-guardrail-th.md` | คู่มือนี้ |
 
-## 4. ไฟล์เดิมที่แก้
+## 3. ไฟล์เดิมที่แก้
 
 | ไฟล์เดิม | สิ่งที่แก้ |
 | --- | --- |
@@ -92,7 +75,7 @@ flowchart TD
 ไม่มีการเพิ่มตารางหรือ migration ใช้ `AiSetting`, `AiActionLog`, `GuardrailEvent`, `HandoverTicket`, `Conversation` เดิม
 ไม่มีการเพิ่มระบบทำรายการสั่งซื้อ ชำระเงิน หรือตัดสต็อก
 
-## 5. Confidence คิดอย่างไร
+## 4. Confidence คิดอย่างไร
 
 ให้ I = คะแนนจาก intent classifier, E = คะแนนหลักฐานสูงสุดของ chunks ที่ผ่านการคัดแล้ว
 
@@ -110,7 +93,7 @@ flowchart TD
 ตัวอย่าง I=0.82 และ E=0.90 ได้ 0.884 จึงผ่าน default threshold
 ถ้าเจอแค่เอกสารหมวดสินค้าแต่ lexical/semantic เป็น 0 จะตอบไม่ได้แม้ intent สูง
 
-## 6. API/MCP ที่ใช้งานได้
+## 5. API/MCP ที่ใช้งานได้
 
 AI Service ใช้ port **5000**, Backend ใช้ port **4000**
 
@@ -153,103 +136,7 @@ Memory ยังเป็น scaffold; conversation history ถูกส่ง�
 อย่านำ service token ไปใส่ใน frontend; การตรวจ merchant header เป็นการตรวจความสอดคล้องภายใต้ขอบเขตความเชื่อถือของ backend
 Origin allowlist ใช้ตรวจ Origin header ของ client ไม่ได้เปิด CORS สำหรับเรียกจาก browser frontend โดยตรง
 
-## 7. วิธีใส่โค้ดในเครื่องคิว
-
-1. แตก ZIP ไว้นอกโฟลเดอร์ repo เช่น `C:\Users\User\Downloads\chatto-mcp`
-2. เปิด PowerShell ใน repo ที่คิวใช้อยู่:
-
-```powershell
-cd C:\Users\User\Chatto-AI-Commerce-Assistant-1
-git status --short
-git branch --show-current
-```
-
-ถ้ามีงานค้าง ให้บันทึกงานเดิมให้เรียบร้อยก่อน อย่านำ patch ทับงานค้างโดยไม่ตรวจ
-ถ้ามี branch ของคิวแล้ว ให้ใช้:
-
-```powershell
-git switch feature/mcp-confidence-guardrail
-```
-
-ถ้ายังไม่มี branch:
-
-```powershell
-git fetch origin
-git switch -c feature/mcp-confidence-guardrail origin/feature/ai-integration
-```
-
-3. ตรวจ patch ก่อน แล้วจึง apply; รันคำสั่งถัดไปเมื่อคำสั่งก่อนหน้าสำเร็จเท่านั้น:
-
-```powershell
-git apply --check C:\Users\User\Downloads\chatto-mcp\mcp-confidence-guardrail.patch
-git apply C:\Users\User\Downloads\chatto-mcp\mcp-confidence-guardrail.patch
-git diff --stat
-```
-
-อีกทางหนึ่งเรียก `APPLY-ON-WINDOWS.ps1` จาก ZIP ขณะอยู่ใน repo; helper ตรวจ branch, งานค้าง และ patch ก่อน apply
-ไฟล์ใน `changed-files/` ใช้เปิดเทียบกับ repo ตาม path ได้ ไม่จำเป็นต้องคัดลอกทับเมื่อ apply patch แล้ว
-
-ถ้า `git apply --check` ไม่ผ่าน ให้หยุดก่อน เพราะฐานหรือไฟล์คิวอาจต่างจากชุดนี้
-สามารถสร้าง branch แยกจาก commit ฐานที่ระบุข้างต้นเพื่อตรวจชุดแก้ไข โดยไม่ย้อนทับ branch ที่มีงานของคิว
-
-4. ติดตั้งและทดสอบ ใช้ Node.js 20+ และ pnpm 9.12.0 ตามโปรเจกต์:
-
-```powershell
-corepack pnpm install --frozen-lockfile
-corepack pnpm --filter @chatto/api prisma:generate
-corepack pnpm --filter @chatto/ai-service test
-corepack pnpm --filter @chatto/api test
-```
-
-ไม่ต้องใส่ Gemini key เพื่อรัน automated tests
-ถ้าใช้ `pnpm` 9.12.0 อยู่แล้ว ตัดคำว่า `corepack` ออกได้
-`.env` เดิมของคิวเก็บไว้ เติมเฉพาะค่าที่ต้องใช้:
-
-```env
-AI_HANDOVER_THRESHOLD=0.65
-AI_SERVICE_ALLOWED_ORIGINS=
-```
-
-เมื่อ merchant มีค่า handoverThreshold อยู่ใน DB ค่านั้นมีลำดับสูงกว่า env
-
-5. ทดลอง AI Service แยกก่อน:
-
-```powershell
-$env:AI_LLM_PROVIDER = "mock"
-$env:GEMINI_API_KEY = ""
-corepack pnpm --filter @chatto/ai-service dev
-```
-
-เปิด PowerShell อีกหน้าที่ root ของ repo:
-
-```powershell
-.\apps\ai-service\scripts\demo-safety.ps1
-```
-
-ถ้า AI_SERVICE_TOKEN ใน `.env` เปลี่ยนจากค่าเริ่มต้น ให้ส่ง `-Token` ด้วยค่าที่ตั้งไว้
-สคริปต์นี้ยิงตรง AI Service จึงตรวจคำตอบและ handover flag เท่านั้น ไม่สร้าง ticket ใน DB
-
-6. ทดลองระบบรวมจาก Docker:
-
-```powershell
-docker compose up -d --build
-docker compose ps
-docker compose logs --tail=100 api ai-service
-```
-
-รอ `db-init` เสร็จและ services healthy แล้วทดสอบกับ LINE OA ของทีม
-หลังขอคุยกับเจ้าหน้าที่ ควรพบ ticket และ conversation เป็น `HANDOVER_REQUESTED`; ข้อความถัดไปยังบันทึกเข้า conversation แต่ AI จะไม่ตอบแทรก
-ต้องมี workflow เจ้าหน้าที่รับ/ปิดงานและคืนสถานะ `AI_ACTIVE` ตามที่ทีม backend กำหนด ไม่ควรเปลี่ยนกลับอัตโนมัติทุกข้อความ
-
-7. เมื่อคิวตรวจ diff แล้ว สามารถ commit เฉพาะไฟล์ตามรายการในคู่มือนี้ได้
-การ push ยังต้องมีสิทธิ์ collaborator/write ใน repo นี้ ติดต่อเจ้าของ repo ให้เพิ่มสิทธิ์บัญชีคิวก่อน
-เมื่อมีสิทธิ์และ commit แล้ว:
-
-```powershell
-git push -u origin feature/mcp-confidence-guardrail
-```
-
-## 8. สิ่งที่ทดสอบแล้วและสิ่งที่ทีมต้องลองต่อ
+## 6. สิ่งที่ทดสอบแล้วและสิ่งที่ทีมต้องลองต่อ
 
 ผลตรวจบนชุดส่งมอบ: **43 tests ผ่าน** — AI Service 31, Backend 12; TypeScript build ผ่านทั้งสองบริการ
 ทดสอบด้วย Node.js 24.19.0 และ pnpm 9.12.0 ในเครื่องทดสอบ
@@ -271,7 +158,7 @@ Backend ใช้ Prisma/dependency mocks จึงยังไม่ใช่�
 สิ่งที่ยังไม่ได้ทดสอบจริงในสภาพแวดล้อมนี้: Docker build, PostgreSQL transaction/lock, การส่ง LINE, Gemini API และการรับงานผ่านหน้า inbox ของทีม
 ไม่เพิ่ม frontend ใหม่ในงานนี้; handover inbox และ CRUD endpoints เดิมบางส่วนยังเป็น scaffold ต้องเชื่อมกับ ticket workflow ของทีมต่อ
 
-## 9. ข้อจำกัดที่ควรอธิบายอาจารย์ตรง ๆ
+## 7. ข้อจำกัดที่ควรอธิบายอาจารย์ตรง ๆ
 
 Guardrail เป็น rule-based defense หลายจุด ยังมีทั้งกรณีตรวจเกินและกรณีหลุด ไม่รับประกันป้องกัน prompt injection ทุกแบบ
 การตรวจตัวเลขดูว่ามีตัวเลขในหลักฐาน ไม่ได้พิสูจน์ว่าจับคู่ราคากับสินค้าถูกทุกกรณี และไม่ตรวจความหมายของข้อความทุกประโยค
@@ -282,7 +169,7 @@ API บันทึกการตัดสินก่อนส่ง LINE จ�
 การล็อกแถวช่วยป้องกัน ticket ซ้ำและ suppress คำตอบเมื่อพบ human takeover ใน transaction แต่ไม่ได้จัดคิว webhook หลายข้อความให้ตอบตามลำดับทุกกรณี
 ถ้า DB ไม่พร้อมใช้งาน ระบบจะหยุดก่อนส่ง AI reply ไม่สามารถอ้างว่าสร้าง ticket สำเร็จได้
 
-## 10. คำอธิบายสั้น ๆ สำหรับคิวนำเสนอ
+## 8. คำอธิบายสั้น ๆ สำหรับคิวนำเสนอ
 
 “ส่วนที่ผมทำคือเพิ่มชั้นควบคุมก่อนที่ AI จะตอบลูกค้าครับ MCP ทำให้การเรียกเครื่องมือมีรูปแบบและตรวจข้อมูลได้ ส่วน Confidence ประเมินจากหลักฐานที่ค้นเจอ ไม่ใช้แค่ความมั่นใจในการเดาเจตนา แล้ว Guardrail ตรวจทั้งข้อความเข้า บริบท และคำตอบ ถ้าข้อมูลไม่พอหรือพบความเสี่ยง ระบบจะใช้ข้อความปลอดภัยและให้ backend บันทึกเหตุผลพร้อมส่งต่อเจ้าหน้าที่ครับ ตอนนี้ผ่านการทดสอบอัตโนมัติแล้ว ส่วนถัดไปคือทดสอบกับฐานข้อมูลและ LINE ของทีมจริง”
 

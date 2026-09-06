@@ -10,7 +10,8 @@
     "prisma:generate": "node ./scripts/prisma-runner.cjs generate",
     "prisma:migrate": "node ./scripts/prisma-runner.cjs migrate dev",
     "prisma:seed": "node ./scripts/prisma-runner.cjs db seed",
-    "prisma:studio": "node ./scripts/prisma-runner.cjs studio --browser none"
+    "prisma:studio": "node ./scripts/prisma-runner.cjs studio --browser none",
+    "test": "tsc -p tsconfig.build.json && node --test scripts/*.test.cjs"
   },
   "prisma": {
     "seed": "node ./scripts/seed-runner.cjs"

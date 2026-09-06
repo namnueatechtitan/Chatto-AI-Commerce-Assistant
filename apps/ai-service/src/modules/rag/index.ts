@@ -147,6 +147,8 @@ export class RagService {
     chunk: RagRetrievedChunk,
     hasQueryEmbedding: boolean,
   ): boolean {
+    // Keep type-compatible candidates for cross-language retrieval; the separate
+    // confidence gate must require lexical/semantic evidence before answering.
     if (chunk.intent_score > 0 && chunk.score >= 0.18) {
       return true;
     }

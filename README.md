@@ -144,3 +144,17 @@ pnpm dev
 - `main` = stable
 - `dev` = integration branch
 - `feature/*` = individual work
+
+## MCP, Confidence and Guardrail
+
+Implementation and Windows setup: [คู่มืองาน MCP + Confidence + Guardrail](docs/implementation/mcp-confidence-guardrail-th.md).
+
+The AI service now validates MCP tool arguments and tenant context, gates replies
+on source evidence, checks input/context/output safety, and returns explainable
+handover decisions. The API records audit events/tickets and stops AI when human
+support takes over. Run the focused tests after installing dependencies:
+
+```bash
+pnpm --filter @chatto/ai-service test
+pnpm --filter @chatto/api test
+```

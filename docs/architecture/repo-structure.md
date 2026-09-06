@@ -10,7 +10,13 @@ NestJS backend for authentication, merchants, RBAC scaffolds, channels, LINE web
 
 ## `apps/ai-service`
 
-TypeScript AI service scaffold for MCP-based mock replies, prompt management, context building, future OpenAI integration, RAG, embeddings, memory, guardrails, and evaluation.
+TypeScript AI service with a validated MCP server, chat pipeline, evidence confidence,
+input/context/output guardrails, RAG, embeddings and provider fallbacks.
+`src/app.ts` owns HTTP/authentication; `modules/chat-pipeline.ts` owns reply orchestration;
+`modules/mcp/` owns SDK transport, resources, tool dispatch and schemas;
+`modules/confidence/` owns evidence scoring. Memory remains a scaffold.
+The API's `ai-integration/ai-safety.service.ts` persists safety decisions and handover.
+See [implementation guide](../implementation/mcp-confidence-guardrail-th.md).
 
 ## `packages/shared`
 

@@ -49,6 +49,8 @@ services:
       NODE_ENV: production
       AI_SERVICE_PORT: 5000
       AI_SERVICE_TOKEN: ${AI_SERVICE_TOKEN:-dev_internal_service_token}
+      AI_HANDOVER_THRESHOLD: ${AI_HANDOVER_THRESHOLD:-0.65}
+      AI_SERVICE_ALLOWED_ORIGINS: ${AI_SERVICE_ALLOWED_ORIGINS:-}
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-dev_internal_service_token}
       INTERNAL_API_BASE_URL: http://api:4000
       AI_LLM_PROVIDER: ${AI_LLM_PROVIDER:-mock}

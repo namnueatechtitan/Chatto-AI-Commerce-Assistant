@@ -68,6 +68,22 @@ export interface AiChatResponse {
   };
   actions?: Array<Record<string, unknown>>;
   handover_required: boolean;
+  handover_reason?: string;
+  confidence?: {
+    score: number;
+    threshold: number;
+    level: "high" | "medium" | "low";
+    decision: "answer" | "handover";
+    reasons: string[];
+    signals: { intent: number; evidence: number; source_count: number };
+  };
+  guardrails?: Array<{
+    allowed: boolean;
+    severity: "low" | "medium" | "high";
+    stage: "input" | "context" | "output";
+    reasons: string[];
+    requires_handover: boolean;
+  }>;
   mcp?: {
     server: string;
     resources_used: McpResourceName[];
@@ -145,6 +161,7 @@ export interface MerchantSettingsForAi {
   bot_name: string;
   default_language: string;
   ai_tone: string;
+  handover_threshold?: number;
   rules: string[];
   enabled_features: {
     product_qa: boolean;
@@ -219,7 +236,9 @@ export type McpToolName =
   | "chatto.evaluate_guardrails"
   | "chatto.draft_mock_reply"
   | "chatto.evaluate_reply"
-  | "chatto.create_embedding";
+  | "chatto.create_embedding"
+  | "chatto.calculate_confidence"
+  | "chatto.validate_output";
 
 export interface McpResourceDescriptor {
   name: McpResourceName;

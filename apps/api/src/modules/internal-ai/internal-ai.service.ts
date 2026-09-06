@@ -345,6 +345,7 @@ export class InternalAiService {
       bot_name: aiSetting?.botName ?? "Chatto",
       default_language: aiSetting?.language ?? "en",
       ai_tone: aiSetting?.tone ?? "friendly",
+      handover_threshold: aiSetting?.handoverThreshold?.toNumber(),
       rules: jsonToStringArray(aiSetting?.storeRules),
       enabled_features: {
         product_qa: true,

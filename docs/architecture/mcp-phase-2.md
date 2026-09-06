@@ -1,109 +1,90 @@
-# MCP-Based Phase 2 Architecture
+# MCP, confidence and guardrails in Phase 2
 
-Chatto Phase 2 uses MCP as the AI orchestration boundary while keeping the MVP scope unchanged. The API, web app, database schema, and AI service still focus on onboarding, LINE message intake, knowledge scaffolding, conversation storage, mock AI replies, and human handover preparation.
+The trusted NestJS API exports merchant-scoped settings, product/knowledge records,
+vector documents and recent conversation messages, then calls `POST /mcp/chat`.
+That endpoint is the internal REST orchestration route. `POST /ai/chat` is an alias.
 
-## Scope Rules
+The separate `POST /mcp` endpoint implements MCP using the official TypeScript SDK
+and stateless Streamable HTTP. Initialization, notifications and protocol errors
+are handled by the SDK. Tools use `inputSchema`, `params.arguments`, and standard
+text content results with `isError`. The same validated dispatcher powers chat.
 
-- MCP resources and tools are Phase 2 only.
-- Real OpenAI calls remain deferred until Phase 2.3 activation work.
-- Phase 2.4 RAG is active; commerce execution remains outside the retrieval layer.
-- Payment, order, subscription, and inventory behavior remain out of scope.
+## Safety flow
 
-## API to AI Service
+1. API verifies merchant/customer/conversation identity and `AI_ACTIVE` state.
+2. AI Service validates request shape and every supplied merchant ID.
+3. Input and context/history guardrails run before external calls or vector sync.
+4. RAG produces candidates; weak lexical/semantic evidence is excluded from LLM context.
+5. Confidence decides whether sufficient evidence exists to answer.
+6. A deterministic greeting, grounded fallback, or external provider generates a candidate.
+7. Output checks reject detected secrets, unsupported action claims and ungrounded numbers.
+8. API validates response IDs, score, safety fields and empty Phase 2 actions.
+9. API records audit/guardrail events and optional handover in a transaction before LINE delivery.
 
-The existing API `AiIntegrationService` calls the AI service through:
+Provider success never removes a handover decision. Low-confidence and blocked
+requests use fixed safe messages, and raw candidates/context/prompts are not
+returned in debug payloads. Provider failures may use grounded deterministic
+fallbacks; unavailable/malformed AI Service responses trigger backend handover.
 
-```txt
-POST /mcp/chat
-```
+## Confidence
 
-`POST /ai/chat` remains available in the AI service as a compatibility route and delegates to the same MCP-backed flow.
+For evidence-dependent intents, the heuristic is `0.2 * intent + 0.8 * evidence`,
+where evidence is the highest lexical or semantic score among eligible chunks.
+RAG's source-type compatibility score is not counted as evidence. Missing/weak
+evidence, unclear intent, guardrail violations and explicit human requests are
+hard handover gates. Greetings and language preferences need no store evidence.
 
-For Phase 2.3, the API enriches each AI request with database context before calling the MCP endpoint:
+The threshold defaults to `0.65`; merchant `AiSetting.handoverThreshold` overrides
+`AI_HANDOVER_THRESHOLD`. This is a routing heuristic, not a calibrated probability.
+See the [Thai implementation guide](../implementation/mcp-confidence-guardrail-th.md)
+for limitations, exact files, commands, examples and test results.
 
-- merchant AI settings
-- active products and variants
-- active knowledge base documents
-- active vector document rows
-- the latest 12 messages from the same merchant-scoped conversation
+## Routes and resources
 
-The AI service treats those payloads as MCP resources and drafts the reply from relevant DB-backed chunks. Live product and knowledge exports are deterministically chunked. An unchanged chunk reuses its stored embedding by stable chunk ID and content hash; edited source data receives a fresh embedding. Retrieval enforces the request merchant ID and limits policy/product context according to the detected intent.
+All operational routes require the AI service bearer token. `/health` is public.
 
-```txt
-LINE/web message
-  -> API stores inbound message and exports merchant-scoped DB context
-  -> AI /mcp/chat
-     -> classify intent + build context
-     -> chunk live product/knowledge records
-     -> reuse or create document embeddings
-     -> create query embedding
-     -> hybrid retrieve top-k grounded chunks
-     -> Gemini reply (deterministic fallback on provider failure)
-     -> guardrail/handover metadata
-  -> API stores reply and sends it through the active channel
+- `GET /mcp/manifest`, `GET /mcp/tools`, `GET /mcp/resources`
+- `POST /mcp/resources/read`, `POST /mcp/tools/:toolName/call`
+- `POST /mcp/chat`, `POST /ai/chat`
+- `POST /mcp` (MCP protocol; stateless GET/DELETE return 405)
 
-Document embeddings -> authenticated internal sync endpoint -> Postgres VectorDocument
-```
+`/mock-reply` is a deprecated alias accepting a full authenticated AiChatRequest.
+The old unauthenticated `{message}` debugging request is intentionally retired.
 
-## Phase 2.4 RAG Strategy
+Two static resources expose guardrail and handover policies. Three live resource
+templates expose merchant profile, knowledge base and vector documents through
+the authenticated backend export routes. Exact URI and merchant scope are checked.
+`X-Merchant-Id` is required for these resource reads and merchant-scoped tools.
+This header is a trusted-backend scope assertion, not end-user authorization.
+Memory remains a scaffold. History is supplied in chat context, not advertised as
+a live MCP resource. No order/payment/inventory/subscription tool is exposed.
 
-- **Chunking:** semantic sentence/paragraph boundaries, 1,200-character target, and a 160-character boundary overlap. Oversized sentences are split at whitespace. Chunk IDs and SHA-256 content hashes are deterministic.
-- **Embeddings:** `gemini-embedding-2`, `RETRIEVAL_DOCUMENT` for chunks, `RETRIEVAL_QUERY` for user messages, and 768 normalized dimensions by default.
-- **Persistence:** embeddings and chunk metadata are stored in the existing `VectorDocument` JSON columns. This avoids a schema migration in Phase 2; pgvector can replace the in-process cosine scan when scale requires it.
-- **Retrieval:** cosine similarity (65%), Unicode-aware lexical similarity (25%), and intent/source compatibility (10%). If embedding generation is unavailable, retrieval falls back to lexical and intent scoring.
-- **Grounding gates:** only active rows for the current merchant are eligible. Greeting and language-preference intents retrieve no store documents.
+## Persistence and human support
 
-## LINE Reply Flow
+`AiSafetyService` locks the merchant/customer-scoped conversation row, deduplicates
+audit decisions by request ID, reuses active tickets and sets `HANDOVER_REQUESTED`.
+Future AI calls are suppressed until the team explicitly resumes the conversation.
+Existing Prisma models are reused; no schema migration is introduced. Guardrail
+logs store reason codes, not raw secret-bearing input or rejected model output.
 
-```txt
-Customer
--> LINE OA
--> Chatto Backend /webhooks/line
--> AiIntegrationService
--> AI Service /mcp/chat
--> LINE Reply API
--> messages table stores the AI reply
-```
+The existing inbox UI/CRUD scaffolds still need the team's live workflow integration.
+This change does not add an outbox or guarantee ordered delivery for concurrent
+LINE events. Delivery follows the database decision, so transport failure/crash
+recovery needs a separate delivery-retry design.
 
-`LINE_CHANNEL_ACCESS_TOKEN` must be a real LINE Messaging API channel access token for the reply to be delivered. If the token is missing or still set to the Phase 2 placeholder value, the AI message is still generated and persisted with delivery metadata showing that LINE delivery was skipped.
+## Development
 
-## AI Service MCP Endpoints
+- Backend port: `4000`; AI Service port: `5000`.
+- `AI_LLM_PROVIDER=mock` supports offline demonstrations.
+- Existing Gemini and embedding configuration is retained.
+- `AI_SERVICE_ALLOWED_ORIGINS` checks exact Origin headers; empty denies requests
+  with Origin. This does not expose a browser CORS API or replace service authentication.
+- Shared service tokens stay on trusted servers. This internal MCP is not OAuth.
+- Real OpenAI activation and commerce execution remain outside this change.
 
-- `GET /mcp/manifest`
-- `GET /mcp/resources`
-- `POST /mcp/resources/read`
-- `GET /mcp/tools`
-- `POST /mcp/tools/:toolName/call`
-- `POST /mcp/chat`
-- `POST /mcp`
+Validation: AI tests include the official SDK client over local HTTP. Backend
+safety tests use dependency/Prisma mocks; live PostgreSQL, Docker, Gemini and LINE
+verification must be performed with the team's environment.
 
-The JSON-RPC `POST /mcp` endpoint supports `initialize`, `resources/list`, `resources/read`, `tools/list`, and `tools/call`. The chat pipeline invokes the same MCP tool dispatcher used by direct tool calls. Resource reads are scoped to the request context supplied by the API.
-
-## Development LLM Provider
-
-The AI service supports a provider switch so Phase 2.3 can test Gemini now and keep room for OpenAI later.
-
-```env
-AI_LLM_PROVIDER=gemini
-GEMINI_API_KEY=<your Google AI Studio API key>
-GEMINI_MODEL=gemini-3.1-flash-lite
-GEMINI_API_BASE_URL=https://generativelanguage.googleapis.com/v1/interactions
-GEMINI_TIMEOUT_MS=10000
-GEMINI_EMBEDDING_MODEL=gemini-embedding-2
-GEMINI_EMBEDDING_DIMENSIONS=768
-GEMINI_EMBEDDING_TIMEOUT_MS=10000
-INTERNAL_API_BASE_URL=http://localhost:4000
-```
-
-Use `AI_LLM_PROVIDER=mock` to return the local deterministic reply without calling an external model.
-
-`AI_LLM_PROVIDER=openai` is reserved for future activation. The placeholder env keys are:
-
-```env
-OPENAI_API_KEY=<future key>
-OPENAI_MODEL=<future model>
-```
-
-When Gemini is enabled, the MCP flow performs local intent classification, context building, hybrid RAG, and guardrail checks before reply generation. Gemini receives the current message, recent conversation, detected reply language, and only the retrieved merchant/product/knowledge chunks. It is instructed not to invent missing store data or perform commerce actions. The deterministic fallback handles greetings and unknown questions without dumping unrelated store context.
-
-Gemini 3.1 Flash-Lite uses `thinking_level=minimal` for this low-latency customer-chat path. Complex reasoning is not required because answers must remain grounded in the supplied store records. The model can be overridden through `GEMINI_MODEL` when a project has additional quota.
+References: [MCP TypeScript SDK](https://github.com/modelcontextprotocol/typescript-sdk/tree/v1.x),
+[server examples](https://github.com/modelcontextprotocol/typescript-sdk/blob/v1.x/docs/server.md).

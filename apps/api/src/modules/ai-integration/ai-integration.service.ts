@@ -1,6 +1,8 @@
-import { Injectable } from "@nestjs/common";
+import { ConflictException, Injectable } from "@nestjs/common";
 import { InternalAiService } from "../internal-ai/internal-ai.service";
 import type { AiChatRequest, AiChatResponse } from "./ai-contract.types";
+import { AiSafetyService } from "./ai-safety.service";
+import { assertAiChatResponse } from "./ai-response.validator";
 
 @Injectable()
 export class AiIntegrationService {
@@ -15,15 +17,22 @@ export class AiIntegrationService {
     20000,
   );
 
-  constructor(private readonly internalAiService: InternalAiService) {}
+  constructor(
+    private readonly internalAiService: InternalAiService,
+    private readonly safety: AiSafetyService,
+  ) {}
 
   async chat(request: AiChatRequest): Promise<AiChatResponse> {
+    if (!await this.safety.isAiActive(request)) {
+      throw new ConflictException("Conversation is awaiting human support");
+    }
     const enrichedRequest = await this.withMerchantContext(request);
     const controller = new AbortController();
     const timeout = setTimeout(
       () => controller.abort(),
       this.aiServiceTimeoutMs,
     );
+    let result: AiChatResponse;
 
     try {
       const response = await fetch(`${this.aiServiceBaseUrl}/mcp/chat`, {
@@ -39,24 +48,38 @@ export class AiIntegrationService {
       });
 
       if (!response.ok) {
-        const errorText = await response.text().catch(() => "");
-        throw new Error(
-          `AI service failed with ${response.status}: ${errorText || response.statusText}`,
-        );
+        throw new Error("AI_SERVICE_UNAVAILABLE");
       }
 
-      return response.json() as Promise<AiChatResponse>;
+      const payload: unknown = await response.json();
+      assertAiChatResponse(payload, request);
+      result = payload;
     } catch (error) {
-      if (error instanceof Error && error.name === "AbortError") {
-        throw new Error(
-          `AI service timed out after ${this.aiServiceTimeoutMs}ms`,
-        );
-      }
-
-      throw error;
+      const reason = error instanceof Error && error.name === "AbortError"
+        ? "AI_SERVICE_TIMEOUT" : "AI_SERVICE_UNAVAILABLE";
+      result = this.unavailableResponse(request, reason);
     } finally {
       clearTimeout(timeout);
     }
+    // Persistence errors and human takeover must not be converted into a second
+    // fallback send. Auditing/state transition is a prerequisite for delivery.
+    if (!await this.safety.record(request, result)) {
+      throw new ConflictException("AI reply suppressed: duplicate request or human takeover");
+    }
+    return result;
+  }
+
+  private unavailableResponse(request: AiChatRequest, reason: string): AiChatResponse {
+    const thai = /[\u0E00-\u0E7F]/u.test(request.message.text) || request.ai_options?.language === "th";
+    return {
+      request_id: request.request_id, merchant_id: request.merchant_id, conversation_id: request.conversation_id,
+      intent: "unknown", reply: { confidence: 0, text: thai
+        ? "ขออภัยครับ ระบบตอบอัตโนมัติไม่พร้อมใช้งาน จำเป็นต้องให้เจ้าหน้าที่ช่วยตรวจสอบครับ"
+        : "The automated assistant is unavailable. A staff member needs to review this request." },
+      actions: [], sources: [], handover_required: true, handover_reason: reason,
+      confidence: { score: 0, threshold: 0.65, level: "low", decision: "handover", reasons: [reason], signals: { intent: 0, evidence: 0, source_count: 0 } },
+      guardrails: [{ allowed: false, severity: "high", stage: "output", reasons: [reason], requires_handover: true }],
+    };
   }
 
   private async withMerchantContext(

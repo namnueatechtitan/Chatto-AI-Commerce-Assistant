@@ -78,7 +78,17 @@
 - `GET /guardrail-events`
 - `GET /customer-memories`
 
-The API AI integration calls the AI service through MCP. These endpoints stay in Phase 2 scaffold scope and do not call real OpenAI, external RAG, order, payment, subscription, or inventory logic.
+The API calls the internal REST orchestration route `POST /mcp/chat`.
+The distinct `POST /mcp` endpoint uses the official MCP SDK and Streamable HTTP.
+All operational AI routes require a service bearer token. Merchant resources and
+merchant-scoped tools require `X-Merchant-Id`; supplied context must match it.
+Existing RAG and Gemini support remain active; commerce execution stays out of scope.
+
+The chat response retains `reply.text`, `reply.confidence`, `sources`, `actions: []`
+and `handover_required`. It adds `confidence` (score, threshold, level, decision,
+reasons, signals), `guardrails` (input/context/output checks), and `handover_reason`.
+The API validates these fields and persists safety decisions before delivery.
+See [full behavior and examples](../implementation/mcp-confidence-guardrail-th.md).
 
 ## Handover
 

@@ -67,7 +67,7 @@ export class AuthService {
       where: { email: payload.email },
     });
 
-    if (!user) {
+    if (!user || !user.passwordHash || user.status !== "ACTIVE") {
       throw new UnauthorizedException(this.invalidCredentialsMessage);
     }
 
@@ -95,15 +95,4 @@ export class AuthService {
     };
   }
 
-  profile() {
-    return {
-      message: "Phase 2 auth profile scaffold",
-      user: {
-        id: "placeholder-user-id",
-        email: "merchant@example.com",
-        name: "Alice Merchant",
-        merchantId: "placeholder-merchant-id",
-      },
-    };
-  }
 }

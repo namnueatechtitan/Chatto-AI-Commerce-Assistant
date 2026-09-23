@@ -22,4 +22,11 @@ Shared configuration helpers and environment key examples used to keep service c
 
 ## `docs`
 
+Authentication is isolated under `apps/api/src/auth`: `google-auth.service.ts` handles
+OAuth state, PKCE and Google identity validation; `auth-session.service.ts` handles
+opaque database sessions; `auth-http.ts` handles cookies and origin checks. Prisma
+stores `AuthSession`, `GoogleOAuthAttempt` and the optional Google subject on `User`.
+The web app proxies `/api/auth/*` to the API, uses `lib/auth.ts` for server-side
+session checks, and keeps login/logout controls in `components/auth`.
+
 Living documentation for API contracts, database scope, architecture, integration guides, sprint planning, and team responsibilities.

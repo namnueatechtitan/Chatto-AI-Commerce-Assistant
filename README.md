@@ -10,7 +10,7 @@ This repository contains the Phase 2 foundation for the Chatto monorepo. The goa
 
 Phase 2 currently includes:
 
-- Merchant registration and login scaffold
+- Email/password login and Google OAuth with database-backed sessions
 - Basic merchant dashboard scaffold
 - Product and FAQ management foundations
 - LINE channel and webhook storage structure
@@ -22,6 +22,9 @@ Phase 2 currently includes:
 Out of scope for this phase: payment, orders, subscriptions, inventory reservation, advanced analytics, and production monitoring.
 
 ## Tech Stack
+
+Google login setup (including blank environment fields, Google Cloud setup, migration,
+and testing): [Google OAuth guide](docs/integrations/google-oauth.md).
 
 - Monorepo with `pnpm`
 - Frontend: Next.js + TypeScript

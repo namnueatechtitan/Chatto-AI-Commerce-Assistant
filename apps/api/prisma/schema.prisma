@@ -102,7 +102,9 @@ model User {
   id                            String               @id @default(uuid()) @db.Uuid
   name                          String               @db.VarChar(255)
   email                         String               @unique @db.VarChar(255)
-  passwordHash                  String               @map("password_hash") @db.VarChar(255)
+  passwordHash                  String?              @map("password_hash") @db.VarChar(255)
+  googleId                      String?              @unique @map("google_id") @db.VarChar(255)
+  sessions                      AuthSession[]
   globalRole                    String               @map("global_role") @db.VarChar(50)
   status                        UserStatus           @default(ACTIVE)
   merchantUsers                 MerchantUser[]
@@ -114,6 +116,29 @@ model User {
   updatedAt                     DateTime             @updatedAt @map("updated_at")
 
   @@map("users")
+}
+
+model AuthSession {
+  id        String   @id @default(uuid()) @db.Uuid
+  tokenHash String   @unique @map("token_hash") @db.VarChar(64)
+  userId    String   @map("user_id") @db.Uuid
+  expiresAt DateTime @map("expires_at")
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@map("auth_sessions")
+}
+
+model GoogleOAuthAttempt {
+  stateHash   String   @id @map("state_hash") @db.VarChar(64)
+  browserHash String   @map("browser_hash") @db.VarChar(64)
+  verifier    String   @db.VarChar(128)
+  nonce       String   @db.VarChar(128)
+  expiresAt   DateTime @map("expires_at")
+
+  @@index([expiresAt])
+  @@map("google_oauth_attempts")
 }
 
 model Merchant {

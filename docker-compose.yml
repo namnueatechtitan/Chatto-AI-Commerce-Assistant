@@ -89,6 +89,10 @@ services:
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-dev_internal_service_token}
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/chatto_phase2?schema=public
       JWT_SECRET: ${JWT_SECRET:-change-me-for-local-development}
+      WEB_URL: ${WEB_URL:-http://localhost:3000}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_REDIRECT_URI: ${GOOGLE_REDIRECT_URI:-}
       LINE_CHANNEL_SECRET: ${LINE_CHANNEL_SECRET:-phase-2-placeholder-secret}
       LINE_CHANNEL_ACCESS_TOKEN: ${LINE_CHANNEL_ACCESS_TOKEN:-phase-2-placeholder-token}
       LINE_CHANNEL_ID: ${LINE_CHANNEL_ID:-}
@@ -114,11 +118,13 @@ services:
       target: web
       args:
         NEXT_PUBLIC_API_BASE_URL: ${NEXT_PUBLIC_API_BASE_URL:-http://localhost:4000}
+        API_INTERNAL_BASE_URL: http://api:4000
     container_name: chatto-web
     restart: unless-stopped
     environment:
       NODE_ENV: production
       PORT: 3000
+      API_INTERNAL_BASE_URL: http://api:4000
     ports:
       - "3000:3000"
     depends_on:

@@ -10,7 +10,7 @@ This repository contains the Phase 2 foundation for the Chatto monorepo. The goa
 
 Phase 2 currently includes:
 
-- Email/password login and Google OAuth with database-backed sessions
+- Google-only sign-up and login with database-backed sessions
 - Basic merchant dashboard scaffold
 - Product and FAQ management foundations
 - LINE channel and webhook storage structure

@@ -12,7 +12,7 @@ export default async function DashboardLayout({
   children: ReactNode;
 }>) {
   const user = await getCurrentUser();
-  if (!user) redirect("/auth");
+  if (!user) redirect("/login");
   return (
     <DashboardProviders>
       <div className="dashboard-shell xl:grid xl:grid-cols-[248px_minmax(0,1fr)]">

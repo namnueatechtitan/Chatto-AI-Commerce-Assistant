@@ -11,7 +11,7 @@ export function LogoutButton() {
     try {
       const response = await fetch("/api/auth/logout", { method: "POST" });
       if (!response.ok) throw new Error("Logout failed");
-      window.location.assign("/auth");
+      window.location.assign("/login");
     } catch { setError(true); setPending(false); }
   }
   return <div>

@@ -30,3 +30,5 @@ The web app proxies `/api/auth/*` to the API, uses `lib/auth.ts` for server-side
 session checks, and keeps login/logout controls in `components/auth`.
 
 Living documentation for API contracts, database scope, architecture, integration guides, sprint planning, and team responsibilities.
+
+The sign-in page is `/login` (`apps/web/app/login/page.tsx`). Google OAuth callbacks remain under `/api/auth/google/callback`.

@@ -2,11 +2,16 @@
 
 ## 1. สิ่งที่เพิ่ม
 
+ใช้ Google เท่านั้นสำหรับสมัครและเข้าสู่ระบบ ปุ่มเดียวสร้างบัญชีเมื่อใช้งานครั้งแรก
+ไม่มีฟอร์มรหัสผ่านและไม่มี endpoint `/auth/login` หรือ `/auth/register` แล้ว
+ยังเก็บข้อมูลบัญชีเดิมและ `password_hash` ไว้ โดยไม่มีการลบข้อมูลหรือ migration เพิ่ม
+บัญชีรหัสผ่านเดิมที่ยังไม่เชื่อม Google จะยังเข้าสู่ระบบใหม่ไม่ได้ ต้องให้ผู้ดูแลจัดการเชื่อมบัญชีก่อน
+
 - Sign in ด้วย Google ผ่าน Authorization Code + PKCE และ OpenID Connect
 - ตรวจ state ที่ผูกกับ cookie ของเบราว์เซอร์, nonce และ Google ID token ด้วย `google-auth-library`
 - ใช้ Google `sub` เป็นรหัสบัญชี ไม่ใช้ email เป็นรหัส Google
 - สร้างผู้ใช้ใหม่โดยไม่สร้างร้านค้า/สิทธิ์ merchant เพิ่มให้เอง
-- ไม่ผูกบัญชีรหัสผ่านเดิมโดยอัตโนมัติเมื่อ email ตรงกัน ให้ใช้รหัสผ่านเดิมก่อน
+- ไม่ผูกบัญชีรหัสผ่านเดิมโดยอัตโนมัติเมื่อ email ตรงกัน ให้ติดต่อผู้ดูแลเพื่อวางแผนเชื่อมบัญชีเดิม
 - session อายุ 7 วัน เก็บเฉพาะ SHA-256 hash ใน PostgreSQL; cookie เป็น HttpOnly และ SameSite=Lax
 - session cookie ใช้ Secure เมื่อ WEB_URL เป็น HTTPS; HTTP อนุญาตเฉพาะ localhost/loopback
 - หน้า Dashboard ตรวจ session; logout เพิกถอน session ในฐานข้อมูล
@@ -92,13 +97,13 @@ pnpm --filter @chatto/web build
 บัญชีซ้ำ/ถูกระงับ, session rotation/expiry/logout และ Origin check.
 การตรวจลายเซ็น Google จริงและ flow ในเบราว์เซอร์ยังต้องทดสอบกับ Google credentials.
 
-1. เปิด `http://localhost:3000/auth` → กดเข้าสู่ระบบด้วย Google.
+1. เปิด `http://localhost:3000/login` → กดเข้าสู่ระบบด้วย Google.
 2. เลือกบัญชี → กลับ Dashboard และเห็นชื่อ/email จริง.
 3. รีเฟรชหน้าแล้วยังอยู่ในระบบ.
 4. ออกจากระบบ → เข้า Dashboard อีกครั้งต้องกลับหน้า auth.
 5. ยกเลิก consent → มีข้อความแจ้งและลองใหม่ได้.
 6. เปิด callback โดยไม่มี state/cookie หรือใช้ callback ซ้ำ → ไม่สร้าง session.
-7. ใช้อีเมลที่มีบัญชี password เดิม → แจ้งให้ใช้รหัสผ่านเดิม.
+7. ใช้อีเมลที่มีบัญชี password เดิม → แจ้งให้ติดต่อผู้ดูแลระบบ โดยไม่เชื่อมบัญชีอัตโนมัติ.
 8. บัญชีที่ไม่ ACTIVE หรือ session หมดอายุ → ถูกปฏิเสธ.
 
 ## API และขอบเขต
@@ -109,8 +114,6 @@ Browser เรียก prefix `/api/auth`; เส้นทางจริงบ
 | --- | --- | --- |
 | GET | `/auth/google` | ตั้ง flow cookie และ redirect ไป Google |
 | GET | `/auth/google/callback` | ตรวจ identity, ตั้ง session cookie และ redirect |
-| POST | `/auth/login` | ตรวจ password และตั้ง session cookie |
-| POST | `/auth/register` | สมัครบัญชี password ตาม contract เดิม ไม่มี auto-login |
 | GET | `/auth/profile` | ผู้ใช้จริงจาก session หรือ 401 |
 | POST | `/auth/logout` | ลบ session และ clear cookie |
 

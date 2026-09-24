@@ -1,15 +1,15 @@
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "../../lib/auth";
-import { LoginForm } from "../../components/auth/login-form";
+
 
 const errors: Record<string, string> = {
   google_not_configured: "ยังไม่ได้ตั้งค่า Google OAuth กรุณากรอกค่าใน .env แล้วรีสตาร์ต API",
   google_cancelled: "คุณยกเลิกการเข้าสู่ระบบด้วย Google สามารถลองใหม่ได้",
   google_failed: "เข้าสู่ระบบด้วย Google ไม่สำเร็จ กรุณาเริ่มใหม่อีกครั้ง",
-  account_exists: "อีเมลนี้มีบัญชีอยู่แล้ว กรุณาเข้าสู่ระบบด้วยรหัสผ่านเดิม",
+  account_exists: "อีเมลนี้มีบัญชีเดิมที่ยังไม่ได้เชื่อมกับ Google กรุณาติดต่อผู้ดูแลระบบ",
 };
 
-export default async function AuthPage({ searchParams }: {
+export default async function LoginPage({ searchParams }: {
   searchParams: Promise<{ error?: string }>;
 }) {
   if (await getCurrentUser()) redirect("/dashboard");
@@ -21,10 +21,9 @@ export default async function AuthPage({ searchParams }: {
         <p className="mt-2 text-sm text-slate-600">จัดการผู้ช่วย AI ของคุณ</p>
         {error && <p role="alert" className="mt-5 rounded-xl bg-red-50 p-3 text-sm text-red-700">{errors[error] || errors.google_failed}</p>}
         <a href="/api/auth/google" className="mt-6 flex w-full items-center justify-center rounded-xl border border-slate-300 px-4 py-3 font-medium text-slate-800 hover:bg-slate-50">
-          เข้าสู่ระบบด้วย Google
+          ดำเนินการต่อด้วย Google
         </a>
-        <p className="my-5 text-center text-sm text-slate-500">หรือใช้อีเมลและรหัสผ่าน</p>
-        <LoginForm />
+        <p className="mt-4 text-center text-sm text-slate-500">หากยังไม่มีบัญชี ระบบจะสร้างบัญชีให้โดยอัตโนมัติ</p>
       </section>
     </main>
   );

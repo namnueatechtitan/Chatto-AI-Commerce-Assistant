@@ -74,7 +74,7 @@ export class GoogleAuthService {
     // Never link an existing password account solely because its email matches.
     const email = identity.email.toLowerCase();
     const emailOwner = await this.prisma.user.findFirst({ where: { email: { equals: email, mode: "insensitive" } }, select: { id: true } });
-    if (emailOwner) throw new ConflictException("Use your existing sign-in method");
+    if (emailOwner) throw new ConflictException("Existing account requires Google linking by an administrator");
     try {
       return await this.prisma.user.create({ data: {
         googleId: identity.sub, email, name: (identity.name || email).slice(0, 255), globalRole: "merchant_user",

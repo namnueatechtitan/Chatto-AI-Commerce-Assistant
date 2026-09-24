@@ -4,7 +4,7 @@ const { createHash } = require("node:crypto");
 require("reflect-metadata");
 const { GoogleAuthService } = require("../dist/auth/google-auth.service");
 const { AuthSessionService, hashToken } = require("../dist/auth/auth-session.service");
-const { AuthService } = require("../dist/auth/auth.service");
+const { AuthController } = require("../dist/auth/auth.controller");
 const { cookieOptions, requireWebOrigin, readCookie } = require("../dist/auth/auth-http");
 
 beforeEach(() => {
@@ -186,9 +186,14 @@ test("profile rejects missing, expired and inactive sessions; logout revokes", a
   await assert.rejects(sessions.profile("token"), { status: 401 });
 });
 
-test("Google-only account cannot sign in with a password", async () => {
-  const auth = new AuthService({ user: { findUnique: async () => ({ passwordHash: null, status: "ACTIVE" }) } });
-  await assert.rejects(auth.login({ email: "user@example.com", password: "anything" }), { status: 401 });
+test("auth controller exposes no password login or registration routes", () => {
+  const routes = Object.getOwnPropertyNames(AuthController.prototype)
+    .filter(name => name !== "constructor")
+    .map(name => Reflect.getMetadata("path", AuthController.prototype[name]));
+  assert.ok(routes.includes("google"));
+  assert.ok(routes.includes("google/callback"));
+  assert.ok(!routes.includes("login"));
+  assert.ok(!routes.includes("register"));
 });
 
 test("CSRF origin checks and secure cookie configuration", () => {

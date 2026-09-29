@@ -32,6 +32,7 @@ export class AuthController {
   @Get("google")
   async googleStart(@Res() response: Response) {
     response.setHeader("Cache-Control", "no-store");
+    
     try {
       const flow = await this.google.start();
       response.cookie(GOOGLE_FLOW_COOKIE, flow.browserToken, { ...cookieOptions(), maxAge: GOOGLE_FLOW_MAX_AGE });

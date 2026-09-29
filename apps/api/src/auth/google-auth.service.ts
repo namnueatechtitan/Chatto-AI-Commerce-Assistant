@@ -17,6 +17,7 @@ export class GoogleAuthService {
     const clientId = process.env.GOOGLE_CLIENT_ID?.trim();
     const clientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim();
     const redirectUri = process.env.GOOGLE_REDIRECT_URI?.trim();
+
     if (!clientId || !clientSecret || !redirectUri) {
       throw new ServiceUnavailableException("Google sign-in is not configured");
     }
@@ -49,31 +50,40 @@ export class GoogleAuthService {
     if (!state || !/^[A-Za-z0-9_-]{43}$/.test(state) || !browserToken) {
       throw new UnauthorizedException("Invalid OAuth state");
     }
+
+    
     const where = { stateHash: hashToken(state), browserHash: hashToken(browserToken), expiresAt: { gt: new Date() } };
     const attempt = await this.prisma.googleOAuthAttempt.findFirst({ where });
     if (!attempt) throw new UnauthorizedException("Expired or invalid OAuth state");
-    // Atomic consumption prevents concurrent callbacks from reusing a flow.
+    
+    
     const consumed = await this.prisma.googleOAuthAttempt.deleteMany({ where });
     if (consumed.count !== 1 || providerError || !code) {
       throw new UnauthorizedException("Google sign-in was cancelled or invalid");
     }
+
+  
     const client = this.client();
     const { tokens } = await client.getToken({ code, codeVerifier: attempt.verifier });
     if (!tokens.id_token) throw new UnauthorizedException("Missing Google identity");
+    
     const ticket = await client.verifyIdToken({ idToken: tokens.id_token, audience: process.env.GOOGLE_CLIENT_ID?.trim() });
-    const identity = ticket.getPayload();
+    const identity = ticket.getPayload(); 
     if (!identity || !identity.sub || !identity.email || identity.email_verified !== true ||
         !("nonce" in identity) || identity.nonce !== attempt.nonce) {
       throw new UnauthorizedException("Invalid Google identity");
     }
+
     const existing = await this.prisma.user.findUnique({ where: { googleId: identity.sub }, select: publicUserSelect });
+    
     if (existing) {
       if (existing.status !== "ACTIVE") throw new UnauthorizedException("Account unavailable");
       return existing;
     }
-    // Never link an existing password account solely because its email matches.
+    
     const email = identity.email.toLowerCase();
     const emailOwner = await this.prisma.user.findFirst({ where: { email: { equals: email, mode: "insensitive" } }, select: { id: true } });
+    
     if (emailOwner) throw new ConflictException("Existing account requires Google linking by an administrator");
     try {
       return await this.prisma.user.create({ data: {

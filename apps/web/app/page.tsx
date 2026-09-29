@@ -1,14 +1,11 @@
-import Link from "next/link";
+import styles from "./plain-auth.module.css";
 
 export default function HomePage() {
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-4 bg-white">
-      <Link
-        className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white"
-        href="/login"
-      >
-        เริ่มต้นการใช้งาน
-      </Link>
+    <main className={styles.page}>
+      <form action="/login" method="get">
+        <button type="submit">เข้าสู่ระบบ</button>
+      </form>
     </main>
   );
 }

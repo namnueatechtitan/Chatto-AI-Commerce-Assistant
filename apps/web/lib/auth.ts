@@ -3,7 +3,7 @@ import { cookies } from "next/headers";
 export interface AuthUser {
   id: string;
   name: string;
-  email: string;
+  email: string | null;
   globalRole: string;
   status: string;
 }

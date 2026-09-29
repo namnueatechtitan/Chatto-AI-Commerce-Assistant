@@ -99,7 +99,7 @@ export interface BaseEntity {
 
 export interface User extends BaseEntity {
   name: string;
-  email: string;
+  email: string | null;
   globalRole: string;
   status: UserStatus;
 }

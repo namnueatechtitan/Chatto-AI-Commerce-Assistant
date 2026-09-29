@@ -4,6 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 
@@ -101,9 +102,10 @@ enum GuardrailSeverity {
 model User {
   id                            String               @id @default(uuid()) @db.Uuid
   name                          String               @db.VarChar(255)
-  email                         String               @unique @db.VarChar(255)
+  email                         String?              @unique @db.VarChar(255)
   passwordHash                  String?              @map("password_hash") @db.VarChar(255)
   googleId                      String?              @unique @map("google_id") @db.VarChar(255)
+  lineId                        String?              @unique @map("line_id") @db.VarChar(255)
   sessions                      AuthSession[]
   globalRole                    String               @map("global_role") @db.VarChar(50)
   status                        UserStatus           @default(ACTIVE)
@@ -139,6 +141,17 @@ model GoogleOAuthAttempt {
 
   @@index([expiresAt])
   @@map("google_oauth_attempts")
+}
+
+model LineOAuthAttempt {
+  stateHash   String   @id @map("state_hash") @db.VarChar(64)
+  browserHash String   @map("browser_hash") @db.VarChar(64)
+  verifier    String   @db.VarChar(128)
+  nonce       String   @db.VarChar(128)
+  expiresAt   DateTime @map("expires_at")
+
+  @@index([expiresAt])
+  @@map("line_oauth_attempts")
 }
 
 model Merchant {

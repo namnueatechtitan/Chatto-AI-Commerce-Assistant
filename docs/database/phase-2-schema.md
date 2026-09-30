@@ -51,6 +51,20 @@ Database Core V2 from the attached PDF is treated as the source of truth. This P
 - `conversations.current_order_id`
 - `handover_tickets.order_id`
 
+## User and Merchant Onboarding
+
+- Google and LINE login redirect to `/merchants`. Active `MerchantUser` records determine the user's shops: zero redirects to `/merchants/new`, one opens `/merchants/[merchantId]`, and multiple show a plain list.
+- Shop creation is explicit. Login never creates a shop or merges Google and LINE accounts.
+- `GET /merchants` returns `{ memberships: [{ merchant, role }] }` for the session user. `merchant` contains `id`, `shopName`, `slug`, and `status`; `role` contains `name`.
+- `POST /merchants` accepts `{ "shopName": "My shop" }` and returns `{ merchant }` with HTTP 201. The name is trimmed, required, and limited to 255 characters. User ID and role come from the backend, never the request body. The request must include the configured `WEB_URL` Origin.
+- `GET /merchants/:merchantId` returns `{ merchant, role, owners: [{ user: { id, name } }] }` only for an active member. Other users receive 404. All merchant endpoints require a valid session cookie and return 401 for missing or expired sessions.
+- The web app forwards `/api/merchants` requests to the API, using the existing session cookie. Restart the web server after changing rewrite configuration.
+- `MerchantsService.create` uses one database transaction for the Owner role lookup/setup and the nested creation of `Merchant` and `MerchantUser`. A failed membership write rolls back the shop. New shops retain the schema's `TRIAL` default and get a generated UUID slug.
+- Ownership uses the existing `Role.name = "Owner"` relationship. Existing Owner roles are reused; otherwise a stable UUID upsert initializes the role safely for concurrent requests. No schema migration or seed run is required.
+- Backend callers can use `MerchantsService.findOwnedByUser(userId)` and `findOwners(merchantId)` to query ownership in either direction. These return active memberships; owner records expose only user ID and name.
+- Direct dashboard visits also check membership: users without a shop go to creation and users with several shops go to selection. The existing dashboard remains a scaffold; the new shop page shows real shop identity and ownership only.
+- This change does not add staff invitation, member management, ownership transfer, permission enforcement, or product/chat API authorization.
+
 ## Phase 2 Vector Note
 
 - `vector_documents.embedding` is stored as `Json` in Phase 2.

@@ -15,7 +15,7 @@ const errors: Record<string, string> = {
 export default async function LoginPage({ searchParams }: {
   searchParams: Promise<{ error?: string }>;
 }) {
-  if (await getCurrentUser()) redirect("/dashboard");
+  if (await getCurrentUser()) redirect("/merchants");
   const { error } = await searchParams;
   return (
     <main className={styles.page}>

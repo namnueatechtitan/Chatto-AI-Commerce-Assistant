@@ -1,4 +1,4 @@
-/* Restore native HTML styles only on the public authentication pages. */
+/* Restore native HTML styles on authentication and merchant onboarding pages. */
 .page {
   all: revert;
   display: block;

@@ -8,5 +8,6 @@ import { LineAuthService } from "./line-auth.service";
 @Module({
   controllers: [AuthController],
   providers: [AuthSessionService, GoogleAuthService, LineAuthService],
+  exports: [AuthSessionService],
 })
 export class AuthModule {}

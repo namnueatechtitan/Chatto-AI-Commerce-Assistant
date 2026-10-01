@@ -32,3 +32,8 @@ session checks, and keeps login/logout controls in `components/auth`.
 Living documentation for API contracts, database scope, architecture, integration guides, sprint planning, and team responsibilities.
 
 The sign-in page is `/login` (`apps/web/app/login/page.tsx`). Google OAuth callbacks remain under `/api/auth/google/callback`.
+
+The login page has isolated responsive styles in `apps/web/app/login/login.module.css`.
+Its original brand and illustration images remain in `apps/web/images/`; copies in
+`apps/web/public/images/` are served at `/images/` without changing the source assets.
+Login continues to use the existing Google/LINE OAuth forms and server-side session check.

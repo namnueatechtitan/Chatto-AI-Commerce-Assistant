@@ -2,8 +2,10 @@ import Link from "next/link";
 import { Bell, ChevronDown, Menu } from "lucide-react";
 
 import { dashboardOverview } from "../../lib/mock-data";
+import type { AuthUser } from "../../lib/auth";
+import { LogoutButton } from "../auth/logout-button";
 
-export function TopNavbar() {
+export function TopNavbar({ user }: { user: AuthUser }) {
   return (
     <header className="sticky top-0 z-20 border-b border-border/80 bg-white/95 backdrop-blur">
       <div className="flex items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
@@ -34,18 +36,19 @@ export function TopNavbar() {
 
           <div className="flex items-center gap-3 rounded-full border border-border bg-white px-2 py-1.5 shadow-soft">
             <div className="flex size-11 items-center justify-center rounded-full bg-gradient-to-br from-emerald-300 via-lime-300 to-emerald-500 text-sm font-semibold text-slate-900">
-              PC
+              {user.name.slice(0, 2).toUpperCase()}
             </div>
             <div className="hidden min-w-0 sm:block">
               <div className="truncate text-sm font-semibold text-slate-950">
-                {dashboardOverview.profileName}
+                {user.name}
               </div>
               <div className="text-xs text-slate-500">
-                {dashboardOverview.profileRole}
+                {user.email}
               </div>
             </div>
             <ChevronDown className="size-4 text-slate-500" />
           </div>
+          <LogoutButton />
         </div>
       </div>
     </header>

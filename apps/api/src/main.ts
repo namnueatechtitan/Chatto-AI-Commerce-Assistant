@@ -5,6 +5,7 @@ import { NestFactory } from "@nestjs/core";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 
 import { AppModule } from "./app.module";
+import { webOrigin } from "./auth/auth-http";
 
 // keeps original request body for signature verification (e.g. LINE webhook)
 async function bootstrap() {
@@ -14,7 +15,7 @@ async function bootstrap() {
   const port = Number(process.env.API_PORT ?? 4000);
   // validation pipe is applied globally to all incoming requests, so we can validate DTOs and transform payloads into class instances
 
-  app.enableCors();
+  app.enableCors({ origin: webOrigin(), credentials: true });
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

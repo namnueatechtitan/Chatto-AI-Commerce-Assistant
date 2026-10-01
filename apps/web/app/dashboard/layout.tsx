@@ -1,20 +1,28 @@
 import type { ReactNode } from "react";
+import { redirect } from "next/navigation";
+import { getCurrentUser } from "../../lib/auth";
+import { getMyMerchants } from "../../lib/merchants";
 
 import { Sidebar } from "../../components/dashboard/sidebar";
 import { TopNavbar } from "../../components/dashboard/top-navbar";
 import { DashboardProviders } from "./providers";
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: Readonly<{
   children: ReactNode;
 }>) {
+  const user = await getCurrentUser();
+  if (!user) redirect("/login");
+  const memberships = await getMyMerchants();
+  if (memberships.length === 0) redirect("/merchants/new");
+  if (memberships.length > 1) redirect("/merchants");
   return (
     <DashboardProviders>
       <div className="dashboard-shell xl:grid xl:grid-cols-[248px_minmax(0,1fr)]">
         <Sidebar />
         <div className="min-w-0">
-          <TopNavbar />
+          <TopNavbar user={user} />
           <div className="border-b border-border bg-white px-4 py-3 xl:hidden">
             <Sidebar mobile />
           </div>

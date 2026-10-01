@@ -2,8 +2,9 @@
 
 ## Auth
 
-- `POST /auth/register`
-- `POST /auth/login`
+- `GET /auth/google` (sign-up and login)
+- `GET /auth/google/callback`
+- `POST /auth/logout`
 - `GET /auth/profile`
 
 ## Merchant

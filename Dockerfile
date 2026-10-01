@@ -1,4 +1,4 @@
-FROM node:20-alpine AS dependencies
+FROM node:22-alpine AS dependencies
 
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
@@ -42,6 +42,8 @@ FROM source AS web
 
 ARG NEXT_PUBLIC_API_BASE_URL=http://localhost:4000
 ENV NEXT_PUBLIC_API_BASE_URL=$NEXT_PUBLIC_API_BASE_URL
+ARG API_INTERNAL_BASE_URL=http://api:4000
+ENV API_INTERNAL_BASE_URL=$API_INTERNAL_BASE_URL
 
 RUN pnpm --filter @chatto/shared build \
     && pnpm --filter @chatto/config build \

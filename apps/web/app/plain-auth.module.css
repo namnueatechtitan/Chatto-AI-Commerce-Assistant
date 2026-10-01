@@ -1,0 +1,16 @@
+/* Restore native HTML styles on authentication and merchant onboarding pages. */
+.page {
+  all: revert;
+  display: block;
+  margin: 8px;
+  color: black;
+  font-family: Arial, sans-serif;
+}
+
+.page * {
+  all: revert;
+}
+
+.page button {
+  border-radius: 0;
+}

@@ -2,9 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import { Noto_Sans_Thai } from "next/font/google";
 import { ChartLine } from "lucide-react";
-import { redirect } from "next/navigation";
 import { Button } from "../../components/ui/Button";
-import { getCurrentUser } from "../../lib/auth";
 import styles from "./login.module.css";
 
 const thaiFont = Noto_Sans_Thai({
@@ -30,7 +28,6 @@ const errors: Record<string, string> = {
 export default async function LoginPage({ searchParams }: {
   searchParams: Promise<{ error?: string }>;
 }) {
-  if (await getCurrentUser()) redirect("/merchants");
   const { error } = await searchParams;
   return (
     <main className={`${styles.page} ${thaiFont.variable}`}>

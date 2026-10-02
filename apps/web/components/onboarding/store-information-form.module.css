@@ -1,0 +1,61 @@
+.page { min-height: 100svh; }
+.panel { min-width: 0; padding: 36px 7.1% 54px 6.65%; }
+.back { color: #469f55; font-size: 15px; font-weight: 600; text-decoration: none; display: inline-flex; gap: 7px; align-items: center; min-height: 24px; }
+.badge { display: block; width: fit-content; margin: 12px 0 26px auto; padding: 8px 19px; color: #22994a; border-radius: 20px; background: #e6f5e9; font-size: 12px; font-weight: 600; }
+.intro { margin: 0 2px 22px; }
+.intro h1 { margin: 0; font-size: 25px; line-height: 34px; font-weight: 700; }
+.intro p { margin: 0; color: #777; font-size: 15px; line-height: 25px; }
+.form { display: grid; gap: 18px; }
+.card { min-width: 0; border: 1px solid #c8cbc9; border-radius: 15px; background: white; padding: 22px 25px 26px; }
+.card h2 { margin: 0 0 8px; font-size: 15px; font-weight: 600; line-height: 24px; }
+.fields { padding: 0 17px; display: grid; gap: 16px; }
+.row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.categoryRow { grid-template-columns: minmax(0, 181fr) minmax(0, 325fr); gap: 40px; }
+.field { display: grid; gap: 6px; min-width: 0; }
+.field label { color: #242424; font-size: 13px; font-weight: 600; line-height: 20px; }
+.field input, .field select, .field textarea { min-width: 0; width: 100%; border: 1px solid #d8dad9; border-radius: 5px; background: #fafbfa; color: #252525; font: inherit; font-size: 13px; padding: 8px 13px; line-height: 18px; }
+.field input, .field select { height: 36px; }
+.field select { padding-right: 8px; }
+.field textarea { min-height: 86px; resize: vertical; }
+.field .address { min-height: 52px; }
+.field input::placeholder, .field textarea::placeholder { color: #888; opacity: 1; }
+.field input[aria-invalid=true], .field textarea[aria-invalid=true], .field select[aria-invalid=true] { border-color: #b42318; }
+.hint { margin: 0; color: #777; font-size: 12px; line-height: 20px; }
+.card > .hint:first-of-type { margin: -7px 0 20px; }
+.drop + .hint { margin-top: 10px; }
+.faqList { display: grid; gap: 14px; }
+.faq { position: relative; border: 1px solid #c8cbc9; border-radius: 10px; padding: 18px 23px 25px; display: grid; gap: 18px; }
+.faqHeader { position: absolute; top: 10px; right: 18px; font-size: 12px; color: #777; }
+.faqHeader span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+.delete { color: #777; border: 0; background: transparent; padding: 0 4px; min-height: 24px; font: inherit; font-size: 12px; cursor: pointer; }
+.faq textarea { min-height: 68px; }
+.add { width: 100%; min-height: 50px; margin-top: 16px; border: 2px dotted #79c48a; border-radius: 10px; color: #22813b; background: white; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; }
+.buttons { display: grid; grid-template-columns: .9fr 1fr; gap: 22px; margin-top: 8px; }
+.primary, .secondary { min-height: 45px; border: 1px solid #469f55; border-radius: 15px; padding: 10px 18px; font: inherit; font-size: 15px; font-weight: 600; cursor: pointer; }
+.primary { color: white; background: #22994a; }
+.secondary { color: #22813b; background: white; }
+.primary:disabled, .secondary:disabled, .add:disabled { opacity: .55; cursor: wait; }
+.error { color: #b42318; font-size: 12px; line-height: 20px; margin: 0; }
+.notice { background: #f0f9f3; border: 1px solid #b7dfc2; border-radius: 8px; padding: 10px 14px; font-size: 13px; line-height: 22px; color: #226d39; }
+.alert { background: #fff3f1; border: 1px solid #ffd2c9; color: #9d241a; }
+.drop { background: #f5fbf6; border: 1px solid #d8dad9; border-radius: 10px; min-height: 170px; padding: 20px; display: grid; place-items: center; }
+.dropActive { border-color: #22994a; background: #e6f5e9; }
+.choose { width: min(100%, 310px); min-height: 124px; padding: 14px; display: grid; place-content: center; gap: 2px; text-align: center; border: 2px dotted #8bd098; border-radius: 12px; background: #fafdfb; color: #526054; font: inherit; font-size: 20px; line-height: 30px; cursor: pointer; }
+.choose span { font-size: 11px; line-height: 18px; color: #278940; }
+.templates { display: flex; flex-wrap: wrap; gap: 14px; margin: 12px 0; font-size: 12px; color: #22813b; }
+.uploadMeta { margin-top: 12px; display: grid; gap: 10px; min-width: 0; }
+.uploadMeta h3 { margin: 0; font-size: 14px; overflow-wrap: anywhere; }
+.uploadMeta progress { width: 100%; accent-color: #22994a; }
+.preview { overflow: auto; max-height: 360px; border: 1px solid #d8dad9; border-radius: 8px; }
+.preview table { border-collapse: collapse; width: 100%; min-width: 420px; font-size: 12px; }
+.preview th, .preview td { padding: 8px; text-align: left; vertical-align: top; border-bottom: 1px solid #e3e7e4; max-width: 180px; overflow-wrap: anywhere; }
+.preview th { background: #f1f8f3; position: sticky; top: 0; }
+.importActions { display: flex; flex-wrap: wrap; gap: 10px; }
+.importActions button { font-size: 13px; border-radius: 10px; }
+.history { display: grid; gap: 8px; margin-top: 14px; }
+.history button { text-align: left; border: 0; color: #22813b; background: none; font: inherit; font-size: 12px; cursor: pointer; overflow-wrap: anywhere; }
+.form :focus-visible, .back:focus-visible { outline: 3px solid #89d49a; outline-offset: 3px; }
+@media (min-width: 1600px) { .panel { padding-top: 48px; } .intro { margin-bottom: 28px; } .card { padding: 28px 30px; } .form { gap: 24px; } .field input, .field select { height: 42px; } }
+@media (min-width: 768px) and (max-width: 1199px) { .panel { padding: 28px 22px 40px; } .fields { padding: 0; } .categoryRow { gap: 16px; } .card { padding: 20px 18px; } .faq { padding: 14px; } }
+@media (max-width: 767px) { .panel { padding: 22px 24px 40px; } .badge { margin: 10px 0 22px auto; } .intro h1 { font-size: 24px; } .card { padding: 20px 16px; } .fields { padding: 0; } .row { grid-template-columns: 1fr; gap: 16px; } .field input, .field select { height: 44px; font-size: 16px; } .field textarea { font-size: 16px; } .faq { padding: 14px; } .buttons { grid-template-columns: 1fr; gap: 12px; } .primary, .secondary { min-height: 48px; } .choose { font-size: 17px; } .drop { padding: 14px; } .delete { min-height: 40px; } }
+@media (max-width: 359px) { .panel { padding-left: 16px; padding-right: 16px; } .card { padding-left: 12px; padding-right: 12px; } }

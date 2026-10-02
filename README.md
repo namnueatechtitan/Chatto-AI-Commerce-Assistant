@@ -69,6 +69,26 @@ docker compose up
 
 Compose builds missing images automatically. Use `docker compose up --build` after changing dependencies or application source. The stack installs dependencies inside image layers, generates Prisma Client, waits for PostgreSQL, applies migrations, and starts the web app, API, AI service, and Prisma Studio. It does not mount or modify host `node_modules`.
 
+The containers run a built copy of the source. Restarting them alone keeps that
+copy unchanged. After a frontend-only change, update the running web container:
+
+```bash
+docker compose build web
+docker compose up -d --no-deps web
+```
+
+If API code also changed, include `api` in both commands. This targeted update
+requires any reviewed database migration to have already been deployed; it leaves
+database containers and the optional demo-seed startup job running as they are.
+The current sign-in page is `http://localhost:3000/login`; the legacy `/auth` URL
+redirects there.
+
+If `/onboarding/line?merchantId=<uuid>` still shows the old LINE availability card,
+check the running `chatto-web` image before changing route guards. The Step 4 form
+is frontend-only and does not require live LINE integration. Rebuild and recreate
+only `web` using the commands above; a restart or a host-side validation build does
+not update its production image. See the [Step 4 runtime correction](docs/validation/line-runtime-fix.md).
+
 The stack works without an `.env` file using mock AI and no LINE demo seed. To enable Gemini or LINE, copy `.env.example` to `.env`, add the real credentials, and run `docker compose up --build` again. When `LINE_CHANNEL_ID` is set, startup also runs the idempotent LINE demo seed.
 
 Local URLs:

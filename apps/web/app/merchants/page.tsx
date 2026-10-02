@@ -6,15 +6,15 @@ import styles from "../plain-auth.module.css";
 
 export default async function MerchantsPage() {
   const memberships = await getMyMerchants();
-  if (memberships.length === 0) redirect("/merchants/new");
-  if (memberships.length === 1) redirect(`/merchants/${memberships[0]!.merchant.id}`);
+  if (memberships.length === 0) redirect("/onboarding");
+  if (memberships.length === 1) redirect(`/onboarding?merchantId=${memberships[0]!.merchant.id}`);
   return (
     <main className={styles.page}>
       <h1>เลือกร้านค้า</h1>
       <ul>
         {memberships.map(({ merchant, role }) => (
           <li key={merchant.id}>
-            <Link href={`/merchants/${merchant.id}`}>{merchant.shopName}</Link> ({role.name})
+            <Link href={`/onboarding?merchantId=${merchant.id}`}>{merchant.shopName}</Link> ({role.name})
           </li>
         ))}
       </ul>

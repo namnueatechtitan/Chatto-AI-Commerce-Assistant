@@ -20,6 +20,9 @@ import { LineWebhookEventsModule } from "./modules/line-webhook-events.module";
 import { LineWebhooksModule } from "./modules/line-webhooks/line-webhooks.module";
 import { MerchantUsersModule } from "./modules/merchant-users.module";
 import { MerchantsModule } from "./modules/merchants.module";
+import { OnboardingModule } from "./modules/onboarding/onboarding.module";
+import { StoreInformationModule } from "./modules/store-information/store-information.module";
+import { CatalogImportsModule } from "./modules/catalog-imports/catalog-imports.module";
 import { MessagesModule } from "./modules/messages.module";
 import { PermissionsModule } from "./modules/permissions.module";
 import { PlatformsModule } from "./modules/platforms.module";
@@ -46,6 +49,9 @@ import { InternalAiModule } from "./modules/internal-ai/internal-ai.module";
     InternalAiModule,
     UsersModule,
     MerchantsModule,
+    OnboardingModule,
+    StoreInformationModule,
+    CatalogImportsModule,
     RolesModule,
     PermissionsModule,
     MerchantUsersModule,

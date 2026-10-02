@@ -159,6 +159,13 @@ model Merchant {
   shopName               String                  @map("shop_name") @db.VarChar(255)
   slug                   String                  @unique @db.VarChar(255)
   businessCategory       String?                 @map("business_category") @db.VarChar(255)
+  operatingHours         String?                 @map("operating_hours") @db.VarChar(255)
+  description            String?                 @db.Text
+  phone                  String?                 @db.VarChar(50)
+  email                  String?                 @db.VarChar(255)
+  address                String?                 @db.Text
+  informationRevision    Int                     @default(0) @map("information_revision")
+  onboardingRequestId    String?                 @unique @map("onboarding_request_id") @db.Uuid
   status                 MerchantStatus          @default(TRIAL)
   merchantUsers          MerchantUser[]
   channels               Channel[]
@@ -166,6 +173,7 @@ model Merchant {
   products               Product[]
   productVariants        ProductVariant[]
   productImages          ProductImage[]
+  catalogImports         CatalogImport[]
   knowledgeBaseDocuments KnowledgeBaseDocument[]
   vectorDocuments        VectorDocument[]
   customers              Customer[]
@@ -182,6 +190,35 @@ model Merchant {
   updatedAt              DateTime                @updatedAt @map("updated_at")
 
   @@map("merchants")
+}
+
+model CatalogImport {
+  id           String   @id @default(uuid()) @db.Uuid
+  merchantId   String   @map("merchant_id") @db.Uuid
+  uploadedById String   @map("uploaded_by_id") @db.Uuid
+  originalName String   @map("original_name") @db.VarChar(255)
+  format       String   @db.VarChar(10)
+  mimeType     String   @map("mime_type") @db.VarChar(100)
+  byteSize     Int      @map("byte_size")
+  sha256       String   @db.VarChar(64)
+  storageKey   String?  @map("storage_key") @db.VarChar(100)
+  status       String   @db.VarChar(20)
+  preview      Json?
+  error        String?  @db.VarChar(500)
+  createdCount Int      @default(0) @map("created_count")
+  updatedCount Int      @default(0) @map("updated_count")
+  rejectedCount Int     @default(0) @map("rejected_count")
+  confirmedById String? @map("confirmed_by_id") @db.Uuid
+  confirmedAt  DateTime? @map("confirmed_at")
+  expiresAt    DateTime @map("expires_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  merchant     Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
+
+  @@unique([merchantId, sha256])
+  @@index([status, expiresAt])
+  @@index([merchantId, createdAt])
+  @@map("catalog_imports")
 }
 
 model Role {

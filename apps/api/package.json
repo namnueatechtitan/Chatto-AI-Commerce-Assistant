@@ -6,6 +6,10 @@
     "dev": "ts-node-dev --respawn --transpile-only src/main.ts",
     "build": "tsc -p tsconfig.build.json",
     "test:auth": "npm run build && node --test tests/auth.test.cjs",
+    "test:onboarding": "npm run build && node --test tests/onboarding.test.cjs",
+    "test:onboarding:db": "npm run build && node --test tests/onboarding-db.test.cjs",
+    "test:store": "npm run build && node --test tests/catalog-parser.test.cjs tests/store-information.test.cjs",
+    "test:store:db": "npm run build && node --test tests/store-information-db.test.cjs",
     "start": "node dist/main.js",
     "prisma": "node ./scripts/prisma-runner.cjs",
     "prisma:generate": "node ./scripts/prisma-runner.cjs generate",
@@ -26,15 +30,23 @@
     "argon2": "^0.45.1",
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.1",
+    "csv-parse": "^7.0.3",
+    "exceljs": "^4.4.0",
     "google-auth-library": "^11.1.0",
+    "multer": "^2.4.0",
+    "pdfjs-dist": "^6.3.289",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
-    "swagger-ui-express": "^5.0.1"
+    "swagger-ui-express": "^5.0.1",
+    "yauzl": "^3.4.0"
   },
   "devDependencies": {
     "@types/express": "4",
+    "@types/multer": "^2.3.0",
     "@types/node": "^22.7.4",
+    "@types/yauzl": "^3.4.0",
     "prisma": "^5.20.0",
+    "ts-node": "^10.9.2",
     "ts-node-dev": "^2.0.0",
     "typescript": "^5.6.2"
   }

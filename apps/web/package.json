@@ -5,7 +5,8 @@
   "scripts": {
     "dev": "next dev -p 3000",
     "build": "next build",
-    "start": "next start -p 3000"
+    "start": "next start -p 3000",
+    "test:onboarding:ui": "node tests/onboarding-ui.cjs"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.81.5",

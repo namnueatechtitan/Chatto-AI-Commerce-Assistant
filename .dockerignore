@@ -2,6 +2,9 @@
 .github
 .next
 **/.next
+**/.next-*
+build
+apps/api/storage
 dist
 **/dist
 *.tsbuildinfo

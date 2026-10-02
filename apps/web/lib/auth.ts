@@ -6,6 +6,7 @@ export interface AuthUser {
   email: string | null;
   globalRole: string;
   status: string;
+  avatarUrl?: string | null;
 }
 
 export async function getCurrentUser(): Promise<AuthUser | null> {

@@ -1,6 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { Body, Controller, Get, Header, Injectable, Module, NotFoundException, Param, ParseUUIDPipe, Post, Req } from "@nestjs/common";
 import { ApiTags } from "@nestjs/swagger";
+import { Prisma } from "@prisma/client";
 import { Transform } from "class-transformer";
 import { IsNotEmpty, IsString, MaxLength } from "class-validator";
 import type { Request } from "express";
@@ -12,9 +13,9 @@ import { PrismaService } from "../prisma/prisma.service";
 const OWNER_ROLE_NAME = "Owner";
 // A stable ID prevents duplicate Owner roles during concurrent first-time creation.
 const OWNER_ROLE_ID = "6426c563-47cc-4c54-a827-b307c10f7263";
-const merchantSelect = { id: true, shopName: true, slug: true, status: true } as const;
+const merchantSelect = { id: true, shopName: true, slug: true, status: true, businessCategory: true, operatingHours: true } as const;
 
-class CreateMerchantDto {
+export class CreateMerchantDto {
   @Transform(({ value }: { value: unknown }) => typeof value === "string" ? value.trim() : value)
   @IsString()
   @IsNotEmpty()
@@ -58,19 +59,34 @@ export class MerchantsService {
   }
 
   create(userId: string, shopName: string) {
+    return this.prisma.$transaction((tx) => this.createWithTransaction(tx, userId, shopName));
+  }
+
+  createForOnboarding(userId: string, shopName: string) {
     return this.prisma.$transaction(async (tx) => {
-      const existingRole = await tx.role.findFirst({ where: { name: OWNER_ROLE_NAME }, orderBy: { id: "asc" } });
-      const ownerRole = existingRole ?? await tx.role.upsert({
-        where: { id: OWNER_ROLE_ID }, update: { name: OWNER_ROLE_NAME },
-        create: { id: OWNER_ROLE_ID, name: OWNER_ROLE_NAME, status: "active" },
+      // Serialize first-store requests for this user without adding an onboarding table.
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${userId}))`;
+      const membership = await tx.merchantUser.findFirst({
+        where: { userId, status: "ACTIVE" },
+        select: { merchant: { select: merchantSelect } },
+        orderBy: [{ createdAt: "asc" }, { id: "asc" }],
       });
-      return tx.merchant.create({
-        data: {
-          shopName, slug: randomUUID(),
-          merchantUsers: { create: { userId, roleId: ownerRole.id } },
-        },
-        select: merchantSelect,
-      });
+      return membership?.merchant ?? this.createWithTransaction(tx, userId, shopName);
+    });
+  }
+
+  async createWithTransaction(tx: Prisma.TransactionClient, userId: string, shopName: string, information: Partial<Prisma.MerchantCreateInput> = {}) {
+    const existingRole = await tx.role.findFirst({ where: { name: OWNER_ROLE_NAME }, orderBy: { id: "asc" } });
+    const ownerRole = existingRole ?? await tx.role.upsert({
+      where: { id: OWNER_ROLE_ID }, update: { name: OWNER_ROLE_NAME },
+      create: { id: OWNER_ROLE_ID, name: OWNER_ROLE_NAME, status: "active" },
+    });
+    return tx.merchant.create({
+      data: {
+        ...information, shopName, slug: randomUUID(),
+        merchantUsers: { create: { userId, roleId: ownerRole.id } },
+      },
+      select: merchantSelect,
     });
   }
 }

@@ -14,6 +14,7 @@ export default async function MerchantPage({ params }: {
       <p>บทบาทของคุณ: {role.name}</p>
       <p>สถานะร้านค้า: {merchant.status}</p>
       <p>Owner: {owners.map(({ user }) => user.name).join(", ")}</p>
+      <p><Link href={`/onboarding/store?merchantId=${merchant.id}`}>ข้อมูลร้านค้า</Link></p>
       <p><Link href="/merchants">ร้านค้าของฉัน</Link></p>
       <p><Link href="/merchants/new">สร้างร้านค้าเพิ่มเติม</Link></p>
       <LogoutButton />

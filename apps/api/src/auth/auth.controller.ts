@@ -55,7 +55,7 @@ export class AuthController {
     try {
       const user = await this.google.complete(state, readCookie(request, GOOGLE_FLOW_COOKIE), code, providerError);
       await this.setSession(user.id, request, response);
-      return response.redirect(`${webOrigin()}/merchants`);
+      return response.redirect(`${webOrigin()}/onboarding`);
     } catch (error) {
       const reason = error instanceof ConflictException ? "account_exists"
         : providerError === "access_denied" ? "google_cancelled" : "google_failed";
@@ -87,7 +87,7 @@ export class AuthController {
     try {
       const user = await this.line.complete(state, readCookie(request, LINE_FLOW_COOKIE), code, providerError);
       await this.setSession(user.id, request, response);
-      return response.redirect(`${webOrigin()}/merchants`);
+      return response.redirect(`${webOrigin()}/onboarding`);
     } catch {
       const reason = providerError === "access_denied" ? "line_cancelled" : "line_failed";
       return response.redirect(`${webOrigin()}/login?error=${reason}`);

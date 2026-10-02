@@ -15,8 +15,7 @@ export default async function DashboardLayout({
   const user = await getCurrentUser();
   if (!user) redirect("/login");
   const memberships = await getMyMerchants();
-  if (memberships.length === 0) redirect("/merchants/new");
-  if (memberships.length > 1) redirect("/merchants");
+  if (memberships.length === 0) redirect("/onboarding");
   return (
     <DashboardProviders>
       <div className="dashboard-shell xl:grid xl:grid-cols-[248px_minmax(0,1fr)]">

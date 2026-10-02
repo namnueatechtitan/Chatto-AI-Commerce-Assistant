@@ -1,0 +1,100 @@
+.page { min-height: 100svh; }
+.panel { min-width: 0; padding: 36px 7.1% 54px 6.65%; }
+.back { display: inline-flex; min-height: 24px; align-items: center; gap: 7px; color: #469f55; font-size: 15px; font-weight: 600; }
+.badge { display: block; width: fit-content; margin: 10px 0 24px auto; border-radius: 15px; padding: 8px 19px; color: #22994a; background: #e6f5e9; font-size: 12px; font-weight: 600; line-height: 18px; }
+.intro { margin: 0 2px 17px; }
+.intro h1 { margin: 0; color: #000; font-size: 25px; font-weight: 700; line-height: 34px; }
+.intro p { margin: 0; color: #777; font-size: 15px; line-height: 25px; }
+.connectionStatus { display: flex; min-height: 55px; align-items: center; gap: 10px; margin-bottom: 18px; border-radius: 5px; padding: 10px 22px; background: #f3faf4; }
+.statusDot { flex: 0 0 10px; height: 10px; border-radius: 50%; background: #d9d9d9; }
+.connectionStatus p { margin: 0; font-size: 12px; font-weight: 600; line-height: 18px; }
+.connectionStatus p + p { color: #777; font-weight: 400; }
+.form { display: grid; gap: 18px; }
+.card { min-width: 0; border: 1px solid #c8cbc9; border-radius: 15px; padding: 20px 22px 25px; background: #fff; }
+.channelCard { min-height: 368px; padding-bottom: 48px; }
+.sectionHeader { display: grid; grid-template-columns: 20px minmax(0, 1fr); align-items: start; gap: 10px; }
+.number { display: inline-flex; width: 20px; height: 20px; align-items: center; justify-content: center; margin-top: 1px; border-radius: 50%; color: #fff; background: #22994a; font-size: 12px; font-weight: 600; }
+.sectionHeader h2 { margin: 0; color: #171717; font-size: 15px; font-weight: 600; line-height: 24px; }
+.sectionHeader p { margin: 0; color: #777; font-size: 12px; line-height: 20px; }
+.guide { color: #469f55; font-size: 12px; line-height: 20px; text-decoration: underline; text-underline-offset: 2px; }
+.fields { display: grid; gap: 16px; margin-top: 28px; padding: 0 9px; }
+.field { display: grid; min-width: 0; gap: 8px; }
+.field label { font-size: 12px; font-weight: 600; line-height: 18px; }
+.inputWrap { position: relative; min-width: 0; }
+.field input { display: block; width: 100%; min-width: 0; height: 36px; border: 1px solid #d9d9d9; border-radius: 5px; padding: 7px 12px; color: #242424; background: #fafbfa; font-size: 14px; line-height: 20px; }
+.field input.secretInput { padding-right: 44px; }
+.field input[aria-invalid=true] { border-color: #b42318; }
+.visibility { position: absolute; top: 0; right: 1px; display: flex; width: 38px; height: 36px; align-items: center; justify-content: center; border: 0; border-radius: 5px; color: #6a756d; background: transparent; cursor: pointer; }
+.visibility:hover { color: #127223; }
+.error { margin: 0; color: #b42318; font-size: 12px; line-height: 20px; }
+.webhook { display: flex; min-width: 0; min-height: 43px; align-items: center; gap: 12px; margin-top: 20px; border: 1px solid #d9d9d9; border-radius: 10px; padding: 6px 12px 6px 19px; background: #f3faf4; }
+.webhook > span { min-width: 0; flex: 1; color: #242424; font-size: 15px; line-height: 24px; overflow-wrap: anywhere; }
+.webhook > .unconfigured { color: #777; font-size: 13px; }
+.copy { display: inline-flex; width: 28px; height: 28px; flex-shrink: 0; align-items: center; justify-content: center; border: 1px solid #d9d9d9; border-radius: 5px; color: #22994a; background: #fff; cursor: pointer; }
+.copy:disabled { color: #9fa9a2; background: #fafbfa; cursor: not-allowed; }
+.copyMessage { margin: 0; color: #469f55; font-size: 12px; line-height: 20px; }
+.copyMessage:not(:empty) { margin-top: 8px; }
+.actions { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 22px; }
+.primary, .secondary { display: inline-flex; min-width: 0; min-height: 45px; align-items: center; justify-content: center; border: 1px solid #469f55; border-radius: 15px; padding: 10px 14px; font-size: 15px; font-weight: 600; line-height: 24px; text-align: center; cursor: pointer; }
+.primary { border-color: #22994a; color: white; background: #22994a; }
+.primary:hover { background: #18813c; }
+.secondary { color: #22813b; background: white; }
+.secondary:hover { background: #f3faf4; }
+.notice { margin: 0; border: 1px solid #b7dfc2; border-radius: 8px; padding: 12px 14px; color: #226d39; background: #f0f9f3; font-size: 13px; line-height: 22px; }
+.panel :focus-visible { outline: 3px solid #127223; outline-offset: 3px; }
+.srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+
+@media (min-width: 1600px) {
+  .panel { padding-top: 48px; }
+  .badge { margin-top: 16px; margin-bottom: 30px; font-size: 14px; padding: 10px 23px; }
+  .intro { margin-bottom: 22px; }
+  .intro h1 { font-size: 30px; line-height: 42px; }
+  .intro p { font-size: 16px; line-height: 27px; }
+  .connectionStatus { min-height: 65px; margin-bottom: 22px; padding: 12px 26px; }
+  .connectionStatus p { font-size: 14px; line-height: 21px; }
+  .form { gap: 22px; }
+  .card { padding: 24px 26px 30px; }
+  .channelCard { min-height: 420px; padding-bottom: 48px; }
+  .sectionHeader { grid-template-columns: 24px minmax(0, 1fr); gap: 12px; }
+  .number { width: 24px; height: 24px; font-size: 14px; }
+  .sectionHeader h2 { font-size: 18px; line-height: 28px; }
+  .sectionHeader p, .guide { font-size: 14px; line-height: 23px; }
+  .fields { margin-top: 30px; gap: 20px; padding: 0 12px; }
+  .field label { font-size: 14px; line-height: 22px; }
+  .field input, .visibility { height: 42px; }
+  .webhook { min-height: 50px; margin-top: 24px; }
+  .primary, .secondary { min-height: 52px; font-size: 17px; }
+}
+
+@media (min-width: 768px) and (max-width: 1199px) {
+  .panel { padding: 28px 22px 40px; }
+  .card { padding: 20px 16px 24px; }
+  .channelCard { min-height: 0; }
+  .fields { padding: 0; }
+  .actions { gap: 12px; }
+  .primary, .secondary { font-size: 14px; }
+}
+
+@media (max-width: 767px) {
+  .panel { padding: 22px 24px 40px; }
+  .back { min-height: 44px; }
+  .badge { margin: 8px 0 22px auto; }
+  .intro h1 { font-size: 24px; }
+  .intro p { font-size: 14px; }
+  .connectionStatus { padding: 12px 16px; }
+  .card { padding: 20px 16px 24px; }
+  .channelCard { min-height: 0; }
+  .fields { padding: 0; margin-top: 24px; }
+  .field input { height: 44px; font-size: 16px; }
+  .visibility { width: 44px; height: 44px; }
+  .field input.secretInput { padding-right: 48px; }
+  .webhook { padding: 8px 10px 8px 12px; gap: 8px; }
+  .copy { width: 44px; height: 44px; }
+  .actions { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  .primary, .secondary { min-height: 48px; }
+}
+
+@media (max-width: 359px) {
+  .panel { padding-right: 16px; padding-left: 16px; }
+  .card { padding-right: 14px; padding-left: 14px; }
+}

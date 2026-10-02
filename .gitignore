@@ -1,6 +1,7 @@
 node_modules
 .pnpm-store
 .next
+.next-*
 dist
 build
 coverage
@@ -9,3 +10,4 @@ coverage
 .env.local
 *.log
 postgres-data
+apps/api/storage/

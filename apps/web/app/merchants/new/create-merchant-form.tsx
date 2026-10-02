@@ -4,7 +4,10 @@ import { useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import type { Merchant } from "../../../lib/merchants";
 
-export function CreateMerchantForm() {
+export function CreateMerchantForm({ className, buttonClassName }: {
+  className?: string;
+  buttonClassName?: string;
+} = {}) {
   const router = useRouter();
   const submitting = useRef(false);
   const [pending, setPending] = useState(false);
@@ -43,13 +46,13 @@ export function CreateMerchantForm() {
   }
 
   return (
-    <form onSubmit={submit}>
+    <form className={className} onSubmit={submit}>
       <p>
         <label htmlFor="shopName">ชื่อร้านค้า </label>
         <input id="shopName" name="shopName" required maxLength={255} disabled={pending} />
       </p>
       {error && <p role="alert">{error}</p>}
-      <button type="submit" disabled={pending}>{pending ? "กำลังสร้างร้านค้า…" : "สร้างร้านค้า"}</button>
+      <button className={buttonClassName} type="submit" disabled={pending}>{pending ? "กำลังสร้างร้านค้า…" : "สร้างร้านค้า"}</button>
     </form>
   );
 }

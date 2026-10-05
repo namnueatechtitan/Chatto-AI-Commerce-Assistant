@@ -99,14 +99,14 @@ export class CatalogImportsService implements OnModuleInit, OnModuleDestroy {
         const data = { uploadedById: userId, originalName: file.originalname.replace(/^.*[\\/]/, "").replace(/[\x00-\x1f\x7f]/g, "").slice(0, 255) || `catalog.${format}`,
           format, mimeType: file.mimetype, byteSize: file.size, storageKey: key, status: "PARSING", expiresAt: new Date(Date.now() + 86400000), error: null, preview: Prisma.DbNull,
           createdCount: 0, updatedCount: 0, rejectedCount: 0, confirmedAt: null, confirmedById: null };
-        return existing ? tx.catalogImport.update({ where: { id: existing.id }, data, select: jobSelect }) : tx.catalogImport.create({ data: { ...data, merchantId, sha256 }, select: jobSelect });
+        return existing ? tx.catalogImport.update({ where: { id: existing.id, merchantId }, data, select: jobSelect }) : tx.catalogImport.create({ data: { ...data, merchantId, sha256 }, select: jobSelect });
       });
-      if (parse) this.startParser(job.id, key, format);
+      if (parse) this.startParser(job.id, key, format, merchantId);
       else await unlink(this.filePath(key));
       return job;
     } catch (error) { await unlink(this.filePath(key)).catch(() => undefined); throw error; }
   }
-  private startParser(id: string, key: string, format: CatalogFormat) {
+  private startParser(id: string, key: string, format: CatalogFormat, merchantId: string) {
     const compiledWorker = join(__dirname, "catalog-parser.worker.js");
     const development = !existsSync(compiledWorker);
     const systemRoot = process.env.SystemRoot || process.env.SYSTEMROOT;
@@ -129,7 +129,7 @@ export class CatalogImportsService implements OnModuleInit, OnModuleDestroy {
       await unlink(this.filePath(key)).catch(() => undefined);
       try {
         if (result.preview) {
-          const job = await this.prisma.catalogImport.findUnique({ where: { id }, select: { merchantId: true, status: true } });
+          const job = await this.prisma.catalogImport.findUnique({ where: { id, merchantId }, select: { merchantId: true, status: true } });
           if (job?.status === "PARSING") {
             const products = await this.prisma.product.findMany({ where: { merchantId: job.merchantId }, select: { name: true } });
             const counts = new Map<string, number>();
@@ -142,7 +142,7 @@ export class CatalogImportsService implements OnModuleInit, OnModuleDestroy {
             result.preview.validCount = result.preview.rows.filter((row) => !row.errors.length).length;
           }
         }
-        await this.prisma.catalogImport.updateMany({ where: { id, status: "PARSING", storageKey: key }, data: {
+        await this.prisma.catalogImport.updateMany({ where: { id, merchantId, status: "PARSING", storageKey: key }, data: {
           status: result.preview ? "PREVIEW" : "FAILED", preview: result.preview ? result.preview as unknown as Prisma.InputJsonValue : Prisma.DbNull,
           error: result.error?.slice(0, 500) ?? null, storageKey: null,
         } });
@@ -160,7 +160,7 @@ export class CatalogImportsService implements OnModuleInit, OnModuleDestroy {
       const job = await tx.catalogImport.findFirst({ where: { id, merchantId }, select: { status: true } });
       if (!job) throw new NotFoundException("Catalog import not found");
       if (job.status === "IMPORTED") throw new ConflictException("An imported catalog cannot be cancelled.");
-      await tx.catalogImport.update({ where: { id }, data: { status: "CANCELLED", storageKey: null } });
+      await tx.catalogImport.update({ where: { id, merchantId }, data: { status: "CANCELLED", storageKey: null } });
     });
     const worker = this.workers.get(id); if (worker) await worker.terminate();
     return this.read(userId, merchantId, id);
@@ -187,11 +187,11 @@ export class CatalogImportsService implements OnModuleInit, OnModuleDestroy {
           if (ids.length) {
             const changes: Prisma.ProductUpdateInput = { name: row.product.name };
             for (const field of ["description", "category", "brand"] as const) if (preview.fields.includes(field)) changes[field] = row.product[field];
-            await tx.product.update({ where: { id: ids[0] }, data: changes }); updatedCount++;
+            await tx.product.update({ where: { id: ids[0], merchantId }, data: changes }); updatedCount++;
           }
           else { const product = await tx.product.create({ data: { ...row.product, merchantId, status: "DRAFT" } }); matches.set(productKey(product.name), [product.id]); createdCount++; }
         }
-        await tx.catalogImport.update({ where: { id }, data: { status: "IMPORTED", createdCount, updatedCount, rejectedCount, confirmedAt: new Date(), confirmedById: userId, error: null } });
+        await tx.catalogImport.update({ where: { id, merchantId }, data: { status: "IMPORTED", createdCount, updatedCount, rejectedCount, confirmedAt: new Date(), confirmedById: userId, error: null } });
       }, { timeout: 30000 });
     } catch (error) {
       // Persist transient/ambiguous confirmation failures without discarding the reviewable preview.

@@ -25,7 +25,9 @@ export default async function SetupStatusPage({ params, searchParams }: {
   const backHref = onboardingHref("/onboarding", status.merchant?.id);
   if (!status.merchant || current?.state === "pending") redirect(backHref);
   if (step === "line") {
-    return <LineConnectionSetup backHref={backHref} webhookUrl={publicLineWebhookUrl(process.env.LINE_PUBLIC_WEBHOOK_URL)} />;
+    return <LineConnectionSetup backHref={backHref} merchantId={status.merchant.id} merchantName={status.merchant.shopName}
+      canEdit={status.role === "Owner" && ["ACTIVE", "TRIAL"].includes(status.merchant.status)}
+      webhookUrl={publicLineWebhookUrl(process.env.LINE_PUBLIC_WEBHOOK_URL)} />;
   }
   return <OnboardingShell user={status.user} role={status.role}>
     <StatusRefresh />

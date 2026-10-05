@@ -15,3 +15,12 @@ export function publicLineWebhookUrl(configured: string | undefined): string | n
     return null;
   }
 }
+
+// Configuration is the deployed route prefix, e.g. https://<host>/webhooks/line.
+// Never expose the old global URL or synthesize a production hostname.
+export function channelWebhookUrl(configuredPrefix: string | null, channelId?: string): string | null {
+  if (!configuredPrefix || !channelId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(channelId)) return null;
+  const prefix = publicLineWebhookUrl(configuredPrefix);
+  if (!prefix || !new URL(prefix).pathname.replace(/\/+$/, "").endsWith("/webhooks/line")) return null;
+  return prefix.replace(/\/+$/, "") + "/" + channelId;
+}

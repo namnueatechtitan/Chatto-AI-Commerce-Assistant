@@ -14,7 +14,7 @@ export function WelcomeBanner({
   inventoryAlert,
 }: WelcomeBannerProps) {
   return (
-    <section className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_374px] xl:items-end">
+    <section className="grid gap-4 desktop:grid-cols-[minmax(0,1fr)_23.375rem] desktop:items-end">
       <div className="space-y-2">
         <div className="flex items-center gap-2">
           <h1 className="text-[2rem] font-semibold tracking-tight text-slate-950 sm:text-[2.25rem]">
@@ -26,7 +26,7 @@ export function WelcomeBanner({
       </div>
 
       <Card className="overflow-hidden rounded-2xl border-0 bg-[#FEF6E8] shadow-none">
-        <div className="grid grid-cols-[8px_minmax(0,1fr)]">
+        <div className="grid grid-cols-[0.5rem_minmax(0,1fr)]">
           <div className="rounded-l-2xl bg-warning" />
           <div className="flex items-center gap-3 px-4 py-4">
             <div className="flex size-10 items-center justify-center rounded-xl bg-white/70 text-amber-600">

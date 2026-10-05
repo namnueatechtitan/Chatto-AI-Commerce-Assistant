@@ -26,7 +26,7 @@ export function StatCard({ stat, icon: Icon }: StatCardProps) {
       <div className="flex items-center gap-4 p-4">
         <div
           className={cn(
-            "flex size-[52px] items-center justify-center rounded-full",
+            "flex size-[3.25rem] items-center justify-center rounded-full",
             toneClasses[stat.tone],
           )}
         >

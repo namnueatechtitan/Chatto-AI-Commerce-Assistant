@@ -2,13 +2,31 @@
 .page {
   all: revert;
   display: block;
-  margin: 8px;
+  margin: 0.5rem;
   color: black;
   font-family: Arial, sans-serif;
+  font-size: var(--font-md);
+  overflow-wrap: anywhere;
 }
 
 .page * {
   all: revert;
+  box-sizing: border-box;
+}
+
+.page input,
+.page select,
+.page textarea,
+.page button {
+  max-width: 100%;
+  font-family: inherit;
+  font-size: 0.833333rem;
+}
+
+@media (max-width: 767px) {
+  .page input,
+  .page select,
+  .page textarea { font-size: 1rem; }
 }
 
 .page button {

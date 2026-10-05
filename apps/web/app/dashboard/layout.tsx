@@ -17,12 +17,12 @@ export default async function DashboardLayout({
   const memberships = await getMyMerchants();
   if (memberships.length === 0) redirect("/onboarding");
   return (
-    <DashboardProviders>
-      <div className="dashboard-shell xl:grid xl:grid-cols-[248px_minmax(0,1fr)]">
+    <DashboardProviders key={user.id} userId={user.id}>
+      <div className="dashboard-shell desktop:grid desktop:grid-cols-[15.5rem_minmax(0,1fr)]">
         <Sidebar />
         <div className="min-w-0">
           <TopNavbar user={user} />
-          <div className="border-b border-border bg-white px-4 py-3 xl:hidden">
+          <div className="border-b border-border bg-white px-4 py-3 desktop:hidden">
             <Sidebar mobile />
           </div>
           <main className="px-4 pb-8 pt-6 sm:px-6 lg:px-8">{children}</main>

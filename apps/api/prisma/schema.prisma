@@ -23,6 +23,10 @@ enum MerchantStatus {
 }
 
 enum ChannelStatus {
+  CONFIGURED           @map("configured")
+  CREDENTIALS_VERIFIED @map("credentials_verified")
+  WEBHOOK_PENDING      @map("webhook_pending")
+  ERROR                @map("error")
   CONNECTED     @map("connected")
   DISCONNECTED  @map("disconnected")
   INVALID_TOKEN @map("invalid_token")
@@ -302,6 +306,11 @@ model Channel {
   channelSecretEncrypted String?      @map("channel_secret_encrypted") @db.Text
   webhookUrl            String?       @map("webhook_url") @db.Text
   isConnected           Boolean       @default(false) @map("is_connected")
+  credentialRevision    Int           @default(0) @map("credential_revision")
+  credentialsVerifiedAt DateTime?     @map("credentials_verified_at")
+  webhookVerifiedAt     DateTime?     @map("webhook_verified_at")
+  lineBotUserId         String?       @map("line_bot_user_id") @db.VarChar(33)
+  lineClaimedAt         DateTime?     @map("line_claimed_at")
   status                ChannelStatus @default(DISCONNECTED)
   merchant              Merchant      @relation(fields: [merchantId], references: [id], onDelete: Cascade)
   platform              Platform      @relation(fields: [platformId], references: [id], onDelete: Restrict)
@@ -312,6 +321,7 @@ model Channel {
   updatedAt             DateTime      @updatedAt @map("updated_at")
 
   @@unique([merchantId, platformId, externalChannelId])
+  @@unique([merchantId, id])
   @@index([merchantId])
   @@index([platformId])
   @@index([externalChannelId])
@@ -328,7 +338,7 @@ model LineWebhookEvent {
   isDuplicate    Boolean   @default(false) @map("is_duplicate")
   processedAt    DateTime? @map("processed_at")
   merchant       Merchant  @relation(fields: [merchantId], references: [id], onDelete: Cascade)
-  channel        Channel   @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  channel        Channel   @relation(fields: [merchantId, channelId], references: [merchantId, id], onDelete: Cascade, onUpdate: Cascade, map: "line_webhook_events_tenant_channel_fkey")
   createdAt      DateTime  @default(now()) @map("created_at")
 
   @@index([merchantId])
@@ -351,6 +361,7 @@ model Product {
   updatedAt   DateTime      @updatedAt @map("updated_at")
 
   @@index([merchantId])
+  @@unique([merchantId, id])
   @@map("products")
 }
 
@@ -369,7 +380,7 @@ model ProductVariant {
   lowStockThreshold Int?          @map("low_stock_threshold")
   status            ProductStatus @default(DRAFT)
   merchant          Merchant      @relation(fields: [merchantId], references: [id], onDelete: Cascade)
-  product           Product       @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product           Product       @relation(fields: [merchantId, productId], references: [merchantId, id], onDelete: Cascade, onUpdate: Cascade, map: "product_variants_tenant_product_fkey")
   createdAt         DateTime      @default(now()) @map("created_at")
   updatedAt         DateTime      @updatedAt @map("updated_at")
 
@@ -386,7 +397,7 @@ model ProductImage {
   altText    String?  @map("alt_text") @db.VarChar(255)
   sortOrder  Int      @default(0) @map("sort_order")
   merchant   Merchant @relation(fields: [merchantId], references: [id], onDelete: Cascade)
-  product    Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product    Product  @relation(fields: [merchantId, productId], references: [merchantId, id], onDelete: Cascade, onUpdate: Cascade, map: "product_images_tenant_product_fkey")
   createdAt  DateTime @default(now()) @map("created_at")
 
   @@index([merchantId])
@@ -441,7 +452,7 @@ model Customer {
   isBlocked          Boolean           @default(false) @map("is_blocked")
   blockedReason      String?           @map("blocked_reason") @db.Text
   merchant           Merchant          @relation(fields: [merchantId], references: [id], onDelete: Cascade)
-  channel            Channel           @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  channel            Channel           @relation(fields: [merchantId, channelId], references: [merchantId, id], onDelete: Cascade, onUpdate: Cascade, map: "customers_tenant_channel_fkey")
   conversations      Conversation[]
   aiActionLogs       AiActionLog[]
   guardrailEvents    GuardrailEvent[]
@@ -452,6 +463,7 @@ model Customer {
   updatedAt          DateTime          @updatedAt @map("updated_at")
 
   @@unique([channelId, externalUserId])
+  @@unique([merchantId, id])
   @@index([merchantId])
   @@index([channelId])
   @@index([externalUserId])
@@ -469,8 +481,8 @@ model Conversation {
   assignedStaffId String?            @db.Uuid @map("assigned_staff_id")
   lastMessageAt   DateTime?          @map("last_message_at")
   merchant        Merchant           @relation(fields: [merchantId], references: [id], onDelete: Cascade)
-  customer        Customer           @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  channel         Channel            @relation(fields: [channelId], references: [id], onDelete: Cascade)
+  customer        Customer           @relation(fields: [merchantId, customerId], references: [merchantId, id], onDelete: Cascade, onUpdate: Cascade, map: "conversations_tenant_customer_fkey")
+  channel         Channel            @relation(fields: [merchantId, channelId], references: [merchantId, id], onDelete: Cascade, onUpdate: Cascade, map: "conversations_tenant_channel_fkey")
   messages        Message[]
   aiActionLogs    AiActionLog[]
   guardrailEvents GuardrailEvent[]
@@ -484,6 +496,7 @@ model Conversation {
   @@index([channelId])
   @@index([assignedStaffId])
   @@map("conversations")
+  @@unique([merchantId, id])
 }
 
 model Message {
@@ -497,7 +510,7 @@ model Message {
   metadata          Json?
   externalMessageId String?      @map("external_message_id") @db.VarChar(255)
   merchant          Merchant     @relation(fields: [merchantId], references: [id], onDelete: Cascade)
-  conversation      Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  conversation      Conversation @relation(fields: [merchantId, conversationId], references: [merchantId, id], onDelete: Cascade, onUpdate: Cascade, map: "messages_tenant_conversation_fkey")
   createdAt         DateTime     @default(now()) @map("created_at")
 
   @@index([merchantId])

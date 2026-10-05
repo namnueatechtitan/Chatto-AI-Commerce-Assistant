@@ -18,14 +18,6 @@ export default async function OnboardingPage({ searchParams }: { searchParams: P
       <h1><span>Welcome,</span><span className={styles.welcomeName}>{name} <span className={styles.exclamation}>!</span></span></h1>
     </div>
     <p className={styles.welcomeDescription}>อีกเพียงไม่กี่ขั้นตอน AI ก็พร้อมช่วยตอบลูกค้า และเพิ่มยอดขายให้ร้านของคุณแล้ว</p>
-    {status.memberships.length > 1 && <form className={styles.storeSelector} action="/onboarding" method="get">
-      <label htmlFor="selected-merchant">ร้านค้า</label>
-      <select id="selected-merchant" name="merchantId" defaultValue={status.merchant?.id || ""} required>
-        <option value="" disabled>เลือกร้านค้า</option>
-        {status.memberships.map(({ merchant }) => <option key={merchant.id} value={merchant.id}>{merchant.shopName}</option>)}
-      </select>
-      <button className={styles.secondaryButton} type="submit">เลือกร้านค้า</button>
-    </form>}
     {saved === "store" && status.steps[2].state === "completed" && <p role="status" className={styles.availabilityNotice}>ข้อมูลร้านพร้อมแล้ว ไปต่อที่การเชื่อมต่อ LINE OA ได้เลย</p>}
     <OnboardingProgress progress={status.progress} completedSteps={status.completedSteps} />
     <div className={styles.stepsCard}>

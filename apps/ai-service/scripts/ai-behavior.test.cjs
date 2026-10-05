@@ -66,6 +66,95 @@ test("RAG selects merchant product data for a Thai product question", () => {
   assert.equal(result.chunks[0].chunk_text, "Product: Tote bag.");
 });
 
+test("RAG fails closed for missing, blank or invalid merchant scopes", () => {
+  const rag = new RagService();
+  const documents = [
+    document("merchant-a", "product", "CHATTO synthetic merchant product."),
+    document("merchant-b", "product", "CHATTO synthetic merchant product."),
+  ];
+
+  for (const merchantId of [
+    undefined,
+    null,
+    "",
+    " ",
+    "\n\t",
+    " merchant-a ",
+    0,
+    false,
+    {},
+    [],
+  ]) {
+    const result = rag.retrieve({
+      merchant_id: merchantId,
+      query: "CHATTO synthetic merchant product",
+      query_embedding: [1, 0],
+      top_k: 10,
+      documents,
+    });
+
+    assert.deepEqual(result.chunks, []);
+    assert.equal(result.mode, "hybrid_semantic");
+    assert.equal(result.top_k, 10);
+  }
+
+  assert.deepEqual(rag.retrieve().chunks, []);
+});
+
+test("RAG filters mixed actual vector exports by exact merchant ownership", () => {
+  const rag = new RagService();
+  const merchantA = "6a1ba050-d56e-4dcb-90e8-82207823a146";
+  const merchantB = "8d3d10a0-4ffb-449e-8c31-72b5b0e8a68a";
+  const own = {
+    id: "81a29cc1-6505-48bf-bbe0-ef421f162ecb",
+    merchant_id: merchantA,
+    source_type: "faq",
+    source_id: "14eaeac4-fc4a-4d35-805c-13136ed9a9bf",
+    chunk_text: "CHATTO synthetic shipping context.",
+    embedding: [1, 0],
+    metadata: {
+      chunk_key: `${merchantA}:faq:14eaeac4-fc4a-4d35-805c-13136ed9a9bf:0`,
+      managed_by: "chatto-live-chunker",
+      chunk_index: 0,
+    },
+    status: "ACTIVE",
+  };
+  const foreign = {
+    ...own,
+    id: "c84125e5-02f3-4b27-8c89-b2c82154043e",
+    merchant_id: merchantB,
+    source_id: "d7b7b16d-2f67-444b-a6fc-8cc86cf0ea47",
+    chunk_text: "CHATTO synthetic foreign shipping context.",
+    metadata: {
+      ...own.metadata,
+      chunk_key: `${merchantB}:faq:d7b7b16d-2f67-444b-a6fc-8cc86cf0ea47:0`,
+    },
+  };
+  const unscoped = { ...foreign, merchant_id: undefined };
+  const documents = [foreign, unscoped, own];
+
+  const result = rag.retrieve({
+    merchant_id: merchantA,
+    query: "CHATTO synthetic shipping context",
+    query_embedding: [1, 0],
+    top_k: 10,
+    documents,
+  });
+
+  assert.equal(result.chunks.length, 1);
+  assert.equal(result.chunks[0].source_id, own.source_id);
+  assert.equal(result.chunks[0].chunk_text, own.chunk_text);
+  assert.deepEqual(result.chunks[0].metadata, own.metadata);
+
+  const foreignOnly = rag.retrieve({
+    merchant_id: merchantA,
+    query: "CHATTO synthetic foreign shipping context",
+    query_embedding: [1, 0],
+    documents: [foreign, unscoped],
+  });
+  assert.deepEqual(foreignOnly.chunks, []);
+});
+
 test("chunking is deterministic, bounded, and preserves overlap metadata", () => {
   const source = {
     merchant_id: "merchant-a",

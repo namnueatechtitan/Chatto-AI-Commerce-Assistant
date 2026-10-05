@@ -24,15 +24,20 @@ export class OnboardingService {
     }
     if (selected && ["ACTIVE", "TRIAL"].includes(selected.merchant.status)) {
       const id = selected.merchant.id;
+      const platforms = await this.prisma.$queryRawUnsafe<Array<{ id: string }>>(
+        "SELECT id FROM platforms WHERE lower(btrim(code))='line' AND status='active'",
+      );
       const [channel, settings, product, documents] = await Promise.all([
-        this.prisma.channel.findFirst({
+        platforms.length === 1 ? this.prisma.channel.findFirst({
           where: {
-            merchantId: id, platform: { code: { equals: "line", mode: "insensitive" } },
+            merchantId: id, platformId: platforms[0].id, credentialRevision: { gt: 0 },
             isConnected: true, status: "CONNECTED", externalChannelId: { not: null },
             accessTokenEncrypted: { not: null }, channelSecretEncrypted: { not: null },
+            credentialsVerifiedAt: { not: null }, webhookVerifiedAt: { not: null },
+            lineBotUserId: { not: null }, lineClaimedAt: { not: null },
           },
           select: { id: true },
-        }),
+        }) : Promise.resolve(null),
         this.prisma.aiSetting.findUnique({ where: { merchantId: id }, select: { botName: true, language: true } }),
         this.prisma.product.findFirst({ where: { merchantId: id, status: "ACTIVE" }, select: { id: true } }),
         this.prisma.knowledgeBaseDocument.findMany({ where: { merchantId: id, status: "ACTIVE" }, select: { content: true } }),
@@ -47,7 +52,7 @@ export class OnboardingService {
       ...buildOnboardingProgress({ store: storeReady, line: lineReady, context: contextReady, activation: false }),
       // The current schema has no explicit activation confirmation. Never infer it
       // from Merchant.status, a seeded channel, or merely visiting this endpoint.
-      capabilities: { lineSetup: false, contextSetup: false, activation: false },
+      capabilities: { lineSetup: true, contextSetup: false, activation: false },
     };
   }
 }

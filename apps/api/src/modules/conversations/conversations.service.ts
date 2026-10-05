@@ -2,21 +2,31 @@ import { Injectable } from "@nestjs/common";
 import { MessageType, SenderType } from "@prisma/client";
 
 import { PrismaService } from "../../prisma/prisma.service";
+import { MerchantsService } from "../merchants.module";
 import { LatestMessageDto } from "./dto/latest-message.dto";
 
 @Injectable()
 export class ConversationsService {
   private readonly latestMessagesLimit = 20;
 
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly merchants: MerchantsService,
+  ) {}
 
-  async findLatestMessages(): Promise<LatestMessageDto[]> {
+  async findLatestMessages(userId: string, merchantId: string): Promise<LatestMessageDto[]> {
+    // Reuse the existing read policy: an active membership, regardless of write role.
+    await this.merchants.findForMember(userId, merchantId);
     const messages = await this.prismaService.message.findMany({
       where: {
+        merchantId,
         senderType: SenderType.CUSTOMER,
         messageType: MessageType.TEXT,
         conversation: {
+          merchantId,
+          customer: { merchantId },
           channel: {
+            merchantId,
             platform: {
               is: {
                 code: {
@@ -28,9 +38,7 @@ export class ConversationsService {
           },
         },
       },
-      orderBy: {
-        createdAt: "desc",
-      },
+      orderBy: [{ createdAt: "desc" }, { id: "desc" }],
       take: this.latestMessagesLimit,
       select: {
         id: true,

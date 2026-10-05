@@ -1,16 +1,18 @@
 import type { LiveMessage } from "../types/live-message";
 
-const DEFAULT_API_BASE_URL = "http://localhost:4000";
-
-function getApiBaseUrl() {
-  const baseUrl = process.env.NEXT_PUBLIC_API_BASE_URL ?? DEFAULT_API_BASE_URL;
-
-  return baseUrl.replace(/\/+$/, "");
+export class ApiError extends Error {
+  constructor(public readonly status: number) {
+    super(status === 400 ? "กรุณาเลือกร้านค้าให้ถูกต้อง"
+      : status === 401 ? "เซสชันหมดอายุ กรุณาเข้าสู่ระบบอีกครั้ง"
+      : status === 404 ? "ไม่พบร้านค้าหรือคุณไม่มีสิทธิ์ดูข้อความของร้านนี้"
+      : "ไม่สามารถโหลดข้อความได้ กรุณาลองใหม่อีกครั้ง");
+  }
 }
 
 async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${getApiBaseUrl()}${path}`, {
+  const response = await fetch(path, {
     cache: "no-store",
+    credentials: "same-origin",
     ...init,
     headers: {
       Accept: "application/json",
@@ -19,12 +21,15 @@ async function fetchJson<T>(path: string, init?: RequestInit): Promise<T> {
   });
 
   if (!response.ok) {
-    throw new Error(`Request failed with status ${response.status}`);
+    throw new ApiError(response.status);
   }
 
   return response.json() as Promise<T>;
 }
 
-export function getLatestMessages() {
-  return fetchJson<LiveMessage[]>("/conversations/messages/latest");
+export function getLatestMessages(merchantId: string, signal?: AbortSignal) {
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(merchantId)) {
+    return Promise.reject(new ApiError(400));
+  }
+  return fetchJson<LiveMessage[]>(`/api/conversations/messages/latest?merchantId=${encodeURIComponent(merchantId)}`, { signal });
 }

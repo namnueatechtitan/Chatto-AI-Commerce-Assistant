@@ -15,6 +15,10 @@ export enum MerchantStatus {
 }
 
 export enum ChannelStatus {
+  CONFIGURED = "configured",
+  CREDENTIALS_VERIFIED = "credentials_verified",
+  WEBHOOK_PENDING = "webhook_pending",
+  ERROR = "error",
   CONNECTED = "connected",
   DISCONNECTED = "disconnected",
   INVALID_TOKEN = "invalid_token",

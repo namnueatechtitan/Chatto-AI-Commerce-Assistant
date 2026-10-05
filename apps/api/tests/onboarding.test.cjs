@@ -35,6 +35,7 @@ test("status queries only an accessible store and requires knowledge plus config
   let documents = [];
   let settings = { botName: "Chatto", language: "th" };
   const prisma = {
+    $queryRawUnsafe: async () => [{ id: "canonical-line-platform" }],
     channel: { findFirst: async (query) => { queries.push(query); return { id: "channel" }; } },
     aiSetting: { findUnique: async (query) => { queries.push(query); return settings; } },
     product: { findFirst: async (query) => { queries.push(query); return product; } },
@@ -64,6 +65,8 @@ test("status queries only an accessible store and requires knowledge plus config
   const channelQuery = queries[0];
   assert.equal(channelQuery.where.status, "CONNECTED");
   assert.equal(channelQuery.where.isConnected, true);
+  assert.equal(channelQuery.where.platformId, "canonical-line-platform");
+  assert.deepEqual(channelQuery.where.credentialRevision, { gt: 0 });
   assert.deepEqual(channelQuery.select, { id: true });
   const count = queries.length;
   await assert.rejects(service.status(user.id, otherStore.id), (error) => error.getStatus() === 404);

@@ -2,6 +2,8 @@ import cors from "cors";
 import express, { type Request, type Response } from "express";
 import fs from "node:fs";
 import path from "node:path";
+import { requireServiceToken } from "./service-auth";
+import { validateProductionServiceCredentials } from "./service-token-policy";
 
 import { ContextBuilder } from "./modules/context-builder";
 import { EmbeddingsService } from "./modules/embeddings";
@@ -78,6 +80,7 @@ function stripEnvQuotes(value: string): string {
 
 loadEnvFile(path.resolve(process.cwd(), "../../.env"));
 loadEnvFile(path.resolve(process.cwd(), ".env"));
+validateProductionServiceCredentials();
 
 const app = express();
 const port = Number(process.env.AI_SERVICE_PORT ?? 5000);
@@ -353,28 +356,6 @@ function readMcpResource(
   }
 
   throw new Error(`Unknown MCP resource URI: ${uri}`);
-}
-
-function hasValidServiceToken(request: Request): boolean {
-  const expectedToken =
-    process.env.AI_SERVICE_TOKEN ?? "dev_internal_service_token";
-  const authorization = request.headers.authorization;
-
-  if (!authorization?.startsWith("Bearer ")) {
-    return false;
-  }
-
-  return authorization.replace("Bearer ", "").trim() === expectedToken;
-}
-
-function rejectUnauthorized(request: Request, response: Response): void {
-  response.status(401).json({
-    error: {
-      code: "UNAUTHORIZED",
-      message: "Missing or invalid AI service token.",
-      request_id: request.headers["x-request-id"] ?? "unknown",
-    },
-  });
 }
 
 function isAiChatRequest(body: Partial<AiChatRequest>): body is AiChatRequest {
@@ -684,7 +665,7 @@ app.get("/health", (_request, response) => {
   });
 });
 
-app.post("/mock-reply", async (request, response) => {
+app.post("/mock-reply", requireServiceToken, async (request, response) => {
   const message =
     typeof request.body?.message === "string" ? request.body.message : "";
   const merchantId =
@@ -731,7 +712,7 @@ app.get("/mcp/resources", (_request, response) => {
   response.json({ resources: mcpResources });
 });
 
-app.post("/mcp/resources/read", (request, response) => {
+app.post("/mcp/resources/read", requireServiceToken, (request, response) => {
   const uri = typeof request.body?.uri === "string" ? request.body.uri : "";
   const aiContext = isRecord(request.body?.ai_context)
     ? (request.body.ai_context as AiContextForRequest)
@@ -760,7 +741,7 @@ app.get("/mcp/tools", (_request, response) => {
   response.json({ tools: mcpTools });
 });
 
-app.post("/mcp/tools/:toolName/call", async (request, response) => {
+app.post("/mcp/tools/:toolName/call", requireServiceToken, async (request, response) => {
   const input = isRecord(request.body?.input) ? request.body.input : {};
 
   response.json(
@@ -771,12 +752,7 @@ app.post("/mcp/tools/:toolName/call", async (request, response) => {
   );
 });
 
-app.post("/mcp/chat", async (request, response) => {
-  if (!hasValidServiceToken(request)) {
-    rejectUnauthorized(request, response);
-    return;
-  }
-
+app.post("/mcp/chat", requireServiceToken, async (request, response) => {
   const body = request.body as Partial<AiChatRequest>;
 
   if (!isAiChatRequest(body)) {
@@ -803,7 +779,11 @@ app.post("/mcp/chat", async (request, response) => {
   }
 });
 
-app.post("/mcp", async (request, response) => {
+app.post("/mcp", (request, response, next) => {
+  const publicMethods = ["initialize", "mcp/manifest", "resources/list", "tools/list"];
+  if (publicMethods.includes(request.body?.method)) next();
+  else requireServiceToken(request, response, next);
+}, async (request, response) => {
   const id = request.body?.id ?? null;
   const method = typeof request.body?.method === "string" ? request.body.method : "";
   const params = isRecord(request.body?.params) ? request.body.params : {};
@@ -880,12 +860,7 @@ app.post("/mcp", async (request, response) => {
   });
 });
 
-app.post("/ai/chat", async (request, response) => {
-  if (!hasValidServiceToken(request)) {
-    rejectUnauthorized(request, response);
-    return;
-  }
-
+app.post("/ai/chat", requireServiceToken, async (request, response) => {
   const body = request.body as Partial<AiChatRequest>;
 
   if (!isAiChatRequest(body)) {

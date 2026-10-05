@@ -38,7 +38,7 @@ export default async function LoginPage({ searchParams }: {
           alt="Chatto AI Commerce Assistant"
           width={976}
           height={368}
-          sizes="244px"
+          sizes="(min-width: 1200px) 16.944444vw, (min-width: 768px) 210px, 180px"
           priority
         />
         <div className={styles.welcome}>
@@ -111,7 +111,7 @@ export default async function LoginPage({ searchParams }: {
             alt=""
             width={284}
             height={368}
-            sizes="71px"
+            sizes="(min-width: 1200px) 4.930556vw, (min-width: 768px) 71px, 64px"
             priority
           />
           <h1 id="login-heading" className={styles.heading}>เข้าสู่ระบบ/สมัครสมาชิก</h1>

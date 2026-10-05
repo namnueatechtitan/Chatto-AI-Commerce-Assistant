@@ -23,7 +23,7 @@ export function AIPerformanceCard({
 }: AIPerformanceCardProps) {
   return (
     <Card className={className}>
-      <CardHeader className="flex flex-row items-start justify-between gap-4 pb-3">
+      <CardHeader className="flex flex-row flex-wrap items-start justify-between gap-4 pb-3">
         <CardTitle>AI Performance</CardTitle>
         <Button className="rounded-lg px-3 text-xs" size="sm" variant="outline">
           {periodLabel}
@@ -36,7 +36,7 @@ export function AIPerformanceCard({
           {metrics.map((metric) => (
             <div
               key={metric.label}
-              className="flex items-center justify-between gap-4 py-4 first:pt-0 last:pb-0"
+              className="flex flex-wrap items-center justify-between gap-4 py-4 first:pt-0 last:pb-0"
             >
               <div className="text-sm text-slate-600">{metric.label}</div>
               <div className="text-right">

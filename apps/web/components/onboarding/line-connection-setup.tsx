@@ -5,7 +5,9 @@ import { LineConnectionForm } from "./line-connection-form";
 import base from "../../app/onboarding/onboarding.module.css";
 import styles from "./line-connection.module.css";
 
-export function LineConnectionSetup({ backHref, webhookUrl }: { backHref: string; webhookUrl: string | null }) {
+export function LineConnectionSetup({ backHref, webhookUrl, merchantId, merchantName, canEdit }: {
+  backHref: string; webhookUrl: string | null; merchantId: string; merchantName: string; canEdit: boolean;
+}) {
   return (
     <main className={`${base.page} ${styles.page}`}>
       <OnboardingBranding />
@@ -16,16 +18,10 @@ export function LineConnectionSetup({ backHref, webhookUrl }: { backHref: string
         <span className={styles.badge}>ขั้นตอนที่ 4 จาก 6</span>
         <header className={styles.intro}>
           <h1 id="line-setup-heading">เชื่อมต่อ LINE OA</h1>
-          <p>เชื่อมต่อ LINE Official Account ของร้านคุณ เพื่อให้ Chatto AI เริ่มตอบแชทลูกค้าอัตโนมัติได้ทันที</p>
+          <p className={styles.merchantName}>ร้าน: {merchantName}</p>
+          <p>บันทึกข้อมูล LINE OA ของร้าน แล้วคัดลอก Webhook URL ไป Verify ใน LINE Developers Console</p>
         </header>
-        <div className={styles.connectionStatus}>
-          <span className={styles.statusDot} aria-hidden="true" />
-          <div>
-            <p>ยังไม่ได้เชื่อมต่อ</p>
-            <p>กรอกข้อมูลด้านล่างเพื่อเตรียมเชื่อมต่อบัญชี LINE OA ของคุณ</p>
-          </div>
-        </div>
-        <LineConnectionForm skipHref={backHref} webhookUrl={webhookUrl} />
+        <LineConnectionForm key={merchantId} skipHref={backHref} webhookPrefix={webhookUrl} merchantId={merchantId} canEdit={canEdit} />
       </section>
     </main>
   );

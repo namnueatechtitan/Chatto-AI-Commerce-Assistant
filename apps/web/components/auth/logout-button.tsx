@@ -1,18 +1,21 @@
 "use client";
 
 import { useState } from "react";
+import { useDashboardSession } from "../../app/dashboard/providers";
 
 export function LogoutButton() {
   const [pending, setPending] = useState(false);
   const [error, setError] = useState(false);
+  const session = useDashboardSession();
   async function logout() {
     setPending(true);
     setError(false);
+    session?.suspend();
     try {
       const response = await fetch("/api/auth/logout", { method: "POST" });
       if (!response.ok) throw new Error("Logout failed");
       window.location.assign("/login");
-    } catch { setError(true); setPending(false); }
+    } catch { session?.resume(); setError(true); setPending(false); }
   }
   return <div>
     <button type="button" disabled={pending} onClick={logout} className="rounded-xl border border-slate-300 px-3 py-2 text-sm disabled:opacity-50">

@@ -35,7 +35,7 @@ export function TopProductsCard({
               </div>
               <div
                 className={cn(
-                  "flex size-11 items-center justify-center rounded-2xl bg-gradient-to-br text-[11px] font-semibold text-slate-700",
+                  "flex size-11 items-center justify-center rounded-2xl bg-gradient-to-br text-[0.6875rem] font-semibold text-slate-700",
                   product.accentClassName,
                 )}
               >

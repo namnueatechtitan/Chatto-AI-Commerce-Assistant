@@ -63,7 +63,45 @@ power the single `/onboarding/store` page. CSV/XLSX templates are in
 
 The existing `/onboarding/line` destination uses `line-connection-setup` and
 `line-connection-form` with an isolated CSS module in `components/onboarding`.
-Local validation and password visibility are frontend only. `lib/line-webhook-url`
-filters explicit, non-secret public URL configuration; no LINE credentials or
-connection/progress mutations are sent. See [Step 4 architecture](line-onboarding.md)
-and [Step 4 validation](../validation/line-onboarding.md).
+Phase D connects this screen to the existing merchant-owned LINE API with session,
+Owner, Origin and revision protections. `lib/merchant-line-api` handles safe metadata
+and mutations; `lib/line-webhook-url` builds only explicitly configured public
+channel URLs. Secrets remain transient in the browser and encrypted in the backend.
+The original design is documented in [Step 4 architecture](line-onboarding.md).
+
+Phase B adds `apps/api/src/modules/merchant-line` for merchant-owned encrypted
+credential configuration, verification and local disconnect, and
+`apps/api/src/security` for reusable authenticated encryption. Reviewed migrations
+and aggregate preflight SQL live under `apps/api/prisma`; isolated migration/restore
+tests live under `apps/api/scripts` and `tests`. Phase B originally left Step 4
+frontend only; Phase D now integrates it.
+See [Phase B architecture](phase-b-security.md),
+[deployment/rotation/rollback runbook](../deployment/phase-b-runbook.md) and
+[validation](../validation/phase-b.md). These changes have not been deployed.
+
+Phase C adds `line-webhooks/line-channel-runtime.service` for channel-scoped raw-body
+signature verification, readiness proof and revision fences. Existing webhook,
+customer/conversation and AI modules provide the message pipeline. No queue or new
+commerce/AI capabilities were added. See [C+D architecture](phase-cd-tenant-line.md),
+[runbook](../deployment/phase-cd-runbook.md) and [validation](../validation/phase-cd.md).
+
+Final deployment preparation and the two real OA connection procedure are in
+[the rollout checklist](../deployment/final-line-rollout.md). The adjacent
+`runtime.env.example` inventories private deployment settings without secret values.
+The root `channel` credential file, private environment overlays and database dumps
+are excluded from Git and Docker build contexts. No live rollout is implied.
+
+[Local environment preparation](../deployment/local-environment-preparation.md)
+records verified host/container database wiring, OA import names, staged replacement
+secrets, the exposure rotation inventory and the remaining restricted-role gate.
+
+The approved [local database preparation](../deployment/local-database-preparation.md)
+records recoverable backup/restore verification and the authenticated restricted API
+role. Its explicit current-application grant whitelist lives in
+`apps/api/prisma/provisioning/api-runtime-grants.sql`; private backup/credential and
+operational artifacts remain excluded from source control and Docker builds.
+
+The approved local application deployment is recorded in
+[local-deployment-20261005.md](../deployment/local-deployment-20261005.md).
+`scripts/line-webhook-gateway.cjs` provides a loopback upstream for a webhook-only
+HTTPS tunnel, preserving raw request bytes and excluding other API routes.

@@ -1,4 +1,5 @@
 import type { VectorDocumentForAi } from "../../types/ai-contract.types";
+import { configuredServiceToken } from "../../service-auth";
 
 export interface VectorSyncResult {
   merchant_id: string;
@@ -9,8 +10,6 @@ export interface VectorSyncResult {
 export class VectorStoreClient {
   private readonly baseUrl =
     process.env.INTERNAL_API_BASE_URL?.trim() || "http://localhost:4000";
-  private readonly token =
-    process.env.INTERNAL_SERVICE_TOKEN?.trim() || "dev_internal_service_token";
   private readonly timeoutMs = 10_000;
 
   async syncDocuments(
@@ -29,6 +28,8 @@ export class VectorStoreClient {
       return { merchant_id: merchantId, upserted: 0, deleted: 0 };
     }
 
+    const token = configuredServiceToken("INTERNAL_SERVICE_TOKEN");
+
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
 
@@ -39,7 +40,7 @@ export class VectorStoreClient {
           method: "POST",
           signal: controller.signal,
           headers: {
-            Authorization: `Bearer ${this.token}`,
+            Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
           },
           body: JSON.stringify({

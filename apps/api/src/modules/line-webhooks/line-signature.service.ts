@@ -1,16 +1,10 @@
-import {
-  Injectable,
-  InternalServerErrorException,
-} from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
+import { Injectable } from "@nestjs/common";
 import { createHmac, timingSafeEqual } from "node:crypto";
 
 @Injectable()
 export class LineSignatureService {
-  constructor(private readonly configService: ConfigService) {}
-
-  verifySignature(rawBody: Buffer, signature: string): boolean {
-    const channelSecret = this.getChannelSecret();
+  verifySignature(rawBody: Buffer, signature: string, channelSecret: string): boolean {
+    if (!channelSecret || !/^[A-Za-z0-9+/]{43}=$/.test(signature)) return false;
     const expectedSignature = createHmac("sha256", channelSecret)
       .update(rawBody)
       .digest("base64");
@@ -25,17 +19,4 @@ export class LineSignatureService {
     return timingSafeEqual(expectedBuffer, providedBuffer);
   }
 
-  private getChannelSecret(): string {
-    const channelSecret = this.configService
-      .get<string>("LINE_CHANNEL_SECRET")
-      ?.trim();
-
-    if (!channelSecret) {
-      throw new InternalServerErrorException(
-        "LINE_CHANNEL_SECRET is not configured",
-      );
-    }
-
-    return channelSecret;
-  }
 }

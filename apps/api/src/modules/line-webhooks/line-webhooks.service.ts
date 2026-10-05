@@ -1,780 +1,212 @@
-import {
-  BadRequestException,
-  Injectable,
-  InternalServerErrorException,
-  Logger,
-  ServiceUnavailableException,
-  UnauthorizedException,
-} from "@nestjs/common";
-import { ConfigService } from "@nestjs/config";
-import {
-  ConversationStatus,
-  MessageType,
-  Prisma,
-  SenderType,
-} from "@prisma/client";
+import { BadRequestException, HttpException, Injectable, ServiceUnavailableException } from "@nestjs/common";
 import { createHash } from "node:crypto";
-
+import { Prisma } from "@prisma/client";
 import { PrismaService } from "../../prisma/prisma.service";
 import { AiIntegrationService } from "../ai-integration/ai-integration.service";
-import { buildAiChatRequest } from "../ai-integration/ai-chat-request.mapper";
 import type { AiChatResponse } from "../ai-integration/ai-contract.types";
-import { LineSignatureService } from "./line-signature.service";
-import type {
-  LineWebhookEvent,
-  LineWebhookHandleResult,
-  LineWebhookMessageEvent,
-  LineWebhookRequestBody,
-  LineWebhookTextMessageEvent,
-} from "./types/line-webhook.types";
+import { buildAiChatRequest } from "../ai-integration/ai-chat-request.mapper";
+import { LineProviderAdapter } from "../merchant-line/line-provider.adapter";
+import { LineChannelRuntimeService, TrustedLineChannel } from "./line-channel-runtime.service";
+import type { LineWebhookEvent, LineWebhookHandleResult, LineWebhookTextMessageEvent } from "./types/line-webhook.types";
 
-interface LineChannelContext {
-  channelId: string;
-  merchantId: string;
-  channelName: string;
-  channelAccessTokenConfigured: boolean;
-}
-
-type PrismaTransactionClient = Pick<
-  PrismaService,
-  "conversation" | "customer" | "lineWebhookEvent" | "message"
->;
-
-type ProcessEventOutcome = "processed" | "ignored" | "duplicate";
-
-interface ProcessedTextMessageContext {
-  conversationId: string;
+interface LineJob extends TrustedLineChannel {
+  eventId: string;
   customerId: string;
-  customerDisplayName: string | null;
+  conversationId: string;
   messageId: string;
-  messageText: string;
-  messageTimestamp: Date;
-  replyToken: string;
-  webhookEventId: string;
 }
 
-type TransactionProcessResult =
-  | {
-      outcome: "processed";
-      textMessage: ProcessedTextMessageContext;
-    }
-  | {
-      outcome: "ignored" | "duplicate";
-      textMessage?: never;
-    };
-
-interface LineReplyResult {
-  attempted: boolean;
-  delivered: boolean;
-  statusCode?: number;
-  error?: string;
+// Qualify provider IDs by channel in the existing global unique column.
+export function scopedLineEventId(channelId: string, event: LineWebhookEvent): string {
+  const identity = event.webhookEventId || JSON.stringify({ type: event.type, timestamp: event.timestamp,
+    source: event.source, messageId: "message" in event ? (event.message as { id?: string })?.id : undefined });
+  return "line_" + createHash("sha256").update(JSON.stringify([channelId.toLowerCase(), identity])).digest("hex");
 }
 
 @Injectable()
 export class LineWebhooksService {
-  private readonly logger = new Logger(LineWebhooksService.name);
-  private readonly lineReplyTimeoutMs = this.resolveTimeoutMs(
-    "LINE_REPLY_TIMEOUT_MS",
-    5000,
-  );
-  private readonly activeConversationStatuses: ConversationStatus[] = [
-    ConversationStatus.AI_ACTIVE,
-    ConversationStatus.HANDOVER_REQUESTED,
-    ConversationStatus.HUMAN_ACTIVE,
-  ];
+  constructor(private readonly prisma: PrismaService, private readonly runtime: LineChannelRuntimeService,
+    private readonly ai: AiIntegrationService, private readonly provider: LineProviderAdapter) {}
 
-  constructor(
-    private readonly prismaService: PrismaService,
-    private readonly configService: ConfigService,
-    private readonly lineSignatureService: LineSignatureService,
-    private readonly aiIntegrationService: AiIntegrationService,
-  ) {}
+  // Retire the global-secret/default-merchant route; preserve historical rows.
+  async handleWebhook(..._legacy: unknown[]): Promise<LineWebhookHandleResult> {
+    throw new ServiceUnavailableException("Use the verified channel-specific LINE webhook URL");
+  }
 
-  async handleWebhook(
-    payload: LineWebhookRequestBody,
-    signature: string | undefined,
-    rawBody: Buffer | undefined,
-  ): Promise<LineWebhookHandleResult> {
-    if (!signature) {
-      throw new UnauthorizedException("Missing x-line-signature header");
+  async receive(channelId: string, signature: string | undefined, rawBody: Buffer | undefined): Promise<LineWebhookHandleResult> {
+    try { return await this.receiveVerified(channelId, signature, rawBody); }
+    catch (error) {
+      if (error instanceof HttpException) throw error;
+      // Nest's default 500 logger can print Prisma argument dumps containing text.
+      throw new ServiceUnavailableException("LINE processing is temporarily unavailable");
     }
+  }
 
-    if (!rawBody) {
-      throw new InternalServerErrorException(
-        "Raw request body is unavailable for LINE signature verification",
-      );
-    }
-
-    if (!this.lineSignatureService.verifySignature(rawBody, signature)) {
-      throw new UnauthorizedException("Invalid LINE signature");
-    }
-
-    if (!payload || !Array.isArray(payload.events)) {
+  private async receiveVerified(channelId: string, signature: string | undefined, rawBody: Buffer | undefined): Promise<LineWebhookHandleResult> {
+    const authenticated = await this.runtime.authenticate(channelId, signature, rawBody);
+    let body: { events: LineWebhookEvent[]; destination?: string };
+    try { body = JSON.parse(rawBody!.toString("utf8")) as typeof body; }
+    catch { throw new BadRequestException("Invalid LINE webhook payload"); }
+    if (!body || !Array.isArray(body.events) || body.events.length > 100 || body.events.some(event => !this.validEvent(event)))
       throw new BadRequestException("Invalid LINE webhook payload");
-    }
-
-    const channelContext = await this.resolveLineChannelContext();
-    const result: LineWebhookHandleResult = {
-      ok: true,
-      receivedEvents: payload.events.length,
-      processedEvents: 0,
-      ignoredEvents: 0,
-      duplicateEvents: 0,
-    };
-
-    for (const event of payload.events) {
-      const outcome = await this.processEvent(
-        channelContext,
-        payload.destination,
-        event,
-      );
-
-      if (outcome === "processed") {
-        result.processedEvents += 1;
-      } else if (outcome === "duplicate") {
-        result.duplicateEvents += 1;
-      } else {
-        result.ignoredEvents += 1;
+    // Includes LINE Console's signed events:[] readiness probe.
+    const context = await this.runtime.accept(authenticated, body.destination);
+    const result: LineWebhookHandleResult = { ok: true, receivedEvents: body.events.length,
+      processedEvents: 0, ignoredEvents: 0, duplicateEvents: 0 };
+    for (const event of body.events) {
+      const outcome = await this.ingest(context, event);
+      if (outcome === "duplicate") result.duplicateEvents++;
+      else if (!outcome) result.ignoredEvents++;
+      else {
+        result.processedEvents++;
+        // Await bounded AI I/O instead of leaving an untracked background task.
+        await this.respond(outcome, event as LineWebhookTextMessageEvent);
       }
     }
-
-    this.logger.log(
-      `Handled LINE webhook for channel ${channelContext.channelName}: ` +
-        `${result.processedEvents} processed, ` +
-        `${result.ignoredEvents} ignored, ` +
-        `${result.duplicateEvents} duplicate.`,
-    );
-
     return result;
   }
 
-  private async resolveLineChannelContext(): Promise<LineChannelContext> {
-    const configuredExternalChannelId = this.configService
-      .get<string>("LINE_CHANNEL_ID")
-      ?.trim();
-    const configuredLineToken = this.configService
-      .get<string>("LINE_CHANNEL_ACCESS_TOKEN")
-      ?.trim();
-    const channelAccessTokenConfigured = Boolean(
-      configuredLineToken &&
-        configuredLineToken !== "phase-2-placeholder-token",
-    );
-
-    if (configuredExternalChannelId) {
-      const configuredChannels = await this.prismaService.channel.findMany({
-        where: {
-          externalChannelId: configuredExternalChannelId,
-          platform: {
-            is: {
-              code: {
-                equals: "line",
-                mode: "insensitive",
-              },
-            },
-          },
-        },
-        include: {
-          merchant: true,
-          platform: true,
-        },
-        orderBy: {
-          createdAt: "asc",
-        },
-        take: 2,
-      });
-
-      if (configuredChannels.length === 0) {
-        throw new ServiceUnavailableException(
-          `Configured LINE external channel ID ${configuredExternalChannelId} was not found in the database. ` +
-            "Seed merchant/platform/channel records first so channels.external_channel_id matches LINE_CHANNEL_ID. See docs/integrations/line-local-testing.md.",
-        );
-      }
-
-      if (configuredChannels.length > 1) {
-        throw new ServiceUnavailableException(
-          `Multiple LINE channels matched external channel ID ${configuredExternalChannelId}. Resolve the duplicate channel data before receiving webhook traffic.`,
-        );
-      }
-
-      const configuredChannel = configuredChannels[0];
-
-      return {
-        channelId: configuredChannel.id,
-        merchantId: configuredChannel.merchantId,
-        channelName: configuredChannel.channelName,
-        channelAccessTokenConfigured,
-      };
-    }
-
-    const lineChannels = await this.prismaService.channel.findMany({
-      where: {
-        platform: {
-          is: {
-            code: {
-              equals: "line",
-              mode: "insensitive",
-            },
-          },
-        },
-      },
-      include: {
-        merchant: true,
-        platform: true,
-      },
-      orderBy: {
-        createdAt: "asc",
-      },
-      take: 2,
-    });
-
-    if (lineChannels.length === 0) {
-      throw new ServiceUnavailableException(
-        "No LINE channel was found in the database. Create a merchant, a LINE platform record, and a channel record before receiving webhook traffic. " +
-          "See docs/integrations/line-local-testing.md.",
-      );
-    }
-
-    if (lineChannels.length > 1) {
-      throw new ServiceUnavailableException(
-        "Multiple LINE channels were found. Set LINE_CHANNEL_ID to the LINE Developers external channel ID stored in channels.external_channel_id.",
-      );
-    }
-
-    return {
-      channelId: lineChannels[0].id,
-      merchantId: lineChannels[0].merchantId,
-      channelName: lineChannels[0].channelName,
-      channelAccessTokenConfigured,
-    };
+  private validEvent(event: LineWebhookEvent): boolean {
+    return Boolean(event && typeof event === "object" && typeof event.type === "string" && event.type.length <= 100 &&
+      Number.isFinite(event.timestamp) && event.timestamp >= 0 && event.timestamp <= 8640000000000000 &&
+      event.source && typeof event.source.type === "string" &&
+      (event.webhookEventId === undefined || typeof event.webhookEventId === "string" && event.webhookEventId.length > 0 && event.webhookEventId.length <= 255));
   }
 
-  private async processEvent(
-    channelContext: LineChannelContext,
-    destination: string | undefined,
-    event: LineWebhookEvent,
-  ): Promise<ProcessEventOutcome> {
-    if (!this.hasBasicEventShape(event)) {
-      throw new BadRequestException("Invalid LINE webhook event payload");
-    }
+  private textEvent(event: LineWebhookEvent): event is LineWebhookTextMessageEvent {
+    if (event.type !== "message" || event.source.type !== "user") return false;
+    const message = event.message as { type?: unknown; id?: unknown; text?: unknown } | undefined;
+    return Boolean(message?.type === "text" && typeof message.id === "string" && message.id.length > 0 && message.id.length <= 255 &&
+      typeof message.text === "string" && message.text.length <= 10000 && typeof event.replyToken === "string" &&
+      event.replyToken.length > 0 && event.replyToken.length <= 255 && typeof event.source.userId === "string" &&
+      event.source.userId.length > 0 && event.source.userId.length <= 255 && event.mode !== "standby");
+  }
 
-    const webhookEventId = this.resolveWebhookEventId(event);
-
-    try {
-      const transactionResult = await this.prismaService.$transaction(
-        async (transaction): Promise<TransactionProcessResult> => {
-          const tx = transaction as PrismaTransactionClient;
-
-          await tx.lineWebhookEvent.create({
-            data: {
-              merchantId: channelContext.merchantId,
-              channelId: channelContext.channelId,
-              webhookEventId,
-              eventType: event.type,
-              rawPayload: this.buildRawPayload(destination, event),
-            },
-          });
-
-          if (!this.isTextMessageEvent(event)) {
-            await tx.lineWebhookEvent.update({
-              where: {
-                webhookEventId,
-              },
-              data: {
-                processedAt: new Date(),
-              },
-            });
-
-            this.logger.debug(
-              `Ignored unsupported LINE webhook event ${webhookEventId} (${this.describeEvent(event)}).`,
-            );
-
-            return {
-              outcome: "ignored",
-            };
-          }
-
-          const customer = await this.findOrCreateCustomer(
-            tx,
-            channelContext,
-            event.source.userId,
-          );
-          const messageTimestamp = new Date(event.timestamp);
-          const conversation = await this.findOrCreateActiveConversation(
-            tx,
-            channelContext,
-            customer.id,
-            messageTimestamp,
-          );
-
-          const customerMessage = await tx.message.create({
-            data: {
-              merchantId: channelContext.merchantId,
-              conversationId: conversation.id,
-              senderType: SenderType.CUSTOMER,
-              messageType: MessageType.TEXT,
-              content: event.message.text,
-              externalMessageId: event.message.id,
-              metadata: this.buildMessageMetadata(
-                destination,
-                channelContext.channelAccessTokenConfigured,
-                webhookEventId,
-                event,
-              ),
-            },
-          });
-
-          await tx.conversation.update({
-            where: {
-              id: conversation.id,
-            },
-            data: {
-              lastMessageAt: messageTimestamp,
-            },
-          });
-
-          await tx.lineWebhookEvent.update({
-            where: {
-              webhookEventId,
-            },
-            data: {
-              processedAt: new Date(),
-            },
-          });
-
-          return {
-            outcome: "processed",
-            textMessage: {
-              conversationId: conversation.id,
-              customerId: customer.id,
-              customerDisplayName: customer.displayName,
-              messageId: customerMessage.id,
-              messageText: event.message.text,
-              messageTimestamp,
-              replyToken: event.replyToken,
-              webhookEventId,
-            },
-          };
-        },
-      );
-
-      if (transactionResult.outcome === "processed") {
-        void this.respondWithAi(
-          channelContext,
-          destination,
-          transactionResult.textMessage,
-        );
-      }
-
-      return transactionResult.outcome;
-    } catch (error) {
-      if (this.isKnownUniqueConstraintError(error)) {
-        await this.prismaService.lineWebhookEvent.updateMany({
-          where: {
-            webhookEventId,
-          },
-          data: {
-            isDuplicate: true,
-          },
-        });
-
-        this.logger.warn(`Duplicate LINE webhook event skipped: ${webhookEventId}`);
+  private async ingest(context: TrustedLineChannel, event: LineWebhookEvent): Promise<LineJob | "duplicate" | null> {
+    const eventId = scopedLineEventId(context.channelId, event);
+    return this.runtime.locked(context, async db => {
+      const previous = await db.lineWebhookEvent.findUnique({ where: { webhookEventId: eventId } });
+      if (previous) {
+        if (previous.merchantId !== context.merchantId || previous.channelId !== context.channelId)
+          throw new BadRequestException("Invalid LINE event relationship");
+        await db.lineWebhookEvent.updateMany({ where: { id: previous.id, merchantId: context.merchantId, channelId: context.channelId }, data: { isDuplicate: true } });
         return "duplicate";
       }
-
-      throw error;
-    }
-  }
-
-  private async respondWithAi(
-    channelContext: LineChannelContext,
-    destination: string | undefined,
-    textMessage: ProcessedTextMessageContext,
-  ): Promise<void> {
-    try {
-      const aiResponse = await this.aiIntegrationService.chat(
-        buildAiChatRequest({
-          requestId: `line_${textMessage.webhookEventId}`,
-          merchantId: channelContext.merchantId,
-          channel: "line",
-          conversationId: textMessage.conversationId,
-          customerId: textMessage.customerId,
-          customerDisplayName: textMessage.customerDisplayName ?? undefined,
-          messageId: textMessage.messageId,
-          messageText: textMessage.messageText,
-          timestamp: textMessage.messageTimestamp.toISOString(),
-        }),
-      );
-      const lineReply = await this.replyToLine(
-        textMessage.replyToken,
-        aiResponse.reply.text,
-      );
-
-      await this.persistAiMessage(
-        channelContext,
-        destination,
-        textMessage,
-        aiResponse,
-        lineReply,
-      );
-
-      this.logger.log(
-        `AI reply persisted for LINE webhook ${textMessage.webhookEventId}: provider=${aiResponse.generation?.provider ?? "unknown"}, external=${aiResponse.generation?.used_external_provider ?? false}, lineDelivered=${lineReply.delivered}`,
-      );
-    } catch (error) {
-      const reason = error instanceof Error ? error.message : String(error);
-
-      this.logger.error(
-        `Failed to generate LINE AI reply for webhook ${textMessage.webhookEventId}: ${reason}`,
-      );
-    }
-  }
-
-  private async replyToLine(
-    replyToken: string,
-    text: string,
-  ): Promise<LineReplyResult> {
-    const channelAccessToken = this.configService
-      .get<string>("LINE_CHANNEL_ACCESS_TOKEN")
-      ?.trim();
-
-    if (
-      !channelAccessToken ||
-      channelAccessToken === "phase-2-placeholder-token"
-    ) {
-      return {
-        attempted: false,
-        delivered: false,
-        error: "LINE_CHANNEL_ACCESS_TOKEN is not configured",
-      };
-    }
-
-    const controller = new AbortController();
-    const timeout = setTimeout(
-      () => controller.abort(),
-      this.lineReplyTimeoutMs,
-    );
-
-    try {
-      const response = await fetch("https://api.line.me/v2/bot/message/reply", {
-        method: "POST",
-        signal: controller.signal,
-        headers: {
-          Authorization: `Bearer ${channelAccessToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          replyToken,
-          messages: [
-            {
-              type: "text",
-              text,
-            },
-          ],
-        }),
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text().catch(() => "");
-
-        return {
-          attempted: true,
-          delivered: false,
-          statusCode: response.status,
-          error: errorText || response.statusText,
-        };
+      await db.lineWebhookEvent.create({ data: { merchantId: context.merchantId, channelId: context.channelId,
+        webhookEventId: eventId, eventType: event.type,
+        rawPayload: { version: 1, revision: context.revision, phase: "received" } } });
+      if (!this.textEvent(event)) {
+        await db.lineWebhookEvent.update({ where: { webhookEventId: eventId, merchantId: context.merchantId },
+          data: { processedAt: new Date(), rawPayload: { version: 1, revision: context.revision, phase: "ignored" } } });
+        return null;
       }
-
-      return {
-        attempted: true,
-        delivered: true,
-        statusCode: response.status,
-      };
-    } catch (error) {
-      const timedOut = error instanceof Error && error.name === "AbortError";
-
-      return {
-        attempted: true,
-        delivered: false,
-        error: timedOut
-          ? `LINE reply timed out after ${this.lineReplyTimeoutMs}ms`
-          : error instanceof Error
-            ? error.message
-            : String(error),
-      };
-    } finally {
-      clearTimeout(timeout);
-    }
-  }
-
-  private async persistAiMessage(
-    channelContext: LineChannelContext,
-    destination: string | undefined,
-    textMessage: ProcessedTextMessageContext,
-    aiResponse: AiChatResponse,
-    lineReply: LineReplyResult,
-  ): Promise<void> {
-    const sentAt = new Date();
-
-    await this.prismaService.message.create({
-      data: {
-        merchantId: channelContext.merchantId,
-        conversationId: textMessage.conversationId,
-        senderType: SenderType.AI,
-        messageType: MessageType.TEXT,
-        content: aiResponse.reply.text,
-        metadata: this.buildAiMessageMetadata(
-          destination,
-          textMessage,
-          aiResponse,
-          lineReply,
-        ),
-      },
-    });
-
-    await this.prismaService.conversation.update({
-      where: {
-        id: textMessage.conversationId,
-      },
-      data: {
-        lastMessageAt: sentAt,
-      },
+      let customer = await db.customer.findUnique({ where: { channelId_externalUserId: {
+        channelId: context.channelId, externalUserId: event.source.userId } } });
+      if (customer && customer.merchantId !== context.merchantId) throw new BadRequestException("Invalid LINE channel relationships");
+      customer ??= await db.customer.create({ data: { merchantId: context.merchantId, channelId: context.channelId, externalUserId: event.source.userId } });
+      let conversation = await db.conversation.findFirst({ where: { merchantId: context.merchantId, customerId: customer.id,
+        channelId: context.channelId, status: { in: ["AI_ACTIVE", "HANDOVER_REQUESTED", "HUMAN_ACTIVE"] },
+        customer: { merchantId: context.merchantId }, channel: { merchantId: context.merchantId } }, orderBy: [{ lastMessageAt: "desc" }, { createdAt: "desc" }] });
+      conversation ??= await db.conversation.create({ data: { merchantId: context.merchantId, customerId: customer.id,
+        channelId: context.channelId, status: "AI_ACTIVE", lastMessageAt: new Date(event.timestamp) } });
+      const existingMessage = await db.message.findFirst({ where: { merchantId: context.merchantId,
+        externalMessageId: event.message.id, senderType: "CUSTOMER", conversation: { merchantId: context.merchantId, channelId: context.channelId } }, select: { id: true } });
+      if (existingMessage) {
+        await db.lineWebhookEvent.update({ where: { webhookEventId: eventId, merchantId: context.merchantId },
+          data: { isDuplicate: true, processedAt: new Date(), rawPayload: { version: 1, revision: context.revision, phase: "duplicate_message" } } });
+        return "duplicate";
+      }
+      const message = await db.message.create({ data: { merchantId: context.merchantId, conversationId: conversation.id,
+        senderType: "CUSTOMER", messageType: "TEXT", content: event.message.text, externalMessageId: event.message.id,
+        metadata: { line: { sourceWebhookEventId: eventId } } } });
+      await db.conversation.update({ where: { id: conversation.id, merchantId: context.merchantId }, data: { lastMessageAt: new Date(event.timestamp) } });
+      if (customer.isBlocked || conversation.status !== "AI_ACTIVE") {
+        await db.lineWebhookEvent.update({ where: { webhookEventId: eventId, merchantId: context.merchantId },
+          data: { processedAt: new Date(), rawPayload: { version: 1, revision: context.revision, phase: "human_or_blocked" } } });
+        return null;
+      }
+      return { ...context, eventId, customerId: customer.id, conversationId: conversation.id, messageId: message.id };
     });
   }
 
-  private async findOrCreateCustomer(
-    transaction: PrismaTransactionClient,
-    channelContext: LineChannelContext,
-    externalUserId: string,
-  ) {
-    const existingCustomer = await transaction.customer.findUnique({
-      where: {
-        channelId_externalUserId: {
-          channelId: channelContext.channelId,
-          externalUserId,
-        },
-      },
-    });
+  private async ownedJob(db: Prisma.TransactionClient, job: LineJob) {
+    const event = await db.lineWebhookEvent.findFirst({ where: { webhookEventId: job.eventId, merchantId: job.merchantId, channelId: job.channelId } });
+    const message = await db.message.findFirst({ where: { id: job.messageId, merchantId: job.merchantId, conversationId: job.conversationId,
+      senderType: "CUSTOMER", conversation: { merchantId: job.merchantId, channelId: job.channelId, customerId: job.customerId,
+        status: "AI_ACTIVE", customer: { merchantId: job.merchantId, channelId: job.channelId, isBlocked: false }, channel: { merchantId: job.merchantId } } } });
+    const metadata = message?.metadata as { line?: { sourceWebhookEventId?: unknown } } | null;
+    if (!event || !message || metadata?.line?.sourceWebhookEventId !== job.eventId ||
+      (event.rawPayload as { revision?: unknown })?.revision !== job.revision)
+      throw new BadRequestException("Invalid LINE processing context");
+    return { event, message };
+  }
 
-    if (existingCustomer) {
-      return existingCustomer;
-    }
+  private generationMetadata(generation: AiChatResponse["generation"]): Prisma.InputJsonObject | null {
+    if (!generation || !["mock", "gemini", "openai"].includes(generation.provider) ||
+      typeof generation.used_external_provider !== "boolean" || typeof generation.fallback_used !== "boolean") return null;
+    // Retain only provider evidence. Never persist arbitrary provider errors,
+    // debug payloads, or an unrecognized value masquerading as a model name.
+    const modelPattern = generation.provider === "gemini" ? /^gemini-[a-zA-Z0-9._-]{1,100}$/
+      : generation.provider === "openai" ? /^(?:gpt-|chatgpt-|o[1-9])[a-zA-Z0-9._-]{1,100}$/ : null;
+    return { provider: generation.provider,
+      model: typeof generation.model === "string" && modelPattern?.test(generation.model) ? generation.model : null,
+      used_external_provider: generation.used_external_provider, fallback_used: generation.fallback_used };
+  }
 
+  private async respond(job: LineJob, input: LineWebhookTextMessageEvent): Promise<void> {
     try {
-      return await transaction.customer.create({
-        data: {
-          merchantId: channelContext.merchantId,
-          channelId: channelContext.channelId,
-          externalUserId,
-        },
+      const claimed = await this.runtime.locked(job, async db => {
+        const { event, message } = await this.ownedJob(db, job);
+        if ((event.rawPayload as { phase?: unknown }).phase !== "received") return null;
+        await db.lineWebhookEvent.update({ where: { id: event.id, merchantId: job.merchantId },
+          data: { rawPayload: { version: 1, revision: job.revision, phase: "ai_started" } } });
+        return message;
       });
-    } catch (error) {
-      if (this.isKnownUniqueConstraintError(error)) {
-        const customer = await transaction.customer.findUnique({
-          where: {
-            channelId_externalUserId: {
-              channelId: channelContext.channelId,
-              externalUserId,
-            },
-          },
-        });
-
-        if (customer) {
-          return customer;
+      if (!claimed) return;
+      const response = await this.ai.chat(buildAiChatRequest({ requestId: job.eventId, merchantId: job.merchantId,
+        channel: "line", conversationId: job.conversationId, customerId: job.customerId, messageId: job.messageId,
+        messageText: claimed.content, timestamp: new Date(input.timestamp).toISOString() }));
+      if (response.merchant_id !== job.merchantId || response.conversation_id !== job.conversationId ||
+        response.request_id !== job.eventId || typeof response.reply?.text !== "string" || !response.reply.text.trim())
+        throw new BadRequestException("Invalid AI response identity");
+      const lineMetadata = { sourceWebhookEventId: job.eventId, channelId: job.channelId, credentialRevision: job.revision };
+      const aiMetadata = { requestId: response.request_id, generation: this.generationMetadata(response.generation) };
+      const outbound = await this.runtime.locked(job, async db => {
+        await this.ownedJob(db, job);
+        const message = await db.message.create({ data: { merchantId: job.merchantId, conversationId: job.conversationId,
+          senderType: "AI", messageType: "TEXT", content: response.reply.text.slice(0, 5000),
+          metadata: { line: { ...lineMetadata, delivery: "reserved" }, ai: aiMetadata } } });
+        // Commit intent before sending. A crash/timeout cannot trigger an automatic
+        // second reply. Ambiguous deliveries require operator reconciliation.
+        await db.lineWebhookEvent.update({ where: { webhookEventId: job.eventId, merchantId: job.merchantId },
+          data: { rawPayload: { version: 1, revision: job.revision, phase: "reply_reserved" } } });
+        return message;
+      });
+      await this.runtime.locked(job, async (db, channel) => {
+        const { event } = await this.ownedJob(db, job);
+        if ((event.rawPayload as { phase?: unknown }).phase !== "reply_reserved") return;
+        const delivery = await this.provider.reply(this.runtime.accessToken(channel), input.replyToken, outbound.content);
+        // Definitive provider authentication failure invalidates this revision's
+        // readiness. Keep the ownership reservation until explicit disconnect.
+        if (delivery.statusCode === 401) {
+          await db.channel.update({ where: { id: channel.id, merchantId: job.merchantId }, data: {
+            status: "ERROR", isConnected: false, credentialsVerifiedAt: null, webhookVerifiedAt: null,
+            credentialRevision: { increment: 1 },
+          } });
         }
-      }
-
-      throw error;
+        await db.message.update({ where: { id: outbound.id, merchantId: job.merchantId },
+          data: { metadata: { line: { ...lineMetadata, delivery: delivery.outcome,
+            ...(delivery.statusCode ? { statusCode: delivery.statusCode } : {}) }, ai: aiMetadata } } });
+        await db.conversation.update({ where: { id: job.conversationId, merchantId: job.merchantId }, data: { lastMessageAt: new Date() } });
+        await db.lineWebhookEvent.update({ where: { id: event.id, merchantId: job.merchantId },
+          data: { processedAt: new Date(), rawPayload: { version: 1, revision: job.revision, phase: delivery.outcome } } });
+      });
+    } catch {
+      // Never log customer text or provider errors. Reserved replies remain
+      // uncertain for reconciliation; failed/stale AI requests are not repeated.
+      await this.prisma.lineWebhookEvent.updateMany({ where: { webhookEventId: job.eventId, merchantId: job.merchantId,
+        channelId: job.channelId, processedAt: null, rawPayload: { path: ["phase"], equals: "ai_started" } },
+        data: { processedAt: new Date(), rawPayload: { version: 1, revision: job.revision, phase: "failed_or_stale" } } }).catch(() => undefined);
     }
-  }
-
-  private async findOrCreateActiveConversation(
-    transaction: PrismaTransactionClient,
-    channelContext: LineChannelContext,
-    customerId: string,
-    messageTimestamp: Date,
-  ) {
-    const activeConversation = await transaction.conversation.findFirst({
-      where: {
-        merchantId: channelContext.merchantId,
-        customerId,
-        channelId: channelContext.channelId,
-        status: {
-          in: this.activeConversationStatuses,
-        },
-      },
-      orderBy: [
-        {
-          lastMessageAt: "desc",
-        },
-        {
-          createdAt: "desc",
-        },
-      ],
-    });
-
-    if (activeConversation) {
-      return activeConversation;
-    }
-
-    return transaction.conversation.create({
-      data: {
-        merchantId: channelContext.merchantId,
-        customerId,
-        channelId: channelContext.channelId,
-        status: ConversationStatus.AI_ACTIVE,
-        lastMessageAt: messageTimestamp,
-      },
-    });
-  }
-
-  private isTextMessageEvent(
-    event: LineWebhookEvent,
-  ): event is LineWebhookTextMessageEvent {
-    if (!this.isMessageEvent(event)) {
-      return false;
-    }
-
-    return (
-      Number.isFinite(event.timestamp) &&
-      typeof event.replyToken === "string" &&
-      typeof event.source?.userId === "string" &&
-      typeof event.message.id === "string" &&
-      event.message.type === "text" &&
-      typeof event.message.text === "string"
-    );
-  }
-
-  private isMessageEvent(
-    event: LineWebhookEvent,
-  ): event is LineWebhookMessageEvent {
-    return (
-      event.type === "message" &&
-      "message" in event &&
-      typeof event.message === "object" &&
-      event.message !== null
-    );
-  }
-
-  private hasBasicEventShape(event: LineWebhookEvent): boolean {
-    return (
-      typeof event === "object" &&
-      event !== null &&
-      typeof event.type === "string" &&
-      Number.isFinite(event.timestamp) &&
-      typeof event.source === "object" &&
-      event.source !== null &&
-      typeof event.source.type === "string"
-    );
-  }
-
-  private resolveWebhookEventId(event: LineWebhookEvent): string {
-    if (typeof event.webhookEventId === "string" && event.webhookEventId.trim()) {
-      return event.webhookEventId.trim();
-    }
-
-    const fallbackSource = {
-      messageId:
-        this.isMessageEvent(event) && typeof event.message.id === "string"
-          ? event.message.id
-          : null,
-      sourceType: event.source?.type ?? null,
-      sourceUserId:
-        typeof event.source?.userId === "string" ? event.source.userId : null,
-      timestamp: event.timestamp,
-      type: event.type,
-    };
-
-    const digest = createHash("sha256")
-      .update(JSON.stringify(fallbackSource))
-      .digest("hex");
-
-    return `fallback_${digest}`;
-  }
-
-  private buildRawPayload(
-    destination: string | undefined,
-    event: LineWebhookEvent,
-  ): Prisma.InputJsonValue {
-    return JSON.parse(
-      JSON.stringify({
-        destination: destination ?? null,
-        event,
-      }),
-    ) as Prisma.InputJsonValue;
-  }
-
-  private buildMessageMetadata(
-    destination: string | undefined,
-    channelAccessTokenConfigured: boolean,
-    webhookEventId: string,
-    event: LineWebhookTextMessageEvent,
-  ): Prisma.InputJsonValue {
-    return JSON.parse(
-      JSON.stringify({
-        line: {
-          destination: destination ?? null,
-          replyToken: event.replyToken,
-          sourceType: event.source.type,
-          timestamp: event.timestamp,
-          webhookEventId,
-          deliveryContext: event.deliveryContext ?? null,
-          mode: event.mode ?? null,
-          channelAccessTokenConfigured,
-        },
-      }),
-    ) as Prisma.InputJsonValue;
-  }
-
-  private buildAiMessageMetadata(
-    destination: string | undefined,
-    textMessage: ProcessedTextMessageContext,
-    aiResponse: AiChatResponse,
-    lineReply: LineReplyResult,
-  ): Prisma.InputJsonValue {
-    return JSON.parse(
-      JSON.stringify({
-        ai: {
-          requestId: aiResponse.request_id,
-          intent: aiResponse.intent,
-          confidence: aiResponse.reply.confidence,
-          sources: aiResponse.sources ?? [],
-          actions: aiResponse.actions ?? [],
-          handoverRequired: aiResponse.handover_required,
-          generation: aiResponse.generation ?? null,
-          mcp: "mcp" in aiResponse ? aiResponse.mcp : null,
-        },
-        line: {
-          destination: destination ?? null,
-          replyToken: textMessage.replyToken,
-          sourceWebhookEventId: textMessage.webhookEventId,
-          reply: lineReply,
-        },
-      }),
-    ) as Prisma.InputJsonValue;
-  }
-
-  private resolveTimeoutMs(name: string, fallback: number): number {
-    const configured = Number(process.env[name]);
-
-    if (Number.isFinite(configured) && configured >= 1000) {
-      return configured;
-    }
-
-    return fallback;
-  }
-
-  private describeEvent(event: LineWebhookEvent): string {
-    if (this.isMessageEvent(event)) {
-      return `message:${event.message.type ?? "unknown"}`;
-    }
-
-    return event.type;
-  }
-
-  private isKnownUniqueConstraintError(error: unknown): boolean {
-    return (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
-      (error as Prisma.PrismaClientKnownRequestError).code === "P2002"
-    );
   }
 }

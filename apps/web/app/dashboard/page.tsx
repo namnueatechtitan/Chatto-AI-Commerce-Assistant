@@ -35,8 +35,16 @@ import {
   topProducts,
   type DashboardStatIcon,
 } from "../../lib/mock-data";
+import { getMyMerchants } from "../../lib/merchants";
 
-export default function DashboardPage() {
+export default async function DashboardPage({ searchParams }: {
+  searchParams: Promise<{ merchantId?: string | string[] }>;
+}) {
+  const memberships = await getMyMerchants();
+  const { merchantId } = await searchParams;
+  const selected = typeof merchantId === "string"
+    ? memberships.find(({ merchant }) => merchant.id === merchantId)
+    : merchantId === undefined && memberships.length === 1 ? memberships[0] : undefined;
   const statIconMap: Record<
     DashboardStatIcon,
     typeof MessageCircleMore
@@ -57,7 +65,7 @@ export default function DashboardPage() {
         storeSummary={dashboardOverview.storeSummary}
       />
 
-      <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
+      <section className="grid gap-4 sm:grid-cols-2 desktop:grid-cols-3">
         {dashboardStats.map((stat) => {
           const Icon = statIconMap[stat.icon];
 
@@ -65,29 +73,29 @@ export default function DashboardPage() {
         })}
       </section>
 
-      <section className="grid gap-4 xl:grid-cols-12">
+      <section className="grid gap-4 desktop:grid-cols-12">
         <MessageOverviewChart
-          className="xl:col-span-5"
+          className="desktop:col-span-5"
           data={messageOverviewData}
           periodLabel={dashboardOverview.periodLabel}
         />
         <ChannelDistributionChart
-          className="xl:col-span-3"
+          className="desktop:col-span-3"
           data={channelDistributionData}
           totalMessages="25,680"
         />
         <AIKnowledgeCard
-          className="xl:col-span-2"
+          className="desktop:col-span-2"
           metrics={aiKnowledgeMetrics}
         />
         <AIPerformanceCard
-          className="xl:col-span-2"
+          className="desktop:col-span-2"
           metrics={aiPerformanceMetrics}
           periodLabel={dashboardOverview.periodLabel}
         />
       </section>
 
-      <section className="grid gap-4 2xl:grid-cols-[0.92fr_0.92fr_1.24fr_0.96fr]">
+      <section className="grid items-start gap-4 desktop:grid-cols-[0.92fr_0.92fr_1.24fr_0.96fr]">
         <TopProductsCard products={topProducts} />
         <RecentOrdersCard orders={recentOrders} />
         <CustomerIssuesCard
@@ -101,7 +109,12 @@ export default function DashboardPage() {
       </section>
 
       <section>
-        <LiveMessagesFeed />
+        <LiveMessagesFeed
+          key={selected?.merchant.id ?? "unselected"}
+          merchants={memberships.map(({ merchant }) => merchant)}
+          selectedMerchantId={selected?.merchant.id ?? null}
+          invalidSelection={merchantId !== undefined && !selected}
+        />
       </section>
 
       <FooterBanner benefits={footerBenefits} />

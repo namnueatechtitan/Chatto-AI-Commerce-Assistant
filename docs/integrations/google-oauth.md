@@ -45,7 +45,7 @@ WEB_URL=http://localhost:3000
 แต่ละตัวแปรต้องอยู่คนละบรรทัด URL เป็น plain text ไม่มี Markdown link หรือ backslash
 หน้า underscore. ใช้ `WEB_URL` ไม่ใช่ `WEB_BASE_URL`.
 ใช้ `DATABASE_URL` ของ PostgreSQL ที่ต้องการ. สำหรับรันบนเครื่องค่าเริ่มต้นใน example
-คือ `postgresql://postgres:postgres@localhost:5432/chatto_phase2?schema=public`.
+คือ `<verified private DATABASE_URL from root .env>`.
 
 API อ่าน `.env` ที่ root. เว็บใช้ `/api/auth/*` บน origin เดียวกันและ proxy ไป API.
 จึงต้องลงทะเบียน callback ที่พอร์ต **3000** แทนพอร์ต 4000.

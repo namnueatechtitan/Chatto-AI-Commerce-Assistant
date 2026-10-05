@@ -1,4 +1,5 @@
-import { Injectable } from "@nestjs/common";
+import { BadGatewayException, Injectable } from "@nestjs/common";
+import { configuredServiceToken } from "../../auth/service-token";
 import { InternalAiService } from "../internal-ai/internal-ai.service";
 import type { AiChatRequest, AiChatResponse } from "./ai-contract.types";
 
@@ -6,9 +7,6 @@ import type { AiChatRequest, AiChatResponse } from "./ai-contract.types";
 export class AiIntegrationService {
   private readonly aiServiceBaseUrl =
     process.env.AI_SERVICE_BASE_URL ?? "http://localhost:5000";
-
-  private readonly serviceToken =
-    process.env.AI_SERVICE_TOKEN ?? "dev_internal_service_token";
 
   private readonly aiServiceTimeoutMs = this.resolveTimeoutMs(
     "AI_SERVICE_TIMEOUT_MS",
@@ -18,6 +16,7 @@ export class AiIntegrationService {
   constructor(private readonly internalAiService: InternalAiService) {}
 
   async chat(request: AiChatRequest): Promise<AiChatResponse> {
+    const serviceToken = configuredServiceToken("AI_SERVICE_TOKEN");
     const enrichedRequest = await this.withMerchantContext(request);
     const controller = new AbortController();
     const timeout = setTimeout(
@@ -30,7 +29,7 @@ export class AiIntegrationService {
         method: "POST",
         signal: controller.signal,
         headers: {
-          Authorization: `Bearer ${this.serviceToken}`,
+          Authorization: `Bearer ${serviceToken}`,
           "Content-Type": "application/json",
           "X-Request-Id": request.request_id,
           "X-Merchant-Id": request.merchant_id,
@@ -39,13 +38,15 @@ export class AiIntegrationService {
       });
 
       if (!response.ok) {
-        const errorText = await response.text().catch(() => "");
-        throw new Error(
-          `AI service failed with ${response.status}: ${errorText || response.statusText}`,
-        );
+        throw new BadGatewayException(`AI service failed with ${response.status}`);
       }
 
-      return response.json() as Promise<AiChatResponse>;
+      const result = await response.json() as AiChatResponse | null;
+      if (!result || result.request_id !== request.request_id || result.merchant_id !== request.merchant_id ||
+          result.conversation_id !== request.conversation_id || typeof result.reply?.text !== "string") {
+        throw new BadGatewayException("Invalid AI service response");
+      }
+      return result;
     } catch (error) {
       if (error instanceof Error && error.name === "AbortError") {
         throw new Error(

@@ -66,7 +66,7 @@ export function Sidebar({ mobile = false, className }: SidebarProps) {
   return (
     <aside
       className={cn(
-        "hidden h-screen flex-col border-r border-border bg-[#f7faf7] px-5 py-6 xl:flex",
+        "sticky top-0 hidden h-[100svh] flex-col overflow-y-auto border-r border-border bg-[#f7faf7] px-5 py-6 desktop:flex",
         className,
       )}
     >
@@ -107,7 +107,7 @@ export function Sidebar({ mobile = false, className }: SidebarProps) {
         })}
       </nav>
 
-      <div className="mt-auto rounded-[28px] bg-[#06281A] p-5 text-white shadow-card">
+      <div className="mt-auto rounded-[1.75rem] bg-[#06281A] p-5 text-white shadow-card">
         <div className="mb-3 flex items-center gap-2 text-sm font-medium text-emerald-200">
           <Sparkles className="size-4" />
           Chatto AI Tips

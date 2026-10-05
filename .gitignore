@@ -8,6 +8,12 @@ coverage
 *.tsbuildinfo
 .env
 .env.local
+channel
+backups/
+*.dump
+*.private.env
+*.private.yml
+*.private.yaml
 *.log
 postgres-data
 apps/api/storage/

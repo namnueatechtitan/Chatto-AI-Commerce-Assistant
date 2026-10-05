@@ -4,6 +4,21 @@
 
 @layer base {
   :root {
+    /* 1440px desktop reference; one rem-based scale for the whole UI. */
+    --space-xs: 0.5rem;
+    --space-sm: 1rem;
+    --space-md: 1.5rem;
+    --space-lg: 2rem;
+    --space-xl: 3rem;
+    --radius-sm: 0.5rem;
+    --radius-md: 0.75rem;
+    --radius-lg: 1.5rem;
+    --font-xs: 0.75rem;
+    --font-sm: 0.875rem;
+    --font-md: 1rem;
+    --font-lg: 1.25rem;
+    --font-xl: 2rem;
+    --content-width: 120rem;
     --font-sans: var(--font-inter), sans-serif;
     --background: 255 255 255;
     --foreground: 15 23 42;
@@ -27,8 +42,20 @@
     @apply min-h-full;
   }
 
+  html {
+    font-size: 100%;
+  }
+
+  @media (min-width: 1200px) {
+    html {
+      font-size: clamp(0.875rem, 1.1111111111vw, 1.3333333333rem);
+    }
+  }
+
   body {
     font-family: var(--font-sans);
+    max-width: var(--content-width);
+    margin-inline: auto;
     @apply bg-background text-foreground;
   }
 
@@ -74,7 +101,16 @@
   }
 
   .dashboard-shell {
-    @apply min-h-screen bg-white;
+    @apply min-h-[100svh] bg-white;
+  }
+
+  @media (max-width: 767px) {
+    .dashboard-shell input,
+    .dashboard-shell select,
+    .dashboard-shell textarea {
+      font-size: var(--font-md);
+      min-height: 2.75rem;
+    }
   }
 
   .dashboard-main {
@@ -98,7 +134,7 @@
   }
 
   .card-grid {
-    @apply grid gap-4 sm:grid-cols-2 xl:grid-cols-4;
+    @apply grid gap-4 sm:grid-cols-2 desktop:grid-cols-4;
   }
 
   .metric-value {

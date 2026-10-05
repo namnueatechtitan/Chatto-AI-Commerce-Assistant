@@ -17,7 +17,7 @@ function Card({
     return (
       <section
         className={cn(
-          "rounded-3xl border border-border bg-white shadow-card",
+          "min-w-0 rounded-3xl border border-border bg-white shadow-card",
           className,
         )}
         {...props}
@@ -33,7 +33,7 @@ function Card({
   return (
     <section
       className={cn(
-        "rounded-3xl border border-border bg-white shadow-card",
+        "min-w-0 rounded-3xl border border-border bg-white shadow-card",
         className,
       )}
       {...props}
@@ -62,7 +62,7 @@ const CardTitle = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <h3
     ref={ref}
-    className={cn("text-base font-semibold tracking-tight text-slate-950", className)}
+    className={cn("min-w-0 break-words text-base font-semibold tracking-tight text-slate-950", className)}
     {...props}
   />
 ));

@@ -35,12 +35,18 @@ import { UsersModule } from "./modules/users.module";
 import { VectorDocumentsModule } from "./modules/vector-documents.module";
 import { AiIntegrationModule } from "./modules/ai-integration/ai-integration.module";
 import { InternalAiModule } from "./modules/internal-ai/internal-ai.module";
+import { MerchantLineModule } from "./modules/merchant-line/merchant-line.module";
+import { validateProductionServiceCredentials } from "./auth/service-token-policy";
 
 @Module({
   imports: [
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: ["../../.env", ".env"],
+      validate: (configuration: NodeJS.ProcessEnv) => {
+        validateProductionServiceCredentials(configuration);
+        return configuration;
+      },
     }),
     PrismaModule,
     HealthModule,
@@ -51,6 +57,7 @@ import { InternalAiModule } from "./modules/internal-ai/internal-ai.module";
     MerchantsModule,
     OnboardingModule,
     StoreInformationModule,
+    MerchantLineModule,
     CatalogImportsModule,
     RolesModule,
     PermissionsModule,

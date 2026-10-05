@@ -35,10 +35,10 @@ export function AIAssistantPanel({
     <Card className={className}>
       <CardHeader className="pb-3">
         <div className="flex items-center gap-2">
-          <div className="flex size-10 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-2xl bg-primary/10 text-primary">
             <BrainCircuit className="size-5" />
           </div>
-          <div>
+          <div className="min-w-0">
             <CardTitle>AI Assistant</CardTitle>
             <div className="mt-1 text-sm text-slate-500">
               ตัวช่วยติดตามสถานะ AI และข้อมูลของร้านแบบเรียลไทม์
@@ -82,16 +82,16 @@ export function AIAssistantPanel({
 
             return (
               <div key={widget.title} className="rounded-2xl border border-border p-4">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex min-w-0 items-start gap-3">
-                    <div className="mt-0.5 flex size-9 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div className="flex min-w-0 flex-1 basis-[10rem] items-start gap-3">
+                    <div className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-slate-600">
                       {icon}
                     </div>
                     <div className="min-w-0">
                       <div className="text-xs font-medium text-slate-500">
                         {widget.title}
                       </div>
-                      <div className="mt-1 text-sm font-semibold text-slate-950">
+                      <div className="mt-1 break-words text-sm font-semibold text-slate-950 [overflow-wrap:anywhere]">
                         {widget.value}
                       </div>
                       <div className="mt-1 text-xs text-slate-500">

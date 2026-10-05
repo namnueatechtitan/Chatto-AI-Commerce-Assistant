@@ -68,22 +68,16 @@ async function main() {
     where: {
       id: existingChannel?.id ?? DEMO_CHANNEL_ID,
     },
-    update: {
-      merchantId: merchant.id,
-      platformId: platform.id,
-      channelName: DEMO_CHANNEL_NAME,
-      externalChannelId,
-      isConnected: true,
-      status: ChannelStatus.CONNECTED,
-    },
+    // Existing history/ownership/status is preserved. Legacy remediation is explicit.
+    update: {},
     create: {
       id: existingChannel?.id ?? DEMO_CHANNEL_ID,
       merchantId: merchant.id,
       platformId: platform.id,
       channelName: DEMO_CHANNEL_NAME,
       externalChannelId,
-      isConnected: true,
-      status: ChannelStatus.CONNECTED,
+      isConnected: false,
+      status: ChannelStatus.DISCONNECTED,
     },
   });
 

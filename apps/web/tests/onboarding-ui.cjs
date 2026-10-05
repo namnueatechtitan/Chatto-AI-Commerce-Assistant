@@ -8,9 +8,13 @@ const { spawn } = require("node:child_process");
 const { createRequire } = require("node:module");
 const root = path.resolve(__dirname, "../../..");
 const web = path.join(root, "apps/web");
+const buildDirectory = process.env.CHATTO_UI_BUILD_DIR || ".next-validation";
+const outputDirectory = path.resolve(root, process.env.CHATTO_UI_OUTPUT_DIR || "docs/validation");
+assert.ok(outputDirectory.startsWith(root + path.sep), "Screenshots must stay inside the repository");
 const fixtureApiPort = Number(process.env.CHATTO_UI_API_PORT || 4000);
 assert.ok(Number.isInteger(fixtureApiPort) && fixtureApiPort > 0 && fixtureApiPort <= 65535, "Valid fixture API port required");
 const fixtureApiUrl = `http://127.0.0.1:${fixtureApiPort}`;
+const lineOnly = process.env.CHATTO_UI_LINE_ONLY === '1';
 const apiRequire = createRequire(path.join(root, "apps/api/package.json"));
 const { buildOnboardingProgress } = require(path.join(root, "apps/api/dist/modules/onboarding/onboarding-status.js"));
 const user = { id: "55f55778-6df2-4530-a5a3-5c691b4de45e", name: "Nattawat Siriwithayanukul", email: null, globalRole: "merchant_user", status: "ACTIVE" };
@@ -21,6 +25,11 @@ const jobs = new Map();
 let readiness = { store: false, line: false, context: false, activation: false };
 let unavailable = false;
 let statusReads = 0;
+let lineCurrent = null, lineHistory = [], lineWrites = 0, lineRole = 'Owner', lineFailure = 0, lineMutationFailure = 0, lineConflictMessage = null, lineVerificationDelay = 0;
+// Synthetic credentials stay inside this isolated fixture; API responses contain metadata only.
+let lineCredentials = null, lineProviderFailure = 0;
+let lineDeferNextRead = false, lineDeferredRead = null;
+const lineRequests = [];
 const api = http.createServer(async (request, response) => {
   response.setHeader("Content-Type", "application/json");
   response.setHeader("Cache-Control", "no-store");
@@ -31,6 +40,58 @@ const api = http.createServer(async (request, response) => {
   }
   if (!request.headers.cookie?.includes("chatto_session=")) { response.writeHead(401); response.end("{}"); return; }
   if (url.pathname === "/auth/profile") { response.end(JSON.stringify({ user })); return; }
+  const linePath = `/merchants/${merchant.id}/line-channel`;
+  if (url.pathname === linePath || url.pathname.startsWith(linePath + '/')) {
+    if (lineFailure) { response.writeHead(lineFailure); response.end('{}'); return; }
+    if (request.method === 'GET') {
+      const snapshot = structuredClone({ current: lineCurrent, history: lineHistory });
+      if (lineDeferNextRead) {
+        lineDeferNextRead = false;
+        lineDeferredRead = { release: () => { response.end(JSON.stringify(snapshot)); lineDeferredRead = null; } };
+        return;
+      }
+      response.end(JSON.stringify(snapshot)); return;
+    }
+    if (lineMutationFailure) { response.writeHead(lineMutationFailure); response.end(JSON.stringify({ message: lineConflictMessage })); return; }
+    if (lineRole !== 'Owner' || request.headers.origin !== 'http://localhost:3002') { response.writeHead(403); response.end('{}'); return; }
+    let raw = ''; for await (const chunk of request) raw += chunk;
+    const data = JSON.parse(raw);
+    lineRequests.push({ method: request.method, action: url.pathname.slice(linePath.length), keys: Object.keys(data).sort(), expectedRevision: data.expectedRevision });
+    const expected = lineCurrent?.revision ?? lineHistory.find(item => item.externalChannelId === data.externalChannelId)?.revision ?? 0;
+    if (data.expectedRevision !== expected) { response.writeHead(409); response.end('{}'); return; }
+    if (request.method === 'PUT') {
+      const invalid = (data.externalChannelId !== undefined && !/^\d{1,255}$/.test(data.externalChannelId)) ||
+        (data.channelSecret !== undefined && !/^[a-f0-9]{32}$/i.test(data.channelSecret)) ||
+        (data.channelAccessToken !== undefined && !/^[\x21-\x7e]{16,4096}$/.test(data.channelAccessToken));
+      if (invalid || !lineCurrent && (!data.externalChannelId || !data.channelSecret || !data.channelAccessToken)) { response.writeHead(400); response.end('{}'); return; }
+      if (lineCurrent && data.externalChannelId !== undefined && data.externalChannelId !== lineCurrent.externalChannelId) {
+        response.writeHead(409); response.end(JSON.stringify({ message: 'Disconnect the current LINE channel before configuring another' })); return;
+      }
+      const nextCredentials = { secret: data.channelSecret ?? lineCredentials?.secret, token: data.channelAccessToken ?? lineCredentials?.token };
+      if (lineCurrent && nextCredentials.secret === lineCredentials.secret && nextCredentials.token === lineCredentials.token) {
+        response.end(JSON.stringify(lineCurrent)); return;
+      }
+      lineCredentials = nextCredentials;
+      lineCurrent = { id: lineCurrent?.id ?? '9bbc1396-1c5c-4dad-ae3f-dde95e4b1962', externalChannelId: data.externalChannelId ?? lineCurrent.externalChannelId,
+        status: 'CONFIGURED', isConnected: false, hasCredentials: true, revision: expected + 1,
+        credentialsVerifiedAt: null, webhookVerifiedAt: null, issue: null };
+      readiness.line = false;
+    } else if (url.pathname.endsWith('/verify')) {
+      if (lineVerificationDelay) await pause(lineVerificationDelay);
+      if (lineProviderFailure) {
+        lineCurrent = { ...lineCurrent, status: 'ERROR', isConnected: false, revision: expected + 1,
+          credentialsVerifiedAt: null, webhookVerifiedAt: null };
+        lineWrites++; response.writeHead(lineProviderFailure); response.end(JSON.stringify({ message: 'Invalid LINE credentials' })); return;
+      }
+      lineCurrent = { ...lineCurrent, status: 'WEBHOOK_PENDING', revision: expected + 1, credentialsVerifiedAt: new Date().toISOString() };
+    } else if (url.pathname.endsWith('/disconnect')) {
+      const disconnected = { ...lineCurrent, status: 'DISCONNECTED', isConnected: false, hasCredentials: false, revision: expected + 1,
+        credentialsVerifiedAt: null, webhookVerifiedAt: null };
+      lineHistory = [disconnected]; lineCurrent = null; lineCredentials = null; readiness.line = false; lineWrites++;
+      response.end(JSON.stringify(disconnected)); return;
+    }
+    lineWrites++; response.end(JSON.stringify(lineCurrent)); return;
+  }
   if (url.pathname === "/onboarding/store" && request.method === "POST") {
     let body = "";
     for await (const chunk of request) body += chunk;
@@ -76,9 +137,9 @@ const api = http.createServer(async (request, response) => {
   if (unavailable) { response.writeHead(503); response.end("{}"); return; }
   if (url.searchParams.has("merchantId") && url.searchParams.get("merchantId") !== merchant.id) { response.writeHead(404); response.end("{}"); return; }
   const selected=readiness.store && (!additionalMerchant || url.searchParams.get('merchantId')===merchant.id)?merchant:null;
-  response.end(JSON.stringify({ user, merchant:selected, role:selected?'Owner':null,
+  response.end(JSON.stringify({ user, merchant:selected, role:selected?lineRole:null,
     memberships:readiness.store?[{merchant,role:{name:'Owner'}},...(additionalMerchant?[{merchant:additionalMerchant,role:{name:'Owner'}}]:[])]:[],
-    ...buildOnboardingProgress({...readiness,store:Boolean(selected)}), capabilities: { lineSetup: false, contextSetup: false, activation: false } }));
+    ...buildOnboardingProgress({...readiness,store:Boolean(selected)}), capabilities: { lineSetup: true, contextSetup: false, activation: false } }));
 });
 
 let chrome, next, socket;
@@ -92,7 +153,7 @@ async function ready(check, label, ms = 15000) {
 (async () => {
   await new Promise((resolve, reject) => { api.once("error", reject); api.listen(fixtureApiPort, "127.0.0.1", resolve); });
   next = spawn(process.execPath, [path.join(web, "node_modules/next/dist/bin/next"), "start", "-p", "3002"], {
-    cwd: web, env: { ...process.env, NEXT_BUILD_DIR: ".next-validation", API_INTERNAL_BASE_URL: fixtureApiUrl }, windowsHide: true, stdio: "ignore",
+    cwd: web, env: { ...process.env, NEXT_BUILD_DIR: buildDirectory, API_INTERNAL_BASE_URL: fixtureApiUrl }, windowsHide: true, stdio: "ignore",
   });
   next.on("error", (error) => { console.error(error); process.exitCode = 1; });
   await ready(async () => (await fetch("http://localhost:3002/login", { signal: AbortSignal.timeout(3000) })).ok, "Next production server");
@@ -128,8 +189,11 @@ async function ready(check, label, ms = 15000) {
     await evaluate("document.fonts.ready.then(() => true)");
   };
   await signIn();
+  const fill=async(selector,value)=>evaluate(`(()=>{const e=document.querySelector(${JSON.stringify(selector)});Object.getOwnPropertyDescriptor(e.tagName==='TEXTAREA'?HTMLTextAreaElement.prototype:e.tagName==='SELECT'?HTMLSelectElement.prototype:HTMLInputElement.prototype,'value').set.call(e,${JSON.stringify(value)});e.dispatchEvent(new Event(e.tagName==='SELECT'?'change':'input',{bubbles:true}));return true;})()`);
+  await fs.mkdir(outputDirectory, { recursive: true });
+  if (!lineOnly) {
   await goto("/onboarding", user.name);
-  await fs.mkdir(path.join(root, "docs/validation"), { recursive: true });
+  await fs.mkdir(outputDirectory, { recursive: true });
   for (const [width, height, name] of [[1440, 1024, "onboarding-desktop.png"], [1920, 1080], [1280, 900], [768, 1024], [390, 900, "onboarding-mobile.png"], [320, 900]]) {
     await send("Emulation.setDeviceMetricsOverride", { width, height, deviceScaleFactor: 1, mobile: false });
     await pause(150);
@@ -144,7 +208,7 @@ async function ready(check, label, ms = 15000) {
     assert.ok(metrics.name.includes(user.name)); assert.equal(metrics.current, "เพิ่มข้อมูลร้านค้า"); assert.equal(metrics.lockedLinks, 0);
     if (name) {
       const result = await send("Page.captureScreenshot", { format: "png", captureBeyondViewport: true, clip: { x: 0, y: 0, width, height: metrics.height, scale: 1 } });
-      await fs.writeFile(path.join(root, "docs/validation", name), Buffer.from(result.data, "base64"));
+      await fs.writeFile(path.join(outputDirectory, name), Buffer.from(result.data, "base64"));
     }
     console.log(`PASS layout ${width}px (document width ${metrics.scrollWidth}px)`);
   }
@@ -161,12 +225,11 @@ async function ready(check, label, ms = 15000) {
     const metrics=await evaluate(`({width:document.documentElement.scrollWidth,height:document.documentElement.scrollHeight,inputs:[...document.querySelectorAll('input:not([type=file]),select,textarea')].map(e=>({width:e.getBoundingClientRect().width,height:e.getBoundingClientRect().height}))})`);
     assert.ok(metrics.width<=width,`Store form overflow at ${width}`);assert.ok(metrics.inputs.every(e=>e.width>40));
     if(width<768)assert.ok(metrics.inputs.every(e=>e.height>=44));
-    if(name){const result=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:true,clip:{x:0,y:0,width,height:metrics.height,scale:1}});await fs.writeFile(path.join(root,'docs/validation',name),Buffer.from(result.data,'base64'));}
+    if(name){const result=await send('Page.captureScreenshot',{format:'png',captureBeyondViewport:true,clip:{x:0,y:0,width,height:metrics.height,scale:1}});await fs.writeFile(path.join(outputDirectory,name),Buffer.from(result.data,'base64'));}
     console.log(`PASS store form layout ${width}px (height ${metrics.height}px)`);
   }
   await evaluate("[...document.querySelectorAll('button')].find(e=>e.textContent==='ข้ามไปก่อน').click();true");
   await ready(()=>evaluate("document.querySelectorAll('[aria-invalid=true]').length===3"),'required fields on skip');assert.equal(writes,0);
-  const fill=async(selector,value)=>evaluate(`(()=>{const e=document.querySelector(${JSON.stringify(selector)});Object.getOwnPropertyDescriptor(e.tagName==='TEXTAREA'?HTMLTextAreaElement.prototype:e.tagName==='SELECT'?HTMLSelectElement.prototype:HTMLInputElement.prototype,'value').set.call(e,${JSON.stringify(value)});e.dispatchEvent(new Event(e.tagName==='SELECT'?'change':'input',{bubbles:true}));return true;})()`);
   await fill('#shopName','UI Validation Store');await fill('#businessCategory','flowers');await fill('#operatingHours','Mon–Fri 09:30–18:00');
   await fill('[id^=question-]','Delivery?');
   await evaluate("document.querySelector('form').requestSubmit();true");await ready(()=>evaluate("document.body.innerText.includes('กรอกคำถามและคำตอบให้ครบ')"),'FAQ pair validation');assert.equal(writes,0);
@@ -197,6 +260,7 @@ async function ready(check, label, ms = 15000) {
   await ready(()=>evaluate("location.pathname==='/onboarding'"),'existing store update');assert.equal(merchant.description,'Changed business description');assert.equal(faqs.length,1);
   await goto("/dashboard", "Dashboard");
   assert.equal(await evaluate("location.pathname"), "/dashboard", "existing dashboard remains available to store members");
+  } else { readiness.store = true; }
   // Step 3 still advances via the authoritative checklist to the existing Step 4 route.
   await goto(`/onboarding?merchantId=${merchant.id}`, "50%");
   await ready(() => evaluate("location.pathname === '/onboarding' && document.querySelector('[aria-current=step] a')?.getAttribute('href')?.startsWith('/onboarding/line')"), "Step 4 action ready");
@@ -208,7 +272,9 @@ async function ready(check, label, ms = 15000) {
     throw error;
   }
   checkingLine = true;
+  await ready(() => evaluate("!document.querySelector('#channelId').disabled"), 'Authenticated Step 4 metadata loaded');
   assert.equal(await evaluate("document.querySelector('#line-setup-heading').textContent"), "เชื่อมต่อ LINE OA");
+  assert.ok(await evaluate(`document.body.innerText.includes(${JSON.stringify('ร้าน: ' + merchant.shopName)})`), 'Selected merchant name is visible');
   assert.ok(await evaluate("document.body.innerText.includes('ขั้นตอนที่ 4 จาก 6')"));
   for (const [width, height] of [[1440, 1024], [1920, 1080], [768, 1024], [390, 900], [320, 900]]) {
     await send("Emulation.setDeviceMetricsOverride", { width, height, deviceScaleFactor: 1, mobile: false });
@@ -226,26 +292,37 @@ async function ready(check, label, ms = 15000) {
     assert.ok(metrics.inputs.every(e => e.width > 40));
     if (width < 768) assert.ok(metrics.inputs.every(e => e.height >= 44));
     const screenshot = await send("Page.captureScreenshot", { format: "png", captureBeyondViewport: true, clip: { x: 0, y: 0, width, height: metrics.height, scale: 1 } });
-    await fs.writeFile(path.join(root, "docs/validation", `line-${width}.png`), Buffer.from(screenshot.data, "base64"));
+    await fs.writeFile(path.join(outputDirectory, `line-${width}.png`), Buffer.from(screenshot.data, "base64"));
     console.log(`PASS LINE layout ${width}px (document width ${metrics.width}px)`);
   }
   const copySelector = 'button[aria-label="คัดลอก Webhook URL"]';
+  async function captureLineState(name) {
+    await evaluate("document.fonts.ready.then(() => true)");
+    const dimensions = await evaluate("({ width: innerWidth, height: document.documentElement.scrollHeight })");
+    const screenshot = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: true,
+      clip: { x: 0, y: 0, ...dimensions, scale: 1 } });
+    await fs.writeFile(path.join(outputDirectory, name), Buffer.from(screenshot.data, 'base64'));
+  }
   assert.equal(await evaluate(`document.querySelector(${JSON.stringify(copySelector)}).disabled`), true);
-  assert.ok(await evaluate("document.body.innerText.includes('ยังไม่ได้กำหนด Webhook URL')"));
+  assert.ok(await evaluate("document.body.innerText.includes('กรอกข้อมูลและกดบันทึกข้อมูล LINE') || document.body.innerText.includes('URL สำหรับรับข้อความยังไม่พร้อม')"));
+  assert.ok(await evaluate("document.querySelector('button[type=submit]').getBoundingClientRect().top < document.querySelector('#webhook-heading').getBoundingClientRect().top"), 'Save comes before webhook setup');
   assert.equal(await evaluate("document.querySelector('#channelSecret').type"), "password");
   assert.equal(await evaluate("document.querySelector('#channelAccessToken').type"), "password");
+  assert.ok(await evaluate("[...document.querySelectorAll('input')].every(e => e.required)"), 'First save requires all three fields');
   assert.equal(await evaluate("document.querySelector('a[target=_blank]').href"), "https://developers.line.biz/en/docs/messaging-api/getting-started/");
   await evaluate("document.querySelector('form').requestSubmit();true");
   await ready(() => evaluate("document.querySelectorAll('[aria-invalid=true]').length === 3"), "LINE required validation");
+  // The approved form focuses on requestAnimationFrame after React commits errors.
+  await ready(() => evaluate("document.activeElement.id === 'channelId'"), "LINE invalid field focus");
   assert.equal(await evaluate("document.activeElement.id"), "channelId");
   assert.ok(await evaluate("[...document.querySelectorAll('input')].every(e => document.getElementById(e.getAttribute('aria-describedby'))?.textContent)"), "Accessible validation descriptions");
   await fill("#channelId", "bad-id");
   await evaluate("document.querySelector('form').requestSubmit();true");
   await ready(() => evaluate("document.body.innerText.includes('กรอก Channel ID เป็นตัวเลขเท่านั้น')"), "LINE ID format validation");
-  // Dummy values are only supplied to the local UI. They never enter fixture API responses.
+  // Synthetic credentials reach only the isolated API fixture and never enter responses.
   await fill("#channelId", "1234567890");
-  await fill("#channelSecret", "frontend-demo-secret");
-  await fill("#channelAccessToken", "frontend-demo-token");
+  await fill("#channelSecret", "a".repeat(32));
+  await fill("#channelAccessToken", "ui-fixture-token-only");
   for (const [field, label] of [["channelSecret", "Channel Secret"], ["channelAccessToken", "Channel Access Token"]]) {
     await evaluate(`document.querySelector('button[aria-label="แสดง ${label}"]').click();true`);
     assert.equal(await evaluate(`document.querySelector('#${field}').type`), "text");
@@ -254,27 +331,226 @@ async function ready(check, label, ms = 15000) {
     assert.equal(await evaluate(`document.querySelector('#${field}').type`), "password");
   }
   const writesBeforeLine = writes;
+  // A rejected configure must preserve the draft and show an actionable error next to Save.
+  for (const status of [503, 409]) {
+    lineMutationFailure = status;
+    lineConflictMessage = status === 409 ? 'LINE association is unavailable' : null;
+    await evaluate("document.querySelector('form').requestSubmit();true");
+    await ready(() => evaluate("document.querySelector('button[type=submit]').disabled === false && Boolean(document.querySelector('form p[role=alert]'))"), 'Rejected save returns visible error');
+    assert.deepEqual(await evaluate("['channelId','channelSecret','channelAccessToken'].map(id=>document.getElementById(id).value)"), ['1234567890', 'a'.repeat(32), 'ui-fixture-token-only']);
+    assert.equal(await evaluate("document.querySelector('#channelSecret').type"), 'password');
+    assert.equal(await evaluate(`document.querySelector(${JSON.stringify(copySelector)}).disabled`), true);
+    assert.equal(lineCurrent, null); assert.equal(lineWrites, 0);
+    if (status === 409) assert.ok(await evaluate("document.querySelector('form p[role=alert]').textContent.includes('ร้านอื่น')"));
+  }
+  lineMutationFailure = 0; lineConflictMessage = null; lineMutations = 0; lineConsoleErrors.length = 0;
+  await send('Emulation.setDeviceMetricsOverride', { width: 390, height: 900, deviceScaleFactor: 1, mobile: false });
+  lineVerificationDelay = 2500;
   await evaluate("document.querySelector('form').requestSubmit();true");
-  await ready(() => evaluate("document.body.innerText.includes('ระบบเชื่อมต่อ LINE OA จะพร้อมใช้งานเมื่อเชื่อมต่อ Backend')"), "Honest LINE demonstration message");
+  if (process.env.LINE_PUBLIC_WEBHOOK_URL) {
+    await ready(() => evaluate(`document.querySelector(${JSON.stringify(copySelector)}).disabled && document.querySelector('button[type=submit]').disabled && document.querySelector('#line-webhook-url').textContent.includes('/webhooks/line/') && document.body.innerText.includes('กำลังตรวจสอบข้อมูลกับ LINE')`), 'Stored URL visible but copy disabled while provider verification is running');
+    assert.equal(lineWrites, 1, 'Only configure has completed');
+    assert.equal(lineCurrent.status, 'CONFIGURED');
+    assert.equal(readiness.line, false);
+    assert.ok(await evaluate("document.body.innerText.includes('บันทึกข้อมูล LINE สำเร็จ')"), 'Persistence acknowledgement appears before provider readiness');
+    await captureLineState('line-saved-verifying.png');
+  }
+  await ready(() => evaluate("document.body.innerText.includes('รอการยืนยัน Webhook') && !document.querySelector('#channelId').disabled"), "Backend-verified credentials remain pending");
+  lineVerificationDelay = 0;
   assert.equal(await evaluate("document.querySelectorAll('[aria-invalid=true]').length"), 0);
-  assert.ok(await evaluate("[...document.querySelectorAll('input')].every(e => e.value === '')"), "Local credentials cleared after demonstration");
-  assert.ok(await evaluate("document.body.innerText.includes('ยังไม่ได้เชื่อมต่อ')"));
-  assert.equal(writes, writesBeforeLine); assert.equal(lineMutations, 0); assert.equal(readiness.line, false);
+  assert.equal(await evaluate("document.querySelector('#channelId').value"), '1234567890', 'Keep non-secret Channel ID after successful save');
+  assert.ok(await evaluate("['channelSecret','channelAccessToken'].every(id => document.getElementById(id).value === '')"), "Clear secrets only after successful backend storage");
+  assert.equal(writes, writesBeforeLine); assert.equal(lineWrites, 2); assert.equal(lineMutations, 2); assert.equal(readiness.line, false);
+  assert.ok(await evaluate("document.body.innerText.includes('ตรวจสอบข้อมูลสำเร็จ พร้อมนำ Webhook URL ไป Verify ใน LINE Developers')"));
+  const pendingBeforeNoop = structuredClone(lineCurrent);
+  await evaluate("document.querySelector('form').requestSubmit();true");
+  await ready(() => evaluate("!document.querySelector('button[type=submit]').disabled && document.body.innerText.includes('ตรวจสอบข้อมูลสำเร็จ พร้อมนำ Webhook URL ไป Verify ใน LINE Developers')"), 'Repeated save retains provider readiness with stored credentials');
+  assert.deepEqual(lineCurrent, pendingBeforeNoop, 'A blank pending save preserves revision and verification proofs');
+  assert.equal(lineWrites, 2); assert.equal(lineMutations, 3, 'No-op PUT does not trigger provider verification');
+  assert.deepEqual(lineRequests.at(-1).keys.filter(key => key !== 'externalChannelId'), ['expectedRevision'], 'Blank secret/token inputs are omitted from the API body');
+  if (process.env.LINE_PUBLIC_WEBHOOK_URL) {
+    assert.equal(await evaluate(`document.querySelector(${JSON.stringify(copySelector)}).disabled`), false);
+    assert.equal(await evaluate("document.querySelector('#line-webhook-url').textContent"), process.env.LINE_PUBLIC_WEBHOOK_URL.replace(/\/$/, '') + '/' + lineCurrent.id);
+    await evaluate(`Object.defineProperty(navigator, 'clipboard', { configurable: true, value: { writeText: async value => { window.copiedWebhook = value; } } }); document.querySelector(${JSON.stringify(copySelector)}).click(); true`);
+    await ready(() => evaluate("document.body.innerText.includes('คัดลอก Webhook URL แล้ว')"), 'Copy succeeds');
+    assert.equal(await evaluate('window.copiedWebhook'), process.env.LINE_PUBLIC_WEBHOOK_URL.replace(/\/$/, '') + '/' + lineCurrent.id);
+    assert.equal(readiness.line, false, 'Copy does not establish a connection');
+    await captureLineState('line-provider-ready.png');
+  }
   assert.equal(await evaluate("Object.keys(localStorage).length + Object.keys(sessionStorage).length"), 0);
   assert.deepEqual((await send("Network.getCookies")).cookies.map(cookie => cookie.name), ["chatto_session"]);
   await send("Page.reload");
-  await ready(() => evaluate("document.querySelector('#channelId') && document.body.innerText.includes('ยังไม่ได้เชื่อมต่อ')"), "Refresh keeps LINE disconnected");
-  assert.ok(await evaluate("[...document.querySelectorAll('input')].every(e => e.value === '')"));
+  await ready(() => evaluate("document.querySelector('#channelId') && document.body.innerText.includes('รอการยืนยัน Webhook')"), "Refresh keeps backend pending state");
+  assert.equal(await evaluate("document.querySelector('#channelId').value"), '1234567890', 'Reload hydrates the non-secret Channel ID');
+  assert.ok(await evaluate("['channelSecret','channelAccessToken'].every(id => document.getElementById(id).value === '' && document.getElementById(id).placeholder === 'บันทึกไว้แล้ว — เว้นว่างหากไม่ต้องการเปลี่ยน')"), 'Reload uses blank saved-credential placeholders without plaintext');
+  assert.ok(await evaluate("[...document.querySelectorAll('input')].every(e => !e.required)"), 'Saved credentials support omission instead of required re-entry');
   assert.equal(await evaluate("document.querySelector('#channelSecret').type"), "password");
+  await captureLineState('line-existing-reloaded.png');
   await evaluate("[...document.querySelectorAll('a')].find(e => e.textContent === 'ข้ามไปก่อน').click();true");
   await ready(() => evaluate("location.pathname === '/onboarding' && document.querySelector('[role=progressbar]')?.getAttribute('aria-valuenow') === '50'"), "Skip preserves persisted progress");
   assert.equal(await evaluate("new URL(location.href).searchParams.get('merchantId')"), merchant.id);
   await goto(`/onboarding/line?merchantId=${merchant.id}`, "เชื่อมต่อ LINE OA");
   await evaluate("[...document.querySelectorAll('a')].find(e => e.textContent === 'กลับไปยังการตั้งค่า').click();true");
   await ready(() => evaluate("location.pathname === '/onboarding'"), "Back to settings");
-  assert.equal(lineMutations, 0); assert.deepEqual(lineConsoleErrors, []);
+  assert.equal(lineMutations, 3); assert.deepEqual(lineConsoleErrors, []);
+  checkingLine = false; // Expected HTTP failures below are not unexpected JS errors.
+  const readyMetadata = structuredClone(lineCurrent);
+  lineCurrent = { ...lineCurrent, status: 'CONFIGURED', credentialsVerifiedAt: null, webhookVerifiedAt: null };
+  await goto(`/onboarding/line?merchantId=${merchant.id}`, "เชื่อมต่อ LINE OA");
+  await ready(() => evaluate("!document.querySelector('#channelId').disabled"), 'Unverified stored form loaded for retry');
+  lineMutationFailure = 503;
+  await evaluate("[...document.querySelectorAll('button')].find(e => e.textContent === 'ตรวจสอบข้อมูล LINE').click();true");
+  await ready(() => evaluate("document.body.innerText.includes('ตรวจสอบการเปิดใช้งาน Backend') && !document.querySelector('#channelId').disabled"), 'Provider unavailability shows honest error');
+  assert.equal(lineWrites, 2); assert.equal(readiness.line, false);
+  lineMutationFailure = 409;
+  await evaluate("[...document.querySelectorAll('button')].find(e => e.textContent === 'ตรวจสอบข้อมูล LINE').click();true");
+  await ready(() => evaluate("document.body.innerText.includes('ข้อมูลการเชื่อมต่อเปลี่ยนแล้ว') && !document.querySelector('#channelId').disabled"), 'Revision conflict refreshes safe metadata');
+  lineMutationFailure = 403;
+  await evaluate("[...document.querySelectorAll('button')].find(e => e.textContent === 'ตรวจสอบข้อมูล LINE').click();true");
+  await ready(() => evaluate("document.body.innerText.includes('คุณไม่มีสิทธิ์แก้ไข') && document.querySelector('#channelId').disabled"), 'Revoked permission clears inputs and blocks changes');
+  assert.ok(await evaluate("[...document.querySelectorAll('input')].every(e => e.value === '')"));
+  lineMutationFailure = 0; await send('Page.reload');
+  await ready(() => evaluate("!document.querySelector('#channelId').disabled"), 'Fresh authorized page allows changes');
+  lineFailure = 503;
+  await evaluate("[...document.querySelectorAll('button')].find(e => e.textContent === 'โหลดสถานะใหม่').click();true");
+  await ready(() => evaluate("document.body.innerText.includes('ไม่สามารถโหลดสถานะการเชื่อมต่อ')"), 'Failed metadata load leaves no false ready state');
+  assert.ok(await evaluate("document.querySelector('#channelId').disabled"));
+  lineFailure = 0;
+  await evaluate("[...document.querySelectorAll('button')].find(e => e.textContent === 'โหลดสถานะใหม่').click();true");
+  await ready(() => evaluate("!document.querySelector('#channelId').disabled"), 'Metadata retry recovers');
+  checkingLine = true;
+  const pendingMetadata = readyMetadata;
+  lineCurrent = { ...lineCurrent, status: 'CONFIGURED', externalChannelId: '7'.repeat(255), credentialsVerifiedAt: null };
+  await evaluate("[...document.querySelectorAll('button')].find(e => e.textContent === 'โหลดสถานะใหม่').click();true");
+  await ready(() => evaluate("document.body.innerText.includes('7'.repeat(255))"), 'Long unverified Channel ID metadata');
+  if (process.env.LINE_PUBLIC_WEBHOOK_URL) assert.equal(await evaluate(`document.querySelector(${JSON.stringify(copySelector)}).disabled`), true, 'Stored URL cannot be copied without provider proof');
+  assert.ok(await evaluate("document.documentElement.scrollWidth <= innerWidth"), 'Unverified long Channel ID wraps at mobile width');
   checkingLine = false;
-  console.log("PASS LINE validation, masking/toggles, guide, disabled copy, local demonstration, no writes/storage, refresh, skip/back navigation and console.");
+  lineMutationFailure = 503; lineFailure = 503;
+  await evaluate("[...document.querySelectorAll('button')].find(e => e.textContent === 'ตรวจสอบข้อมูล LINE').click();true");
+  await ready(() => evaluate("document.body.innerText.includes('ตรวจสอบการเปิดใช้งาน Backend') && !document.querySelector('#channelId').disabled"), 'Failed provider retry and metadata refresh preserve confirmed storage');
+  if (process.env.LINE_PUBLIC_WEBHOOK_URL) {
+    assert.equal(await evaluate(`document.querySelector(${JSON.stringify(copySelector)}).disabled`), true, 'Verification/read failures cannot fabricate provider readiness');
+    assert.equal(await evaluate("document.querySelector('#line-webhook-url').textContent"), process.env.LINE_PUBLIC_WEBHOOK_URL.replace(/\/$/, '') + '/' + lineCurrent.id, 'Verification failure retains the stable saved URL');
+  }
+  assert.equal(await evaluate("[...document.querySelectorAll('a')].some(e => e.textContent === 'ต่อไป')"), false, 'Unverified URL never fabricates connection');
+  assert.equal(lineWrites, 2);
+  lineMutationFailure = 0; lineFailure = 0; checkingLine = true;
+  lineCurrent = pendingMetadata;
+  await evaluate("[...document.querySelectorAll('button')].find(e => e.textContent === 'โหลดสถานะใหม่').click();true");
+  await ready(() => evaluate("document.body.innerText.includes('รอการยืนยัน Webhook')"), 'Pending lifecycle resumes polling');
+  lineCurrent = { ...lineCurrent, status: 'CONNECTED', isConnected: true, webhookVerifiedAt: new Date().toISOString(), revision: 3 };
+  readiness.line = true;
+  await ready(() => evaluate("[...document.querySelectorAll('a')].some(e => e.textContent === 'ต่อไป')"), 'Read-only polling observes backend verification and exposes next action');
+  assert.equal(lineWrites, 2, 'Polling performs no provider verification or lifecycle writes');
+  assert.ok(await evaluate("['channelSecret','channelAccessToken'].every(id => document.getElementById(id).value === '')"));
+  assert.ok(await evaluate("document.body.innerText.includes('เชื่อมต่อแล้ว') && document.body.innerText.includes('LINE OA ของคุณพร้อมใช้งาน')"));
+  await captureLineState('line-connected-mobile.png');
+  await send('Emulation.setDeviceMetricsOverride', { width: 1440, height: 1024, deviceScaleFactor: 1, mobile: false });
+  await captureLineState('line-connected-desktop.png');
+  // Connected no-op saves use the revision-bearing PUT and never re-run provider verification.
+  const connectedBeforeNoop = structuredClone(lineCurrent), connectedWrites = lineWrites;
+  const requestsBeforeNoop = lineRequests.length;
+  await fill('#channelId', '');
+  await evaluate("document.querySelector('form').requestSubmit();true");
+  await ready(() => evaluate("!document.querySelector('button[type=submit]').disabled && document.body.innerText.includes('บันทึกข้อมูล LINE สำเร็จ')"), 'Connected blank save completes without disconnecting');
+  assert.deepEqual(lineCurrent, connectedBeforeNoop);
+  assert.equal(lineWrites, connectedWrites);
+  assert.equal(lineRequests.length, requestsBeforeNoop + 1);
+  assert.deepEqual(lineRequests.at(-1).keys, ['expectedRevision']);
+  for (let save = 0; save < 2; save++) {
+    await fill('#channelSecret', 'a'.repeat(32));
+    await fill('#channelAccessToken', 'ui-fixture-token-only');
+    const requestCount = lineRequests.length;
+    await evaluate("document.querySelector('form').requestSubmit();true");
+    await ready(() => evaluate("!document.querySelector('button[type=submit]').disabled && document.body.innerText.includes('บันทึกข้อมูล LINE สำเร็จ')"), 'Connected same full credentials save completes as no-op');
+    assert.deepEqual(lineCurrent, connectedBeforeNoop, 'Identical credentials preserve both proofs, revision and UUID');
+    assert.equal(lineWrites, connectedWrites);
+    assert.equal(lineRequests.length, requestCount + 1, 'Full no-op save issues no POST verify');
+    assert.ok(await evaluate("['channelSecret','channelAccessToken'].every(id => document.getElementById(id).value === '')"));
+  }
+  checkingLine = false;
+  await fill('#channelId', '1234567891');
+  await evaluate("document.querySelector('form').requestSubmit();true");
+  await ready(() => evaluate("!document.querySelector('button[type=submit]').disabled && document.body.innerText.includes('ต้องยกเลิกการเชื่อมต่อเดิมก่อนเปลี่ยน OA')"), 'Different active Channel ID requires disconnect');
+  assert.deepEqual(lineCurrent, connectedBeforeNoop); assert.equal(lineWrites, connectedWrites);
+  await fill('#channelId', '1234567890');
+  checkingLine = true;
+  const stableId = lineCurrent.id, stableUrl = process.env.LINE_PUBLIC_WEBHOOK_URL?.replace(/\/$/, '') + '/' + stableId;
+  for (const [field, value, omittedField] of [
+    ['channelAccessToken', 'replacement-ui-fixture-token', 'channelSecret'],
+    ['channelSecret', 'b'.repeat(32), 'channelAccessToken'],
+  ]) {
+    const priorRevision = lineCurrent.revision, priorWrites = lineWrites;
+    const retained = lineCredentials[omittedField === 'channelSecret' ? 'secret' : 'token'];
+    await fill('#channelId', ''); await fill('#' + field, value);
+    await evaluate("document.querySelector('form').requestSubmit();true");
+    await ready(() => evaluate("!document.querySelector('button[type=submit]').disabled && document.body.innerText.includes('รอการยืนยัน Webhook')"), 'Partial credential rotation saves and verifies');
+    assert.equal(lineCurrent.id, stableId); assert.equal(lineCurrent.externalChannelId, '1234567890');
+    assert.equal(lineCurrent.revision, priorRevision + 2); assert.equal(lineWrites, priorWrites + 2);
+    assert.equal(lineCredentials[omittedField === 'channelSecret' ? 'secret' : 'token'], retained, 'Omitted credential stays unchanged');
+    assert.deepEqual(lineRequests.at(-2).keys, [field, 'expectedRevision'].sort());
+    assert.equal(lineRequests.at(-1).action, '/' + stableId + '/verify');
+    assert.equal(lineRequests.at(-1).expectedRevision, priorRevision + 1, 'Verification uses the fresh configure revision');
+    if (process.env.LINE_PUBLIC_WEBHOOK_URL) {
+      assert.equal(await evaluate("document.querySelector('#line-webhook-url').textContent"), stableUrl);
+      assert.equal(await evaluate(`document.querySelector(${JSON.stringify(copySelector)}).disabled`), false);
+    }
+    assert.ok(await evaluate("['channelSecret','channelAccessToken'].every(id => document.getElementById(id).value === '')"));
+  }
+  // Provider-rejected replacements keep the stable route but cannot become CONNECTED or copy-ready.
+  lineCurrent = { ...lineCurrent, status: 'CONNECTED', isConnected: true, webhookVerifiedAt: new Date().toISOString(), revision: lineCurrent.revision + 1 };
+  readiness.line = true;
+  await evaluate("window.dispatchEvent(new Event('focus')); true");
+  await ready(() => evaluate("document.body.innerText.includes('LINE OA ของคุณพร้อมใช้งาน') && [...document.querySelectorAll('a')].some(e => e.textContent === 'ต่อไป')"), 'Partial rotation can become connected after webhook proof');
+  checkingLine = false; lineProviderFailure = 400;
+  for (const [field, value] of [['channelAccessToken', 'rejected-ui-fixture-token'], ['channelSecret', 'c'.repeat(32)]]) {
+    // Reproduce a stale CONNECTED read arriving after a failed credential rotation.
+    if (field === 'channelAccessToken') {
+      lineDeferNextRead = true;
+      await evaluate("[...document.querySelectorAll('button')].find(e => e.textContent === 'โหลดสถานะใหม่').click();true");
+      await ready(() => Boolean(lineDeferredRead), 'Old metadata GET is held before credential mutation');
+    }
+    await fill('#channelId', ''); await fill('#' + field, value);
+    await evaluate("document.querySelector('form').requestSubmit();true");
+    await ready(() => evaluate("!document.querySelector('button[type=submit]').disabled && document.body.innerText.includes('ตรวจสอบข้อมูล LINE ไม่สำเร็จ') && Boolean(document.querySelector('form p[role=alert]'))"), 'Invalid partial replacement displays sanitized verification failure');
+    assert.equal(lineCurrent.id, stableId); assert.equal(lineCurrent.status, 'ERROR'); assert.equal(lineCurrent.isConnected, false);
+    assert.equal(lineCurrent.credentialsVerifiedAt, null); assert.equal(lineCurrent.webhookVerifiedAt, null);
+    assert.deepEqual(lineRequests.at(-2).keys, [field, 'expectedRevision'].sort());
+    assert.ok(await evaluate("!document.body.innerText.includes('Invalid LINE credentials')"), 'No raw provider error body is shown');
+    if (process.env.LINE_PUBLIC_WEBHOOK_URL) {
+      assert.equal(await evaluate("document.querySelector('#line-webhook-url').textContent"), stableUrl);
+      assert.equal(await evaluate(`document.querySelector(${JSON.stringify(copySelector)}).disabled`), true);
+    }
+    if (field === 'channelAccessToken') {
+      const failedMetadata = structuredClone(lineCurrent);
+      lineDeferredRead.release();
+      await pause(500);
+      assert.deepEqual(lineCurrent, failedMetadata, 'Deferred read performs no fixture mutation');
+      assert.ok(await evaluate("document.body.innerText.includes('ตรวจสอบข้อมูล LINE ไม่สำเร็จ') && ![...document.querySelectorAll('a')].some(e => e.textContent === 'ต่อไป')"), 'Late CONNECTED snapshot cannot replace confirmed ERROR metadata');
+      assert.equal(await evaluate(`document.querySelector(${JSON.stringify(copySelector)}).disabled`), true, 'Late read cannot re-enable Copy after provider rejection');
+      assert.equal(await evaluate("document.querySelector('#line-webhook-url').textContent"), stableUrl);
+    }
+  }
+  await captureLineState('line-provider-failed.png');
+  lineProviderFailure = 0; checkingLine = true;
+  const writesBeforeRetry = lineWrites;
+  await evaluate("document.querySelector('form').requestSubmit();true");
+  await ready(() => evaluate("!document.querySelector('button[type=submit]').disabled && document.body.innerText.includes('รอการยืนยัน Webhook')"), 'Stored unverified channel no-op save retries provider verification');
+  assert.equal(lineWrites, writesBeforeRetry + 1, 'Unverified retry does not rewrite unchanged credentials');
+  assert.equal(lineRequests.at(-2).method, 'PUT'); assert.equal(lineRequests.at(-1).action, '/' + stableId + '/verify');
+  const writesBeforeDisconnect = lineWrites;
+  await evaluate("[...document.querySelectorAll('button')].find(e => e.textContent === 'ยกเลิกการเชื่อมต่อ').click();true");
+  await ready(() => evaluate("document.body.innerText.includes('ยังไม่ได้เชื่อมต่อ') && !document.querySelector('#channelId').disabled"), 'Disconnect clears backend state');
+  assert.equal(readiness.line, false); assert.equal(lineWrites, writesBeforeDisconnect + 1);
+  lineRole = 'Staff'; await send('Page.reload');
+  await ready(() => evaluate("document.body.innerText.includes('เฉพาะ Owner')"), 'Staff sees read-only connection');
+  assert.ok(await evaluate("[...document.querySelectorAll('input')].every(e => e.disabled)"));
+  lineRole = 'Owner';
+  assert.deepEqual(lineConsoleErrors, []);
+  checkingLine = false;
+  console.log("PASS LINE validation, masked saved fields, partial/no-op PUT, fresh-revision verification, stable UUID/URL, delayed copy readiness, sanitized provider failures, pending/connected lifecycle, no secret storage, refresh, Staff read-only and console (isolated API fixture).");
+  if (lineOnly) { await send("Browser.close"); return; }
   await goto(`/onboarding/context?merchantId=${merchant.id}`, "Welcome,");
   assert.equal(await evaluate("location.pathname"), "/onboarding");
   await goto("/onboarding?merchantId=fdfb94e3-354b-47f5-b7d7-c8e00e257af1", "ไม่พบร้านค้า");

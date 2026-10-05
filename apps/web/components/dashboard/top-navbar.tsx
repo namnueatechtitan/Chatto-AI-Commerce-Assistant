@@ -17,7 +17,7 @@ export function TopNavbar({ user }: { user: AuthUser }) {
           <Menu className="size-5" />
         </Link>
 
-        <div className="flex items-center gap-3 sm:gap-4">
+        <div className="flex min-w-0 flex-wrap items-center justify-end gap-3 sm:gap-4">
           <div className="hidden items-center gap-3 rounded-full bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700 md:flex">
             <span className="size-2 rounded-full bg-success" />
             {dashboardOverview.aiStatus}
@@ -29,12 +29,12 @@ export function TopNavbar({ user }: { user: AuthUser }) {
             type="button"
           >
             <Bell className="size-5" />
-            <span className="absolute -right-0.5 -top-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-danger px-1 text-[10px] font-semibold text-white">
+            <span className="absolute -right-0.5 -top-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-danger px-1 text-[0.625rem] font-semibold text-white">
               99+
             </span>
           </button>
 
-          <div className="flex items-center gap-3 rounded-full border border-border bg-white px-2 py-1.5 shadow-soft">
+          <div className="flex min-w-0 max-w-[22rem] items-center gap-3 rounded-full border border-border bg-white px-2 py-1.5 shadow-soft">
             <div className="flex size-11 items-center justify-center rounded-full bg-gradient-to-br from-emerald-300 via-lime-300 to-emerald-500 text-sm font-semibold text-slate-900">
               {user.name.slice(0, 2).toUpperCase()}
             </div>
@@ -42,7 +42,7 @@ export function TopNavbar({ user }: { user: AuthUser }) {
               <div className="truncate text-sm font-semibold text-slate-950">
                 {user.name}
               </div>
-              <div className="text-xs text-slate-500">
+              <div className="truncate text-xs text-slate-500">
                 {user.email}
               </div>
             </div>

@@ -1,4 +1,16 @@
+# Historical local LINE testing notes
+
+The global webhook and global Messaging API credentials described below are
+retired. Use the deployed tenant credential flow, backend channel UUID route and
+secure tunnel steps in [the current local deployment record](../deployment/local-deployment-20261005.md).
+
 # LINE Local Testing
+
+> Historical single-channel guide. Phase C retires `POST /webhooks/line` with 503.
+> Do not use global LINE credentials, default merchants or the seed procedure below
+> for the multi-tenant implementation. Follow the
+> [C+D runbook](../deployment/phase-cd-runbook.md) for channel-specific routing.
+> Existing environment/database changes require separate operator approval.
 
 This guide covers the Phase 2 backend-only LINE webhook flow:
 
@@ -16,7 +28,7 @@ Customer message -> LINE OA -> `POST /webhooks/line` -> Chatto API -> PostgreSQL
 Update the root `.env` file before starting the API:
 
 ```env
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/chatto_phase2?schema=public
+DATABASE_URL=<verified private host DATABASE_URL>
 API_PORT=4000
 LINE_CHANNEL_SECRET=your-line-channel-secret
 LINE_CHANNEL_ACCESS_TOKEN=your-line-channel-access-token

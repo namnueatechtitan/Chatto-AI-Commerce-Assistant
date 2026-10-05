@@ -52,7 +52,7 @@ export class StoreInformationService {
     await tx.knowledgeBaseDocument.updateMany({ where: { merchantId, type: "faq", status: "ACTIVE", id: { notIn: ids } }, data: { status: "ARCHIVED" } });
     for (const faq of faqs) {
       const data = { title: faq.question, content: faq.answer, status: "ACTIVE" as const };
-      if (faq.id) await tx.knowledgeBaseDocument.update({ where: { id: faq.id }, data });
+      if (faq.id) await tx.knowledgeBaseDocument.update({ where: { id: faq.id, merchantId, type: "faq" }, data });
       else await tx.knowledgeBaseDocument.create({ data: { ...data, merchantId, type: "faq" } });
     }
   }

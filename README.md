@@ -61,35 +61,55 @@ chatto-platform/
 
 ## Docker Quick Start
 
-Docker is the only prerequisite for the default local stack. From a fresh clone:
+The current multi-tenant stack requires approved private deployment settings,
+reviewed database migrations and a restricted API database role. Follow the
+[Phase B runbook](docs/deployment/phase-b-runbook.md),
+[C+D runbook](docs/deployment/phase-cd-runbook.md) and
+[two-OA rollout checklist](docs/deployment/final-line-rollout.md) before replacing
+existing services. Use [the private settings template](docs/deployment/runtime.env.example)
+as a field inventory; it contains no usable secrets.
+
+After the target, backup/restore, migrations, private settings and runtime changes
+have been approved and prepared:
 
 ```bash
-docker compose up
+docker compose --env-file .env --env-file deployment.private.env build api ai-service web
+docker compose --env-file .env --env-file deployment.private.env up -d --no-deps ai-service api web
 ```
 
-Compose builds missing images automatically. Use `docker compose up --build` after changing dependencies or application source. The stack installs dependencies inside image layers, generates Prisma Client, waits for PostgreSQL, applies migrations, and starts the web app, API, AI service, and Prisma Studio. It does not mount or modify host `node_modules`.
+Build fresh images after changing source or dependencies. Normal startup does not
+apply migrations or seed data. The migration-only `db-init` service requires the
+explicit `maintenance` profile; Prisma Studio requires the `admin` profile and a
+private admin database URL. Image builds generate Prisma Client and do not modify
+host `node_modules`. Do not deploy the new client against the pre-Phase-B schema.
 
 The containers run a built copy of the source. Restarting them alone keeps that
 copy unchanged. After a frontend-only change, update the running web container:
 
 ```bash
-docker compose build web
-docker compose up -d --no-deps web
+docker compose --env-file .env --env-file deployment.private.env build web
+docker compose --env-file .env --env-file deployment.private.env up -d --no-deps web
 ```
 
 If API code also changed, include `api` in both commands. This targeted update
 requires any reviewed database migration to have already been deployed; it leaves
-database containers and the optional demo-seed startup job running as they are.
+database containers running as they are. There is no automatic demo-seed job.
 The current sign-in page is `http://localhost:3000/login`; the legacy `/auth` URL
 redirects there.
 
 If `/onboarding/line?merchantId=<uuid>` still shows the old LINE availability card,
-check the running `chatto-web` image before changing route guards. The Step 4 form
-is frontend-only and does not require live LINE integration. Rebuild and recreate
-only `web` using the commands above; a restart or a host-side validation build does
-not update its production image. See the [Step 4 runtime correction](docs/validation/line-runtime-fix.md).
+check the running `chatto-web` image before changing route guards. Current Step 4
+uses the merchant-owned LINE backend and requires a coordinated Phase B/C/D rollout.
+A restart or host-side validation build does not update its production image.
+The [older Step 4 runtime correction](docs/validation/line-runtime-fix.md) documents
+the historical frontend-only implementation.
 
-The stack works without an `.env` file using mock AI and no LINE demo seed. To enable Gemini or LINE, copy `.env.example` to `.env`, add the real credentials, and run `docker compose up --build` again. When `LINE_CHANNEL_ID` is set, startup also runs the idempotent LINE demo seed.
+Compose refuses missing private database and service settings. Preserve approved
+AI provider settings. Merchant Messaging API credentials are registered through
+the owner-authenticated backend and encrypted per channel; global LINE credentials
+are not used for the multi-tenant runtime. Keep the local `channel` file private;
+it is excluded from Git and Docker builds. Never seed/reset an existing database
+as part of deployment.
 
 Local URLs:
 
@@ -97,9 +117,9 @@ Local URLs:
 - API: `http://localhost:4000`
 - API docs: `http://localhost:4000/api/docs`
 - AI service: `http://localhost:5000`
-- Prisma Studio: `http://localhost:5555`
+- Prisma Studio (optional approved admin profile): `http://localhost:5555`
 
-Stop the stack with `docker compose down`. Add `-v` only when you intentionally want to delete the local PostgreSQL data volume.
+Stopping existing services requires approval. Preserve the PostgreSQL volume.
 
 ## Install Dependencies Without Docker
 
@@ -120,7 +140,12 @@ The API reaches the AI service through `AI_SERVICE_BASE_URL` and calls the MCP-b
 
 For Gemini development testing, set `AI_LLM_PROVIDER=gemini`, `GEMINI_API_KEY`, and `GEMINI_MODEL` in `.env`, then restart the AI service. Leave `AI_LLM_PROVIDER=mock` for offline/local deterministic replies. Gemini calls fall back to DB-grounded Phase 2 replies after `GEMINI_TIMEOUT_MS` so LINE webhooks can stay responsive.
 
-For real LINE testing, expose the API with a public HTTPS tunnel such as `ngrok http 4000`, then set the LINE Developers webhook URL to `https://<tunnel-host>/webhooks/line` and enable `Use webhook`. Local signed webhook tests can validate DB and AI flow, but they cannot deliver a LINE reply because fake reply tokens are rejected by LINE.
+For real LINE testing, follow the approved
+[two-OA connection procedure](docs/deployment/final-line-rollout.md). Each verified
+merchant channel needs its own public HTTPS URL ending in
+`/webhooks/line/<backend-channel-UUID>`. The old `/webhooks/line` route is retired.
+Keep API/AI/database/admin ports private and approve ingress changes before opening
+them. Local signed fixtures cannot establish real LINE verification or delivery.
 
 ## Run Database
 

@@ -2,66 +2,51 @@ import {
   Body,
   Controller,
   Get,
-  Headers,
+  Header,
   Param,
+  ParseUUIDPipe,
   Post,
   Query,
-  UnauthorizedException,
+  UseGuards,
 } from "@nestjs/common";
-import type { VectorDocumentSyncRequest } from "../ai-integration/ai-contract.types";
+import { InternalServiceGuard } from "../../auth/internal-service.guard";
 import { InternalAiService } from "./internal-ai.service";
-
-function assertInternalToken(authHeader?: string): void {
-  const expected = process.env.INTERNAL_SERVICE_TOKEN ?? "dev_internal_service_token";
-
-  if (!authHeader?.startsWith("Bearer ")) {
-    throw new UnauthorizedException("Missing internal service token");
-  }
-
-  const token = authHeader.replace("Bearer ", "").trim();
-
-  if (token !== expected) {
-    throw new UnauthorizedException("Invalid internal service token");
-  }
-}
+import { VectorDocumentSyncDto } from "./vector-sync.dto";
 
 @Controller("internal/ai")
+@UseGuards(InternalServiceGuard)
 export class InternalAiController {
   constructor(private readonly internalAiService: InternalAiService) {}
 
   @Get("products/export")
+  @Header("Cache-Control", "private, no-store")
   async exportProducts(
-    @Headers("authorization") authorization: string | undefined,
-    @Query("merchant_id") merchantId: string,
+    @Query("merchant_id", ParseUUIDPipe) merchantId: string,
   ) {
-    assertInternalToken(authorization);
     return this.internalAiService.exportProducts(merchantId);
   }
 
   @Get("knowledge-base/export")
+  @Header("Cache-Control", "private, no-store")
   async exportKnowledgeBase(
-    @Headers("authorization") authorization: string | undefined,
-    @Query("merchant_id") merchantId: string,
+    @Query("merchant_id", ParseUUIDPipe) merchantId: string,
   ) {
-    assertInternalToken(authorization);
     return this.internalAiService.exportKnowledgeBase(merchantId);
   }
 
   @Get("vector-documents/export")
+  @Header("Cache-Control", "private, no-store")
   async exportVectorDocuments(
-    @Headers("authorization") authorization: string | undefined,
-    @Query("merchant_id") merchantId: string,
+    @Query("merchant_id", ParseUUIDPipe) merchantId: string,
   ) {
-    assertInternalToken(authorization);
     return this.internalAiService.exportVectorDocuments(merchantId);
   }
 
   @Post("vector-documents/sync")
+  @Header("Cache-Control", "private, no-store")
   async syncVectorDocuments(
-    @Headers("authorization") authorization: string | undefined,
-    @Body() body: VectorDocumentSyncRequest,
+    @Body() body: VectorDocumentSyncDto,
   ) {
-    assertInternalToken(authorization);
     return this.internalAiService.syncVectorDocuments(
       body.merchant_id,
       body.documents,
@@ -69,11 +54,10 @@ export class InternalAiController {
   }
 
   @Get("merchant-settings/:merchantId")
+  @Header("Cache-Control", "private, no-store")
   async exportMerchantSettings(
-    @Headers("authorization") authorization: string | undefined,
-    @Param("merchantId") merchantId: string,
+    @Param("merchantId", ParseUUIDPipe) merchantId: string,
   ) {
-    assertInternalToken(authorization);
     return this.internalAiService.exportMerchantSettings(merchantId);
   }
 }

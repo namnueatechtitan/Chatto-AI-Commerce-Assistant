@@ -31,8 +31,14 @@ export class RagService {
     const topK = this.normalizeTopK(input.top_k);
     const documents = input.documents ?? [];
     const hasQueryEmbedding = Boolean(input.query_embedding?.length);
+    const merchantId =
+      typeof input.merchant_id === "string" &&
+      input.merchant_id.trim().length > 0 &&
+      input.merchant_id === input.merchant_id.trim()
+        ? input.merchant_id
+        : undefined;
 
-    if (!query || contextFreeIntents.has(input.intent ?? "")) {
+    if (!merchantId || !query || contextFreeIntents.has(input.intent ?? "")) {
       return {
         mode: hasQueryEmbedding
           ? "hybrid_semantic"
@@ -52,7 +58,7 @@ export class RagService {
       chunks: this.rankDocuments(
         query,
         input.intent,
-        input.merchant_id,
+        merchantId,
         input.query_embedding,
         documents,
       ).slice(0, topK),
@@ -62,7 +68,7 @@ export class RagService {
   private rankDocuments(
     query: string,
     intent: string | undefined,
-    merchantId: string | undefined,
+    merchantId: string,
     queryEmbedding: number[] | undefined,
     documents: VectorDocumentForAi[],
   ): RagRetrievedChunk[] {
@@ -71,8 +77,8 @@ export class RagService {
     return documents
       .filter(
         (document) =>
+          document.merchant_id === merchantId &&
           document.status.toLowerCase() === "active" &&
-          (!merchantId || document.merchant_id === merchantId) &&
           (!allowedSourceTypes || allowedSourceTypes.includes(document.source_type)),
       )
       .map((document) =>

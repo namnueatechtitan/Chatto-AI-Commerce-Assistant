@@ -19,6 +19,7 @@ import {
   Type,
 } from "@nestjs/common";
 import { ApiOperation, ApiTags } from "@nestjs/swagger";
+import { assertScaffoldAvailable } from "./scaffold-policy";
 
 type PlaceholderPayload = Record<string, unknown>;
 
@@ -34,6 +35,7 @@ export function createPlaceholderResourceModule(
   @Injectable()
   class PlaceholderResourceService {
     findAll() {
+      assertScaffoldAvailable(options.route);
       return {
         resource: options.resourceName,
         items: [],
@@ -42,6 +44,7 @@ export function createPlaceholderResourceModule(
     }
 
     findOne(id: string) {
+      assertScaffoldAvailable(options.route);
       return {
         resource: options.resourceName,
         id,
@@ -50,6 +53,7 @@ export function createPlaceholderResourceModule(
     }
 
     create(payload: PlaceholderPayload) {
+      assertScaffoldAvailable(options.route);
       return {
         resource: options.resourceName,
         payload,
@@ -58,6 +62,7 @@ export function createPlaceholderResourceModule(
     }
 
     update(id: string, payload: PlaceholderPayload) {
+      assertScaffoldAvailable(options.route);
       return {
         resource: options.resourceName,
         id,
@@ -67,6 +72,7 @@ export function createPlaceholderResourceModule(
     }
 
     remove(id: string) {
+      assertScaffoldAvailable(options.route);
       return {
         resource: options.resourceName,
         id,

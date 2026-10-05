@@ -1,72 +1,23 @@
-# Step 4: LINE Official Account frontend
+# LINE OA onboarding
 
-`/onboarding/line?merchantId=<uuid>` remains part of the existing
-`app/onboarding/[step]/page.tsx` route. Its existing authenticated status read,
-merchant membership selection and prerequisite redirect are preserved. Step 3
-continues to return to the setup checklist, where the current Step 4 action opens
-this screen. The badge is always **ขั้นตอนที่ 4 จาก 6**.
+The authenticated route `/onboarding/line?merchantId=<uuid>` reads the selected merchant's safe connection metadata. Only the merchant Owner can configure, verify credentials, or disconnect. Secret fields are initially empty and masked; existing credentials are never returned to the browser.
 
-The page uses the existing OnboardingBranding, logo and onboarding mascot without
-editing shared branding or Login/Step 3 styles. LINE-specific layout, status,
-numbered cards, inputs and actions have an isolated CSS module. Desktop uses the
-existing 700:740 column ratio, tablet retains two columns, and mobile condenses
-branding and stacks the form/actions.
+## Save, copy, verify
 
-`LineConnectionSetup` assembles the server-rendered layout. `LineConnectionForm`
-owns only local React values, errors, password visibility, copy feedback and the
-demonstration message. Channel ID must be nonempty digits; Secret and Access Token
-must be nonblank. Inputs have associated labels, required attributes and linked
-error messages. Validation focuses the first invalid field. Secret fields start
-masked and have individually labelled show/hide controls.
+1. A new connection requires the numeric Channel ID, Channel Secret, and Access Token. The Owner clicks **บันทึกข้อมูล LINE** in the first card. The frontend submits a merchant-scoped PUT with the expected revision. For an existing active connection, blank secret/token fields are omitted and keep the stored ciphertext. Omitted Channel ID uses the existing identity. Explicit empty or null API values are invalid. A reconnect requires complete credentials.
+2. The backend compares only supplied credentials with DB values inside trusted server code. A no-op returns current metadata without writing credentials, incrementing revision, or resetting connection proofs. Actual changes replace only the changed ciphertext, keep the UUID and ownership reservation, and reset readiness to `CONFIGURED`. The frontend automatically verifies new/changed or previously unverified configuration using the returned revision; a no-op already ready/connected response skips provider verification.
+3. The second card displays `<public-prefix>/<internal-channel-uuid>` after persistence, including during verification. The page acknowledges the save and shows **กำลังตรวจสอบข้อมูลกับ LINE...**. Copy stays disabled while a mutation runs or until authoritative provider proof reports `WEBHOOK_PENDING` (or fully proven `CONNECTED`). Provider success displays **ตรวจสอบข้อมูลสำเร็จ พร้อมนำ Webhook URL ไป Verify ใน LINE Developers**. Failed verification retains the stored URL, shows a sanitized error, and keeps Copy disabled. A valid public prefix is required. Repeated saves and token-only/secret-only changes retain the same UUID URL. No numeric Channel ID, generated client UUID, or browser origin is substituted.
+4. The user pastes the ready URL into LINE Developers Console → Messaging API → Webhook settings, clicks Update and Verify, then enables Use webhook. The existing backend signature and destination checks handle the real LINE callback; saving/provider verification alone never establishes `CONNECTED`.
+5. While pending, the page reads the merchant-scoped metadata every five seconds when visible, and on focus/visibility changes. It shows connected only when the backend reports `CONNECTED`, `isConnected`, encrypted credential availability, and both provider/webhook verification proofs. Polling does not call the provider verification endpoint or mutate lifecycle state. Pending reads are cancelled during mutations/unmount; a request generation guard prevents an older refresh from overwriting a later save/verification. Temporary read failures are retried, while authorization failures block access.
 
-The submit handler prevents native form submission and does not call any API.
-Inputs deliberately have no `name`, preventing native form serialization of
-credentials. A valid demonstration clears all values, restores masking and shows:
+The server reads the non-secret public HTTPS route prefix from `LINE_PUBLIC_WEBHOOK_URL`. Missing or invalid configuration disables Copy and explains the prerequisite. Merchant-keyed form instances prevent state from the previous merchant being reused when selection changes. Credentials are sent only in the authenticated configure request body, cleared from local form state only after confirmed backend storage, and never placed in browser storage, cookies, query strings, or copy output.
 
-> ระบบเชื่อมต่อ LINE OA จะพร้อมใช้งานเมื่อเชื่อมต่อ Backend
+Backend encryption, signature validation, provider verification, tenant ownership, and outbound credential selection remain intact. Only credential changes invalidate proofs. Stored numeric Channel ID is displayed on reload; secret/token inputs remain blank with a saved-value placeholder. Back/Skip preserve the selected merchant; the next step appears only after authoritative connection proof.
 
-The visible connection status always stays **ยังไม่ได้เชื่อมต่อ**, including after
-submission and refresh. This frontend does not claim a real connection even if
-existing backend status reports completion. It never transmits, persists, logs,
-adds to analytics or places credentials in browser storage/cookies/URLs. It never
-changes persisted onboarding progress. Back and Skip both return to the existing
-setup overview with the selected merchant ID; Step 5 remains subject to its
-existing backend prerequisite guard.
+## Verification
 
-The guide opens the official
-[LINE Messaging API setup documentation](https://developers.line.biz/en/docs/messaging-api/getting-started/)
-in a separate tab. Instruction text reflects the documented current workflow:
-enable Messaging API in LINE Official Account Manager, then obtain channel
-information in Developers Console.
+`pnpm --filter @chatto/web test:line` checks scoped requests, sanitized failures, strict connection proofs, and copy readiness. The isolated production UI harness supports `CHATTO_UI_LINE_ONLY=1` with a separate fixture API port/build directory. It checks save-before-copy order, password masking, validation, copying the stored UUID URL, lifecycle polling without extra writes, failure states, and Staff read-only behavior. These fixture checks are frontend regression evidence, not real LINE verification.
 
-## Optional public webhook configuration
+Rejected configure requests preserve the draft in component memory (never browser storage), hide secret visibility, and show a sanitized error beside Save. Authentication/authorization failures clear drafts and block access. The selected merchant name is visible. Only fixed allowlisted backend conflict messages distinguish an OA reserved by another merchant from a stale revision; arbitrary backend/provider content is never displayed. Repeated Save with no replacement credentials still performs the authorized revision-checked PUT; an already provider-verified channel is not rewritten or reverified, and an unverified channel retries verification from encrypted DB storage.
 
-The Next server may read `LINE_PUBLIC_WEBHOOK_URL` at runtime. This optional,
-non-secret value must be an actual deployed public HTTPS webhook endpoint supplied
-by the deployment owner. It is not derived from the browser origin, API base URL,
-merchant ID, LINE Login callback or channel credentials. No environment file or
-existing credential is changed by this implementation.
-
-`lib/line-webhook-url.ts` rejects absent/malformed values, HTTP, IP literals,
-localhost/local/internal/test/example domains, embedded credentials, query strings
-and fragments. DNS-only public HTTPS URLs are accepted as configuration; this is
-a shape check, not a network reachability/provider-verification check. Deployment
-owners must confirm the configured endpoint is real and operational. The frontend
-does not send requests to it. With no eligible value the UI displays
-**ยังไม่ได้กำหนด Webhook URL** and disables Copy. With eligible configuration,
-Copy uses `navigator.clipboard.writeText` only on that URL and announces either
-completion or a manual-copy fallback. No fake production URL is included.
-
-## Backend integration TODOs
-
-- Define a merchant-scoped connection contract with existing authentication and
-  owner authorization; validate LINE credentials on the backend.
-- Encrypt channel secrets/tokens, prevent credential logging, and return only
-  safe connection metadata to the frontend.
-- Supply a real public webhook URL and confirm webhook readiness in the backend.
-- Replace the demonstration handler with the approved contract, handle failures,
-  and refresh authoritative progress only after verified connection.
-- Decide future skip/Step 5 policy without fabricating Step 4 completion.
-
-These are future tasks. NestJS, Prisma, database, authentication, OAuth, LINE APIs,
-webhook behavior and later-phase functionality are unchanged.
+Copy availability follows provider readiness and mutation state. A provider failure does not remove the stored URL, and a temporary metadata refresh failure after confirmed storage retains it. The page explains that provider credential errors must be corrected before LINE verification succeeds. Backend signature checks, ownership checks, and lifecycle proof requirements are unchanged. Rejected configuration writes (validation, permissions, or cross-merchant OA reservation) do not mint a fictitious channel URL. Runtime credentials remain encrypted DB values, with no OA ENV fallback.

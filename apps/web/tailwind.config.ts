@@ -5,9 +5,19 @@ const config = {
   content: ["./app/**/*.{ts,tsx}", "./components/**/*.{ts,tsx}", "./lib/**/*.{ts,tsx}"],
   theme: {
     extend: {
+      screens: {
+        desktop: "1200px",
+      },
+      spacing: {
+        2: "var(--space-xs)",
+        4: "var(--space-sm)",
+        6: "var(--space-md)",
+        8: "var(--space-lg)",
+        12: "var(--space-xl)",
+      },
       boxShadow: {
-        card: "0 18px 40px rgba(15, 23, 42, 0.06)",
-        soft: "0 8px 24px rgba(15, 23, 42, 0.05)",
+        card: "0 1.125rem 2.5rem rgba(15, 23, 42, 0.06)",
+        soft: "0 0.5rem 1.5rem rgba(15, 23, 42, 0.05)",
       },
       colors: {
         background: "rgb(var(--background) / <alpha-value>)",
@@ -23,7 +33,7 @@ const config = {
       keyframes: {
         float: {
           "0%, 100%": { transform: "translateY(0px)" },
-          "50%": { transform: "translateY(-10px)" },
+          "50%": { transform: "translateY(-0.625rem)" },
         },
       },
       animation: {

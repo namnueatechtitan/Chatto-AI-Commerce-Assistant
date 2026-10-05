@@ -1,9 +1,11 @@
 import { Module } from "@nestjs/common";
 
+import { AuthModule } from "../auth/auth.module";
 import { createPlaceholderResourceModule } from "../common/placeholders/placeholder-resource.factory";
 import { PrismaModule } from "../prisma/prisma.module";
 import { ConversationsController } from "./conversations/conversations.controller";
 import { ConversationsService } from "./conversations/conversations.service";
+import { MerchantsModule } from "./merchants.module";
 
 const PlaceholderConversationsModule = createPlaceholderResourceModule({
   resourceName: "conversations",
@@ -12,7 +14,7 @@ const PlaceholderConversationsModule = createPlaceholderResourceModule({
 });
 
 @Module({
-  imports: [PlaceholderConversationsModule, PrismaModule],
+  imports: [PlaceholderConversationsModule, PrismaModule, AuthModule, MerchantsModule],
   controllers: [ConversationsController],
   providers: [ConversationsService],
 })

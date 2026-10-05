@@ -6,7 +6,12 @@
     "dev": "next dev -p 3000",
     "build": "next build",
     "start": "next start -p 3000",
-    "test:onboarding:ui": "node tests/onboarding-ui.cjs"
+    "test:onboarding:ui": "node tests/onboarding-ui.cjs",
+    "test:messages": "node --test tests/latest-messages-api.test.cjs",
+    "test:line": "node --test tests/merchant-line-api.test.cjs",
+    "test:messages:ui": "node tests/latest-messages-ui.cjs",
+    "typecheck": "tsc --noEmit",
+    "test:responsive:ui": "node tests/responsive-ui.cjs"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.81.5",

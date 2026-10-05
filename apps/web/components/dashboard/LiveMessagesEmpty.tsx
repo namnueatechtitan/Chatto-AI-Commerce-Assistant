@@ -2,7 +2,7 @@ import { Inbox } from "lucide-react";
 
 export function LiveMessagesEmpty() {
   return (
-    <div className="flex flex-col items-center justify-center rounded-[28px] border border-dashed border-emerald-200 bg-emerald-50/60 px-6 py-12 text-center">
+    <div className="flex flex-col items-center justify-center rounded-[1.75rem] border border-dashed border-emerald-200 bg-emerald-50/60 px-6 py-12 text-center">
       <div className="flex size-14 items-center justify-center rounded-2xl bg-white text-emerald-600 shadow-sm">
         <Inbox className="size-6" />
       </div>

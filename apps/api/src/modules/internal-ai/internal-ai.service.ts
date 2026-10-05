@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
+import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
+import { isUUID } from "class-validator";
 import { DocumentStatus, Prisma, ProductStatus } from "@prisma/client";
 import type {
   KnowledgeBaseExportResponse,
@@ -69,7 +70,12 @@ function jsonToStringArray(value: unknown): string[] {
 export class InternalAiService {
   constructor(private readonly prisma: PrismaService) {}
 
+  private requireMerchantId(merchantId: string): void {
+    if (typeof merchantId !== "string" || !isUUID(merchantId)) throw new BadRequestException("merchant_id must be a UUID");
+  }
+
   async exportProducts(merchantId: string): Promise<ProductExportResponse> {
+    this.requireMerchantId(merchantId);
     const products = await this.prisma.product.findMany({
       where: {
         merchantId,
@@ -78,6 +84,7 @@ export class InternalAiService {
       include: {
         variants: {
           where: {
+            merchantId,
             status: ProductStatus.ACTIVE,
           },
           orderBy: {
@@ -85,6 +92,7 @@ export class InternalAiService {
           },
         },
         images: {
+          where: { merchantId },
           orderBy: {
             sortOrder: "asc",
           },
@@ -146,6 +154,7 @@ export class InternalAiService {
   }
 
   async exportKnowledgeBase(merchantId: string): Promise<KnowledgeBaseExportResponse> {
+    this.requireMerchantId(merchantId);
     const documents = await this.prisma.knowledgeBaseDocument.findMany({
       where: {
         merchantId,
@@ -171,6 +180,7 @@ export class InternalAiService {
   }
 
   async exportVectorDocuments(merchantId: string): Promise<VectorDocumentForAi[]> {
+    this.requireMerchantId(merchantId);
     const documents = await this.prisma.vectorDocument.findMany({
       where: {
         merchantId,
@@ -206,6 +216,10 @@ export class InternalAiService {
     merchantId: string,
     documents: VectorDocumentForAi[],
   ): Promise<VectorDocumentSyncResponse> {
+    this.requireMerchantId(merchantId);
+    if (!Array.isArray(documents) || documents.some((document) => !document || document.merchant_id !== merchantId)) {
+      throw new BadRequestException("Invalid vector documents");
+    }
     const managedDocuments = documents.filter(
       (document) =>
         document.id &&
@@ -224,31 +238,50 @@ export class InternalAiService {
     }
 
     const result = await this.prisma.$transaction(async (transaction) => {
+      await transaction.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${merchantId}))`;
+      const merchant = await transaction.merchant.findUnique({ where: { id: merchantId }, select: { id: true } });
+      if (!merchant) throw new NotFoundException("Merchant not found");
+      const ids = managedDocuments.map((document) => document.id!);
+      if (new Set(ids).size !== ids.length || managedDocuments.some((document) => !isUUID(document.id!) || !isUUID(document.source_id))) {
+        throw new BadRequestException("Invalid vector documents");
+      }
+      const existing = await transaction.vectorDocument.findMany({
+        where: { merchantId, id: { in: ids } },
+        select: { id: true, sourceType: true, sourceId: true, metadata: true },
+      });
+      const owned = new Map(existing.map((document) => [document.id, document]));
+      // Validate every source before writing; a client-supplied UUID is not ownership evidence.
       for (const document of managedDocuments) {
-        await transaction.vectorDocument.upsert({
-          where: {
-            id: document.id,
-          },
-          create: {
-            id: document.id,
-            merchantId,
-            sourceType: document.source_type,
-            sourceId: document.source_id,
-            chunkText: document.chunk_text,
-            embedding: document.embedding as Prisma.InputJsonValue,
-            metadata: (document.metadata ?? {}) as Prisma.InputJsonValue,
-            status: DocumentStatus.ACTIVE,
-          },
-          update: {
-            merchantId,
-            sourceType: document.source_type,
-            sourceId: document.source_id,
-            chunkText: document.chunk_text,
-            embedding: document.embedding as Prisma.InputJsonValue,
-            metadata: (document.metadata ?? {}) as Prisma.InputJsonValue,
-            status: DocumentStatus.ACTIVE,
-          },
-        });
+        const source = document.source_type === "product"
+          ? await transaction.product.findFirst({ where: { id: document.source_id, merchantId }, select: { id: true } })
+          : document.source_type === "product_variant"
+            ? await transaction.productVariant.findFirst({ where: { id: document.source_id, merchantId, product: { merchantId } }, select: { id: true } })
+            : await transaction.knowledgeBaseDocument.findFirst({ where: {
+              id: document.source_id, merchantId,
+              ...(document.source_type === "knowledge_base" ? {} : { type: document.source_type }),
+            }, select: { id: true } });
+        const previous = owned.get(document.id!);
+        const metadata = previous?.metadata as Record<string, unknown> | null | undefined;
+        if (!source || (previous && (previous.sourceType !== document.source_type || previous.sourceId !== document.source_id || metadata?.managed_by !== "chatto-live-chunker"))) {
+          throw new BadRequestException("Invalid vector documents");
+        }
+      }
+      for (const document of managedDocuments) {
+        const data = {
+          chunkText: document.chunk_text, embedding: document.embedding as Prisma.InputJsonValue,
+          metadata: (document.metadata ?? {}) as Prisma.InputJsonValue, status: DocumentStatus.ACTIVE,
+        };
+        if (owned.has(document.id!)) {
+          const updated = await transaction.vectorDocument.updateMany({
+            where: { id: document.id!, merchantId, sourceType: document.source_type, sourceId: document.source_id }, data,
+          });
+          if (updated.count !== 1) throw new BadRequestException("Invalid vector documents");
+        } else {
+          // Foreign globally unique IDs cause a conflict, never a tenant reassignment.
+          await transaction.vectorDocument.create({ data: {
+            ...data, id: document.id!, merchantId, sourceType: document.source_type, sourceId: document.source_id,
+          } });
+        }
       }
 
       const sourceGroups = new Map<string, typeof managedDocuments>();
@@ -284,6 +317,11 @@ export class InternalAiService {
       }
 
       return deleted;
+    }).catch((error: unknown) => {
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002") {
+        throw new BadRequestException("Invalid vector documents");
+      }
+      throw error;
     });
 
     return {
@@ -298,10 +336,15 @@ export class InternalAiService {
     conversationId: string,
     excludeMessageId?: string,
   ): Promise<AiConversationMessage[]> {
+    this.requireMerchantId(merchantId);
+    if (!isUUID(conversationId) || (excludeMessageId !== undefined && !isUUID(excludeMessageId))) {
+      throw new BadRequestException("Invalid conversation reference");
+    }
     const messages = await this.prisma.message.findMany({
       where: {
         merchantId,
         conversationId,
+        conversation: { merchantId, customer: { merchantId }, channel: { merchantId } },
         ...(excludeMessageId ? { id: { not: excludeMessageId } } : {}),
       },
       orderBy: {
@@ -323,6 +366,7 @@ export class InternalAiService {
   }
 
   async exportMerchantSettings(merchantId: string): Promise<MerchantSettingsForAi> {
+    this.requireMerchantId(merchantId);
     const merchant = await this.prisma.merchant.findUnique({
       where: {
         id: merchantId,

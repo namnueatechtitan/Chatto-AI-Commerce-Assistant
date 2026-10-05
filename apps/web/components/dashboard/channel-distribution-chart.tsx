@@ -56,15 +56,15 @@ export function ChannelDistributionChart({
       </CardHeader>
 
       <CardContent className="pt-3">
-        <div className="grid gap-6 xl:grid-cols-[124px_minmax(0,1fr)] xl:items-center">
-          <div className="relative mx-auto h-[124px] w-[124px]">
+        <div className="grid gap-6">
+          <div className="relative mx-auto h-[7.75rem] w-[7.75rem]">
             <ResponsiveContainer height="100%" width="100%">
               <PieChart>
                 <Pie
                   data={data}
                   dataKey="value"
-                  innerRadius={40}
-                  outerRadius={58}
+                  innerRadius="64.5%"
+                  outerRadius="93.5%"
                   paddingAngle={3}
                   stroke="transparent"
                 >
@@ -80,7 +80,7 @@ export function ChannelDistributionChart({
               <div className="text-xl font-semibold text-slate-950">
                 {totalMessages}
               </div>
-              <div className="text-[11px] text-slate-500">ข้อความทั้งหมด</div>
+              <div className="text-[0.6875rem] text-slate-500">ข้อความทั้งหมด</div>
             </div>
           </div>
 

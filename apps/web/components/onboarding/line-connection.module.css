@@ -1,100 +1,91 @@
 .page { min-height: 100svh; }
-.panel { min-width: 0; padding: 36px 7.1% 54px 6.65%; }
-.back { display: inline-flex; min-height: 24px; align-items: center; gap: 7px; color: #469f55; font-size: 15px; font-weight: 600; }
-.badge { display: block; width: fit-content; margin: 10px 0 24px auto; border-radius: 15px; padding: 8px 19px; color: #22994a; background: #e6f5e9; font-size: 12px; font-weight: 600; line-height: 18px; }
-.intro { margin: 0 2px 17px; }
-.intro h1 { margin: 0; color: #000; font-size: 25px; font-weight: 700; line-height: 34px; }
-.intro p { margin: 0; color: #777; font-size: 15px; line-height: 25px; }
-.connectionStatus { display: flex; min-height: 55px; align-items: center; gap: 10px; margin-bottom: 18px; border-radius: 5px; padding: 10px 22px; background: #f3faf4; }
-.statusDot { flex: 0 0 10px; height: 10px; border-radius: 50%; background: #d9d9d9; }
-.connectionStatus p { margin: 0; font-size: 12px; font-weight: 600; line-height: 18px; }
+.panel { min-width: 0; padding: 2.25rem 7.1% 3.375rem 6.65%; }
+.back { display: inline-flex; min-height: 1.5rem; align-items: center; gap: 0.4375rem; color: #469f55; font-size: 0.9375rem; font-weight: 600; }
+.badge { display: block; width: fit-content; margin: 0.625rem 0 1.5rem auto; border-radius: 0.9375rem; padding: 0.5rem 1.1875rem; color: #22994a; background: #e6f5e9; font-size: 0.75rem; font-weight: 600; line-height: 1.125rem; }
+.intro { margin: 0 0.125rem 1.0625rem; }
+.intro h1 { margin: 0; color: #000; font-size: 1.5625rem; font-weight: 700; line-height: 2.125rem; }
+.intro p { margin: 0; color: #777; font-size: 0.9375rem; line-height: 1.5625rem; }
+.intro .merchantName { margin: 0.5rem 0; color: #226d39; font-weight: 600; }
+.connectionStatus { display: flex; min-height: 3.4375rem; align-items: center; gap: 0.625rem; margin-bottom: 1.125rem; border-radius: 0.3125rem; padding: 0.625rem 1.375rem; background: #f3faf4; }
+.statusDot { flex: 0 0 0.625rem; height: 0.625rem; border-radius: 50%; background: #d9d9d9; }
+.connectionStatus > div { min-width: 0; }
+.connectionStatus p { margin: 0; font-size: 0.75rem; font-weight: 600; line-height: 1.125rem; overflow-wrap: anywhere; }
 .connectionStatus p + p { color: #777; font-weight: 400; }
-.form { display: grid; gap: 18px; }
-.card { min-width: 0; border: 1px solid #c8cbc9; border-radius: 15px; padding: 20px 22px 25px; background: #fff; }
-.channelCard { min-height: 368px; padding-bottom: 48px; }
-.sectionHeader { display: grid; grid-template-columns: 20px minmax(0, 1fr); align-items: start; gap: 10px; }
-.number { display: inline-flex; width: 20px; height: 20px; align-items: center; justify-content: center; margin-top: 1px; border-radius: 50%; color: #fff; background: #22994a; font-size: 12px; font-weight: 600; }
-.sectionHeader h2 { margin: 0; color: #171717; font-size: 15px; font-weight: 600; line-height: 24px; }
-.sectionHeader p { margin: 0; color: #777; font-size: 12px; line-height: 20px; }
-.guide { color: #469f55; font-size: 12px; line-height: 20px; text-decoration: underline; text-underline-offset: 2px; }
-.fields { display: grid; gap: 16px; margin-top: 28px; padding: 0 9px; }
-.field { display: grid; min-width: 0; gap: 8px; }
-.field label { font-size: 12px; font-weight: 600; line-height: 18px; }
+.form { display: grid; gap: 1.125rem; }
+.card { min-width: 0; border: 1px solid #c8cbc9; border-radius: 0.9375rem; padding: 1.25rem 1.375rem 1.5625rem; background: #fff; }
+.channelCard { min-height: 23rem; padding-bottom: 3rem; }
+.sectionHeader { display: grid; grid-template-columns: 1.25rem minmax(0, 1fr); align-items: start; gap: 0.625rem; }
+.number { display: inline-flex; width: 1.25rem; height: 1.25rem; align-items: center; justify-content: center; margin-top: 0.0625rem; border-radius: 50%; color: #fff; background: #22994a; font-size: 0.75rem; font-weight: 600; }
+.sectionHeader h2 { margin: 0; color: #171717; font-size: 0.9375rem; font-weight: 600; line-height: 1.5rem; }
+.sectionHeader p { margin: 0; color: #777; font-size: 0.75rem; line-height: 1.25rem; }
+.guide { color: #469f55; font-size: 0.75rem; line-height: 1.25rem; text-decoration: underline; text-underline-offset: 0.125rem; }
+.fields { display: grid; gap: 1rem; margin-top: 1.75rem; padding: 0 0.5625rem; }
+.field { display: grid; min-width: 0; gap: 0.5rem; }
+.field label { font-size: 0.75rem; font-weight: 600; line-height: 1.125rem; }
 .inputWrap { position: relative; min-width: 0; }
-.field input { display: block; width: 100%; min-width: 0; height: 36px; border: 1px solid #d9d9d9; border-radius: 5px; padding: 7px 12px; color: #242424; background: #fafbfa; font-size: 14px; line-height: 20px; }
-.field input.secretInput { padding-right: 44px; }
+.field input { display: block; width: 100%; min-width: 0; height: 2.25rem; border: 1px solid #d9d9d9; border-radius: 0.3125rem; padding: 0.4375rem 0.75rem; color: #242424; background: #fafbfa; font-size: 0.875rem; line-height: 1.25rem; }
+.field input.secretInput { padding-right: 2.75rem; }
 .field input[aria-invalid=true] { border-color: #b42318; }
-.visibility { position: absolute; top: 0; right: 1px; display: flex; width: 38px; height: 36px; align-items: center; justify-content: center; border: 0; border-radius: 5px; color: #6a756d; background: transparent; cursor: pointer; }
+.visibility { position: absolute; top: 0; right: 0.0625rem; display: flex; width: 2.375rem; height: 2.25rem; align-items: center; justify-content: center; border: 0; border-radius: 0.3125rem; color: #6a756d; background: transparent; cursor: pointer; }
 .visibility:hover { color: #127223; }
-.error { margin: 0; color: #b42318; font-size: 12px; line-height: 20px; }
-.webhook { display: flex; min-width: 0; min-height: 43px; align-items: center; gap: 12px; margin-top: 20px; border: 1px solid #d9d9d9; border-radius: 10px; padding: 6px 12px 6px 19px; background: #f3faf4; }
-.webhook > span { min-width: 0; flex: 1; color: #242424; font-size: 15px; line-height: 24px; overflow-wrap: anywhere; }
-.webhook > .unconfigured { color: #777; font-size: 13px; }
-.copy { display: inline-flex; width: 28px; height: 28px; flex-shrink: 0; align-items: center; justify-content: center; border: 1px solid #d9d9d9; border-radius: 5px; color: #22994a; background: #fff; cursor: pointer; }
+.error { margin: 0; color: #b42318; font-size: 0.75rem; line-height: 1.25rem; }
+.webhook { display: flex; min-width: 0; min-height: 2.6875rem; align-items: center; gap: 0.75rem; margin-top: 1.25rem; border: 1px solid #d9d9d9; border-radius: 0.625rem; padding: 0.375rem 0.75rem 0.375rem 1.1875rem; background: #f3faf4; }
+.webhook > span { min-width: 0; flex: 1; color: #242424; font-size: 0.9375rem; line-height: 1.5rem; overflow-wrap: anywhere; }
+.webhook > .unconfigured { color: #777; font-size: 0.8125rem; }
+.copy { display: inline-flex; width: 1.75rem; height: 1.75rem; flex-shrink: 0; align-items: center; justify-content: center; border: 1px solid #d9d9d9; border-radius: 0.3125rem; color: #22994a; background: #fff; cursor: pointer; }
 .copy:disabled { color: #9fa9a2; background: #fafbfa; cursor: not-allowed; }
-.copyMessage { margin: 0; color: #469f55; font-size: 12px; line-height: 20px; }
-.copyMessage:not(:empty) { margin-top: 8px; }
-.actions { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 22px; }
-.primary, .secondary { display: inline-flex; min-width: 0; min-height: 45px; align-items: center; justify-content: center; border: 1px solid #469f55; border-radius: 15px; padding: 10px 14px; font-size: 15px; font-weight: 600; line-height: 24px; text-align: center; cursor: pointer; }
+.copyMessage { margin: 0; color: #469f55; font-size: 0.75rem; line-height: 1.25rem; }
+.copyMessage:not(:empty) { margin-top: 0.5rem; }
+.savedHint { margin: 1rem 0 0; color: #555; font-size: 0.8125rem; line-height: 1.375rem; }
+.saveActions { display: grid; gap: 0.5rem; margin: 1.5rem 0.5625rem 0; }
+.saveActions p { margin: 0; color: #777; font-size: 0.8125rem; line-height: 1.375rem; }
+.saveActions .errorNotice { border: 1px solid #efb5b0; border-radius: 0.5rem; padding: 0.75rem 0.875rem; color: #b42318; background: #fff5f4; }
+.saveActions .notice { color: #226d39; }
+.actions { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 1.375rem; }
+.primary, .secondary { display: inline-flex; min-width: 0; min-height: 2.8125rem; align-items: center; justify-content: center; border: 1px solid #469f55; border-radius: 0.9375rem; padding: 0.625rem 0.875rem; font-size: 0.9375rem; font-weight: 600; line-height: 1.5rem; text-align: center; cursor: pointer; }
 .primary { border-color: #22994a; color: white; background: #22994a; }
 .primary:hover { background: #18813c; }
+.primary:disabled, .secondary:disabled { opacity: .6; cursor: not-allowed; }
+.management { display: flex; flex-wrap: wrap; gap: 0.625rem; }
+.management > * { max-width: 100%; font-size: 0.8125rem; }
 .secondary { color: #22813b; background: white; }
 .secondary:hover { background: #f3faf4; }
-.notice { margin: 0; border: 1px solid #b7dfc2; border-radius: 8px; padding: 12px 14px; color: #226d39; background: #f0f9f3; font-size: 13px; line-height: 22px; }
-.panel :focus-visible { outline: 3px solid #127223; outline-offset: 3px; }
+.notice { margin: 0; border: 1px solid #b7dfc2; border-radius: 0.5rem; padding: 0.75rem 0.875rem; color: #226d39; background: #f0f9f3; font-size: 0.8125rem; line-height: 1.375rem; }
+.panel :focus-visible { outline: 0.1875rem solid #127223; outline-offset: 0.1875rem; }
 .srOnly { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
-
-@media (min-width: 1600px) {
-  .panel { padding-top: 48px; }
-  .badge { margin-top: 16px; margin-bottom: 30px; font-size: 14px; padding: 10px 23px; }
-  .intro { margin-bottom: 22px; }
-  .intro h1 { font-size: 30px; line-height: 42px; }
-  .intro p { font-size: 16px; line-height: 27px; }
-  .connectionStatus { min-height: 65px; margin-bottom: 22px; padding: 12px 26px; }
-  .connectionStatus p { font-size: 14px; line-height: 21px; }
-  .form { gap: 22px; }
-  .card { padding: 24px 26px 30px; }
-  .channelCard { min-height: 420px; padding-bottom: 48px; }
-  .sectionHeader { grid-template-columns: 24px minmax(0, 1fr); gap: 12px; }
-  .number { width: 24px; height: 24px; font-size: 14px; }
-  .sectionHeader h2 { font-size: 18px; line-height: 28px; }
-  .sectionHeader p, .guide { font-size: 14px; line-height: 23px; }
-  .fields { margin-top: 30px; gap: 20px; padding: 0 12px; }
-  .field label { font-size: 14px; line-height: 22px; }
-  .field input, .visibility { height: 42px; }
-  .webhook { min-height: 50px; margin-top: 24px; }
-  .primary, .secondary { min-height: 52px; font-size: 17px; }
-}
+.back > svg { width: .9375rem; height: .9375rem; }
+.visibility > svg { width: 1.0625rem; height: 1.0625rem; }
+.copy > svg { width: 1.125rem; height: 1.125rem; }
 
 @media (min-width: 768px) and (max-width: 1199px) {
-  .panel { padding: 28px 22px 40px; }
-  .card { padding: 20px 16px 24px; }
+  .panel { padding: 1.75rem 1.375rem 2.5rem; }
+  .card { padding: 1.25rem 1rem 1.5rem; }
   .channelCard { min-height: 0; }
   .fields { padding: 0; }
-  .actions { gap: 12px; }
-  .primary, .secondary { font-size: 14px; }
+  .actions { gap: 0.75rem; }
+  .primary, .secondary { font-size: 0.875rem; }
 }
 
 @media (max-width: 767px) {
-  .panel { padding: 22px 24px 40px; }
-  .back { min-height: 44px; }
-  .badge { margin: 8px 0 22px auto; }
-  .intro h1 { font-size: 24px; }
-  .intro p { font-size: 14px; }
-  .connectionStatus { padding: 12px 16px; }
-  .card { padding: 20px 16px 24px; }
+  .panel { padding: 1.375rem 1.5rem 2.5rem; }
+  .back { min-height: 2.75rem; }
+  .badge { margin: 0.5rem 0 1.375rem auto; }
+  .intro h1 { font-size: 1.5rem; }
+  .intro p { font-size: 0.875rem; }
+  .connectionStatus { padding: 0.75rem 1rem; }
+  .card { padding: 1.25rem 1rem 1.5rem; }
   .channelCard { min-height: 0; }
-  .fields { padding: 0; margin-top: 24px; }
-  .field input { height: 44px; font-size: 16px; }
-  .visibility { width: 44px; height: 44px; }
-  .field input.secretInput { padding-right: 48px; }
-  .webhook { padding: 8px 10px 8px 12px; gap: 8px; }
-  .copy { width: 44px; height: 44px; }
-  .actions { grid-template-columns: minmax(0, 1fr); gap: 12px; }
-  .primary, .secondary { min-height: 48px; }
+  .fields { padding: 0; margin-top: 1.5rem; }
+  .field input { height: 2.75rem; font-size: 1rem; }
+  .visibility { width: 2.75rem; height: 2.75rem; }
+  .field input.secretInput { padding-right: 3rem; }
+  .webhook { padding: 0.5rem 0.625rem 0.5rem 0.75rem; gap: 0.5rem; }
+  .copy { width: 2.75rem; height: 2.75rem; }
+  .actions { grid-template-columns: minmax(0, 1fr); gap: 0.75rem; }
+  .primary, .secondary { min-height: 3rem; }
 }
 
 @media (max-width: 359px) {
-  .panel { padding-right: 16px; padding-left: 16px; }
-  .card { padding-right: 14px; padding-left: 14px; }
+  .panel { padding-right: 1rem; padding-left: 1rem; }
+  .card { padding-right: 0.875rem; padding-left: 0.875rem; }
 }

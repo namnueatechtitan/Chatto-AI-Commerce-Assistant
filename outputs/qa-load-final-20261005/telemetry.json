@@ -1,0 +1,724 @@
+{
+  "baseline": {
+    "phase": "baseline",
+    "started_at_utc": "2026-10-05T12:17:45.675Z",
+    "finished_at_utc": "2026-10-05T12:17:45.729Z",
+    "rss_bytes": 76017664,
+    "gpus": [
+      {
+        "index": 0,
+        "name": "NVIDIA GeForce RTX 5090",
+        "memory_used_mib": 11306,
+        "memory_total_mib": 32607,
+        "utilization_percent": 81,
+        "temperature_c": 51
+      }
+    ]
+  },
+  "samples": [
+    {
+      "phase": "concurrency-1",
+      "started_at_utc": "2026-10-05T12:17:46.729Z",
+      "finished_at_utc": "2026-10-05T12:17:46.779Z",
+      "rss_bytes": 76214272,
+      "gpus": [
+        {
+          "index": 0,
+          "name": "NVIDIA GeForce RTX 5090",
+          "memory_used_mib": 11304,
+          "memory_total_mib": 32607,
+          "utilization_percent": 36,
+          "temperature_c": 48
+        }
+      ]
+    },
+    {
+      "phase": "concurrency-1",
+      "started_at_utc": "2026-10-05T12:17:47.729Z",
+      "finished_at_utc": "2026-10-05T12:17:47.788Z",
+      "rss_bytes": 76324864,
+      "gpus": [
+        {
+          "index": 0,
+          "name": "NVIDIA GeForce RTX 5090",
+          "memory_used_mib": 11313,
+          "memory_total_mib": 32607,
+          "utilization_percent": 57,
+          "temperature_c": 48
+        }
+      ]
+    },
+    {
+      "phase": "concurrency-1",
+      "started_at_utc": "2026-10-05T12:17:48.729Z",
+      "finished_at_utc": "2026-10-05T12:17:48.781Z",
+      "rss_bytes": 76337152,
+      "gpus": [
+        {
+          "index": 0,
+          "name": "NVIDIA GeForce RTX 5090",
+          "memory_used_mib": 11317,
+          "memory_total_mib": 32607,
+          "utilization_percent": 75,
+          "temperature_c": 55
+        }
+      ]
+    },
+    {
+      "phase": "concurrency-1",
+      "started_at_utc": "2026-10-05T12:17:49.730Z",
+      "finished_at_utc": "2026-10-05T12:17:49.781Z",
+      "rss_bytes": 65171456,
+      "gpus": [
+        {
+          "index": 0,
+          "name": "NVIDIA GeForce RTX 5090",
+          "memory_used_mib": 11308,
+          "memory_total_mib": 32607,
+          "utilization_percent": 79,
+          "temperature_c": 50
+        }
+      ]
+    },
+    {
+      "phase": "concurrency-1",
+      "started_at_utc": "2026-10-05T12:17:50.730Z",
+      "finished_at_utc": "2026-10-05T12:17:50.785Z",
+      "rss_bytes": 64524288,
+      "gpus": [
+        {
+          "index": 0,
+          "name": "NVIDIA GeForce RTX 5090",
+          "memory_used_mib": 11301,
+          "memory_total_mib": 32607,
+          "utilization_percent": 60,
+          "temperature_c": 49
+        }
+      ]
+    },
+    {
+      "phase": "concurrency-1",
+      "started_at_utc": "2026-10-05T12:17:51.730Z",
+      "finished_at_utc": "2026-10-05T12:17:51.794Z",
+      "rss_bytes": 65003520,
+      "gpus": [
+        {
+          "index": 0,
+          "name": "NVIDIA GeForce RTX 5090",
+          "memory_used_mib": 11301,
+          "memory_total_mib": 32607,
+          "utilization_percent": 79,
+          "temperature_c": 52
+        }
+      ]
+    },
+    {
+      "phase": "concurrency-1",
+      "started_at_utc": "2026-10-05T12:17:52.730Z",
+      "finished_at_utc": "2026-10-05T12:17:52.782Z",
+      "rss_bytes": 65474560,
+      "gpus": [
+        {
+          "index": 0,
+          "name": "NVIDIA GeForce RTX 5090",
+          "memory_used_mib": 11303,
+          "memory_total_mib": 32607,
+          "utilization_percent": 69,
+          "temperature_c": 55
+        }
+      ]
+    },
+    {
+      "phase": "concurrency-1",
+      "started_at_utc": "2026-10-05T12:17:53.730Z",
+      "finished_at_utc": "2026-10-05T12:17:53.788Z",
+      "rss_bytes": 65896448,
+      "gpus": [
+        {
+          "index": 0,
+          "name": "NVIDIA GeForce RTX 5090",
+          "memory_used_mib": 11298,
+          "memory_total_mib": 32607,
+          "utilization_percent": 78,
+          "temperature_c": 51
+        }
+      ]
+    },
+    {
+      "phase": "concurrency-1",
+      "started_at_utc": "2026-10-05T12:17:54.731Z",
+      "finished_at_utc": "2026-10-05T12:17:54.781Z",
+      "rss_bytes": 66170880,
+      "gpus": [
+        {
+          "index": 0,
+          "name": "NVIDIA GeForce RTX 5090",
+          "memory_used_mib": 11302,
+          "memory_total_mib": 32607,
+          "utilization_percent": 63,
+          "temperature_c": 47
+        }
+      ]
+    },
+    {
+      "phase": "concurrency-1",
+      "started_at_utc": "2026-10-05T12:17:55.731Z",
+      "finished_at_utc": "2026-10-05T12:17:55.782Z",
+      "rss_bytes": 66445312,
+      "gpus": [
+        {
+          "index": 0,
+          "name": "NVIDIA GeForce RTX 5090",
+          "memory_used_mib": 11302,
+          "memory_total_mib": 32607,
+          "utilization_percent": 84,
+          "temperature_c": 55
+        }
+      ]
+    },
+    {
+      "phase": "concurrency-1",
+      "started_at_utc": "2026-10-05T12:17:56.732Z",
+      "finished_at_utc": "2026-10-05T12:17:56.784Z",
+      "rss_bytes": 66523136,
+      "gpus": [
+        {
+          "index": 0,
+          "name": "NVIDIA GeForce RTX 5090",
+          "memory_used_mib": 11302,
+          "memory_total_mib": 32607,
+          "utilization_percent": 49,
+          "temperature_c": 48
+        }
+      ]
+    },
+    {
+      "phase": "concurrency-1",
+      "started_at_utc": "2026-10-05T12:17:57.732Z",
+      "finished_at_utc": "2026-10-05T12:17:57.783Z",
+      "rss_bytes": 66756608,
+      "gpus": [
+        {
+          "index": 0,
+          "name": "NVIDIA GeForce RTX 5090",
+          "memory_used_mib": 11302,
+          "memory_total_mib": 32607,
+          "utilization_percent": 79,
+          "temperature_c": 51
+        }
+      ]
+    },
+    {
+      "phase": "concurrency-1",
+      "started_at_utc": "2026-10-05T12:17:58.732Z",
+      "finished_at_utc": "2026-10-05T12:17:58.786Z",
+      "rss_bytes": 66756608,
+      "gpus": [
+        {
+          "index": 0,
+          "name": "NVIDIA GeForce RTX 5090",
+          "memory_used_mib": 11303,
+          "memory_total_mib": 32607,
+          "utilization_percent": 74,
+          "temperature_c": 51
+        }
+      ]
+    },
+    {
+      "phase": "concurrency-1",
+      "started_at_utc": "2026-10-05T12:17:59.732Z",
+      "finished_at_utc": "2026-10-05T12:17:59.785Z",
+      "rss_bytes": 66977792,
+      "gpus": [
+        {
+          "index": 0,
+          "name": "NVIDIA GeForce RTX 5090",
+          "memory_used_mib": 11302,
+          "memory_total_mib": 32607,
+          "utilization_percent": 78,
+          "temperature_c": 51
+        }
+      ]
+    },
+    {
+      "phase": "concurrency-1",
+      "started_at_utc": "2026-10-05T12:18:00.733Z",
+      "finished_at_utc": "2026-10-05T12:18:00.791Z",
+      "rss_bytes": 67100672,
+      "gpus": [
+        {
+          "index": 0,
+          "name": "NVIDIA GeForce RTX 5090",
+          "memory_used_mib": 11300,
+          "memory_total_mib": 32607,
+          "utilization_percent": 69,
+          "temperature_c": 53
+        }
+      ]
+    },
+    {
+      "phase": "concurrency-2",
+      "started_at_utc": "2026-10-05T12:18:01.735Z",
+      "finished_at_utc": "2026-10-05T12:18:01.790Z",
+      "rss_bytes": 67776512,
+      "gpus": [
+        {
+          "index": 0,
+          "name": "NVIDIA GeForce RTX 5090",
+          "memory_used_mib": 11302,
+          "memory_total_mib": 32607,
+          "utilization_percent": 79,
+          "temperature_c": 55
+        }
+      ]
+    },
+    {
+      "phase": "concurrency-2",
+      "started_at_utc": "2026-10-05T12:18:02.736Z",
+      "finished_at_utc": "2026-10-05T12:18:02.789Z",
+      "rss_bytes": 67776512,
+      "gpus": [
+        {
+          "index": 0,
+          "name": "NVIDIA GeForce RTX 5090",
+          "memory_used_mib": 11311,
+          "memory_total_mib": 32607,
+          "utilization_percent": 75,
+          "temperature_c": 51
+        }
+      ]
+    },
+    {
+      "phase": "concurrency-2",
+      "started_at_utc": "2026-10-05T12:18:03.737Z",
+      "finished_at_utc": "2026-10-05T12:18:03.790Z",
+      "rss_bytes": 67776512,
+      "gpus": [
+        {
+          "index": 0,
+          "name": "NVIDIA GeForce RTX 5090",
+          "memory_used_mib": 11303,
+          "memory_total_mib": 32607,
+          "utilization_percent": 77,
+          "temperature_c": 52
+        }
+      ]
+    },
+    {
+      "phase": "concurrency-2",
+      "started_at_utc": "2026-10-05T12:18:04.737Z",
+      "finished_at_utc": "2026-10-05T12:18:04.790Z",
+      "rss_bytes": 67911680,
+      "gpus": [
+        {
+          "index": 0,
+          "name": "NVIDIA GeForce RTX 5090",
+          "memory_used_mib": 11313,
+          "memory_total_mib": 32607,
+          "utilization_percent": 52,
+          "temperature_c": 50
+        }
+      ]
+    },
+    {
+      "phase": "concurrency-2",
+      "started_at_utc": "2026-10-05T12:18:05.739Z",
+      "finished_at_utc": "2026-10-05T12:18:05.789Z",
+      "rss_bytes": 67911680,
+      "gpus": [
+        {
+          "index": 0,
+          "name": "NVIDIA GeForce RTX 5090",
+          "memory_used_mib": 11309,
+          "memory_total_mib": 32607,
+          "utilization_percent": 62,
+          "temperature_c": 51
+        }
+      ]
+    },
+    {
+      "phase": "concurrency-2",
+      "started_at_utc": "2026-10-05T12:18:06.739Z",
+      "finished_at_utc": "2026-10-05T12:18:06.789Z",
+      "rss_bytes": 67911680,
+      "gpus": [
+        {
+          "index": 0,
+          "name": "NVIDIA GeForce RTX 5090",
+          "memory_used_mib": 11304,
+          "memory_total_mib": 32607,
+          "utilization_percent": 77,
+          "temperature_c": 56
+        }
+      ]
+    },
+    {
+      "phase": "concurrency-2",
+      "started_at_utc": "2026-10-05T12:18:07.740Z",
+      "finished_at_utc": "2026-10-05T12:18:07.795Z",
+      "rss_bytes": 68083712,
+      "gpus": [
+        {
+          "index": 0,
+          "name": "NVIDIA GeForce RTX 5090",
+          "memory_used_mib": 11296,
+          "memory_total_mib": 32607,
+          "utilization_percent": 80,
+          "temperature_c": 51
+        }
+      ]
+    },
+    {
+      "phase": "concurrency-2",
+      "started_at_utc": "2026-10-05T12:18:08.740Z",
+      "finished_at_utc": "2026-10-05T12:18:08.797Z",
+      "rss_bytes": 68100096,
+      "gpus": [
+        {
+          "index": 0,
+          "name": "NVIDIA GeForce RTX 5090",
+          "memory_used_mib": 11296,
+          "memory_total_mib": 32607,
+          "utilization_percent": 72,
+          "temperature_c": 56
+        }
+      ]
+    },
+    {
+      "phase": "concurrency-2",
+      "started_at_utc": "2026-10-05T12:18:09.740Z",
+      "finished_at_utc": "2026-10-05T12:18:09.791Z",
+      "rss_bytes": 68268032,
+      "gpus": [
+        {
+          "index": 0,
+          "name": "NVIDIA GeForce RTX 5090",
+          "memory_used_mib": 11295,
+          "memory_total_mib": 32607,
+          "utilization_percent": 78,
+          "temperature_c": 52
+        }
+      ]
+    },
+    {
+      "phase": "concurrency-2",
+      "started_at_utc": "2026-10-05T12:18:10.740Z",
+      "finished_at_utc": "2026-10-05T12:18:10.807Z",
+      "rss_bytes": 68268032,
+      "gpus": [
+        {
+          "index": 0,
+          "name": "NVIDIA GeForce RTX 5090",
+          "memory_used_mib": 11307,
+          "memory_total_mib": 32607,
+          "utilization_percent": 80,
+          "temperature_c": 52
+        }
+      ]
+    },
+    {
+      "phase": "concurrency-2",
+      "started_at_utc": "2026-10-05T12:18:11.740Z",
+      "finished_at_utc": "2026-10-05T12:18:11.791Z",
+      "rss_bytes": 68276224,
+      "gpus": [
+        {
+          "index": 0,
+          "name": "NVIDIA GeForce RTX 5090",
+          "memory_used_mib": 11307,
+          "memory_total_mib": 32607,
+          "utilization_percent": 55,
+          "temperature_c": 49
+        }
+      ]
+    },
+    {
+      "phase": "concurrency-2",
+      "started_at_utc": "2026-10-05T12:18:12.741Z",
+      "finished_at_utc": "2026-10-05T12:18:12.792Z",
+      "rss_bytes": 68288512,
+      "gpus": [
+        {
+          "index": 0,
+          "name": "NVIDIA GeForce RTX 5090",
+          "memory_used_mib": 11306,
+          "memory_total_mib": 32607,
+          "utilization_percent": 61,
+          "temperature_c": 52
+        }
+      ]
+    },
+    {
+      "phase": "concurrency-2",
+      "started_at_utc": "2026-10-05T12:18:13.741Z",
+      "finished_at_utc": "2026-10-05T12:18:13.794Z",
+      "rss_bytes": 68427776,
+      "gpus": [
+        {
+          "index": 0,
+          "name": "NVIDIA GeForce RTX 5090",
+          "memory_used_mib": 11305,
+          "memory_total_mib": 32607,
+          "utilization_percent": 77,
+          "temperature_c": 58
+        }
+      ]
+    },
+    {
+      "phase": "concurrency-2",
+      "started_at_utc": "2026-10-05T12:18:14.741Z",
+      "finished_at_utc": "2026-10-05T12:18:14.801Z",
+      "rss_bytes": 68435968,
+      "gpus": [
+        {
+          "index": 0,
+          "name": "NVIDIA GeForce RTX 5090",
+          "memory_used_mib": 11311,
+          "memory_total_mib": 32607,
+          "utilization_percent": 78,
+          "temperature_c": 52
+        }
+      ]
+    },
+    {
+      "phase": "concurrency-4",
+      "started_at_utc": "2026-10-05T12:18:15.741Z",
+      "finished_at_utc": "2026-10-05T12:18:15.792Z",
+      "rss_bytes": 68870144,
+      "gpus": [
+        {
+          "index": 0,
+          "name": "NVIDIA GeForce RTX 5090",
+          "memory_used_mib": 11328,
+          "memory_total_mib": 32607,
+          "utilization_percent": 59,
+          "temperature_c": 50
+        }
+      ]
+    },
+    {
+      "phase": "concurrency-4",
+      "started_at_utc": "2026-10-05T12:18:16.741Z",
+      "finished_at_utc": "2026-10-05T12:18:16.792Z",
+      "rss_bytes": 68874240,
+      "gpus": [
+        {
+          "index": 0,
+          "name": "NVIDIA GeForce RTX 5090",
+          "memory_used_mib": 11319,
+          "memory_total_mib": 32607,
+          "utilization_percent": 76,
+          "temperature_c": 53
+        }
+      ]
+    },
+    {
+      "phase": "concurrency-4",
+      "started_at_utc": "2026-10-05T12:18:17.741Z",
+      "finished_at_utc": "2026-10-05T12:18:17.797Z",
+      "rss_bytes": 68911104,
+      "gpus": [
+        {
+          "index": 0,
+          "name": "NVIDIA GeForce RTX 5090",
+          "memory_used_mib": 11319,
+          "memory_total_mib": 32607,
+          "utilization_percent": 52,
+          "temperature_c": 50
+        }
+      ]
+    },
+    {
+      "phase": "concurrency-4",
+      "started_at_utc": "2026-10-05T12:18:18.741Z",
+      "finished_at_utc": "2026-10-05T12:18:18.792Z",
+      "rss_bytes": 68915200,
+      "gpus": [
+        {
+          "index": 0,
+          "name": "NVIDIA GeForce RTX 5090",
+          "memory_used_mib": 11247,
+          "memory_total_mib": 32607,
+          "utilization_percent": 54,
+          "temperature_c": 51
+        }
+      ]
+    },
+    {
+      "phase": "concurrency-4",
+      "started_at_utc": "2026-10-05T12:18:19.742Z",
+      "finished_at_utc": "2026-10-05T12:18:19.793Z",
+      "rss_bytes": 69046272,
+      "gpus": [
+        {
+          "index": 0,
+          "name": "NVIDIA GeForce RTX 5090",
+          "memory_used_mib": 11239,
+          "memory_total_mib": 32607,
+          "utilization_percent": 79,
+          "temperature_c": 52
+        }
+      ]
+    },
+    {
+      "phase": "concurrency-4",
+      "started_at_utc": "2026-10-05T12:18:20.742Z",
+      "finished_at_utc": "2026-10-05T12:18:20.795Z",
+      "rss_bytes": 69169152,
+      "gpus": [
+        {
+          "index": 0,
+          "name": "NVIDIA GeForce RTX 5090",
+          "memory_used_mib": 11239,
+          "memory_total_mib": 32607,
+          "utilization_percent": 74,
+          "temperature_c": 52
+        }
+      ]
+    },
+    {
+      "phase": "concurrency-4",
+      "started_at_utc": "2026-10-05T12:18:21.743Z",
+      "finished_at_utc": "2026-10-05T12:18:21.795Z",
+      "rss_bytes": 69332992,
+      "gpus": [
+        {
+          "index": 0,
+          "name": "NVIDIA GeForce RTX 5090",
+          "memory_used_mib": 11239,
+          "memory_total_mib": 32607,
+          "utilization_percent": 82,
+          "temperature_c": 53
+        }
+      ]
+    },
+    {
+      "phase": "concurrency-4",
+      "started_at_utc": "2026-10-05T12:18:22.745Z",
+      "finished_at_utc": "2026-10-05T12:18:22.795Z",
+      "rss_bytes": 69541888,
+      "gpus": [
+        {
+          "index": 0,
+          "name": "NVIDIA GeForce RTX 5090",
+          "memory_used_mib": 11236,
+          "memory_total_mib": 32607,
+          "utilization_percent": 35,
+          "temperature_c": 49
+        }
+      ]
+    },
+    {
+      "phase": "concurrency-4",
+      "started_at_utc": "2026-10-05T12:18:23.745Z",
+      "finished_at_utc": "2026-10-05T12:18:23.799Z",
+      "rss_bytes": 69545984,
+      "gpus": [
+        {
+          "index": 0,
+          "name": "NVIDIA GeForce RTX 5090",
+          "memory_used_mib": 11233,
+          "memory_total_mib": 32607,
+          "utilization_percent": 79,
+          "temperature_c": 52
+        }
+      ]
+    },
+    {
+      "phase": "concurrency-4",
+      "started_at_utc": "2026-10-05T12:18:24.745Z",
+      "finished_at_utc": "2026-10-05T12:18:24.796Z",
+      "rss_bytes": 69545984,
+      "gpus": [
+        {
+          "index": 0,
+          "name": "NVIDIA GeForce RTX 5090",
+          "memory_used_mib": 11233,
+          "memory_total_mib": 32607,
+          "utilization_percent": 63,
+          "temperature_c": 54
+        }
+      ]
+    },
+    {
+      "phase": "concurrency-4",
+      "started_at_utc": "2026-10-05T12:18:25.745Z",
+      "finished_at_utc": "2026-10-05T12:18:25.803Z",
+      "rss_bytes": 68993024,
+      "gpus": [
+        {
+          "index": 0,
+          "name": "NVIDIA GeForce RTX 5090",
+          "memory_used_mib": 11210,
+          "memory_total_mib": 32607,
+          "utilization_percent": 76,
+          "temperature_c": 52
+        }
+      ]
+    },
+    {
+      "phase": "concurrency-4",
+      "started_at_utc": "2026-10-05T12:18:26.746Z",
+      "finished_at_utc": "2026-10-05T12:18:26.796Z",
+      "rss_bytes": 69214208,
+      "gpus": [
+        {
+          "index": 0,
+          "name": "NVIDIA GeForce RTX 5090",
+          "memory_used_mib": 11207,
+          "memory_total_mib": 32607,
+          "utilization_percent": 80,
+          "temperature_c": 54
+        }
+      ]
+    },
+    {
+      "phase": "concurrency-4",
+      "started_at_utc": "2026-10-05T12:18:27.746Z",
+      "finished_at_utc": "2026-10-05T12:18:27.798Z",
+      "rss_bytes": 69492736,
+      "gpus": [
+        {
+          "index": 0,
+          "name": "NVIDIA GeForce RTX 5090",
+          "memory_used_mib": 11210,
+          "memory_total_mib": 32607,
+          "utilization_percent": 59,
+          "temperature_c": 51
+        }
+      ]
+    },
+    {
+      "phase": "concurrency-4",
+      "started_at_utc": "2026-10-05T12:18:28.748Z",
+      "finished_at_utc": "2026-10-05T12:18:28.798Z",
+      "rss_bytes": 69558272,
+      "gpus": [
+        {
+          "index": 0,
+          "name": "NVIDIA GeForce RTX 5090",
+          "memory_used_mib": 11204,
+          "memory_total_mib": 32607,
+          "utilization_percent": 79,
+          "temperature_c": 53
+        }
+      ]
+    },
+    {
+      "phase": "concurrency-4",
+      "started_at_utc": "2026-10-05T12:18:29.749Z",
+      "finished_at_utc": "2026-10-05T12:18:29.800Z",
+      "rss_bytes": 69718016,
+      "gpus": [
+        {
+          "index": 0,
+          "name": "NVIDIA GeForce RTX 5090",
+          "memory_used_mib": 11197,
+          "memory_total_mib": 32607,
+          "utilization_percent": 61,
+          "temperature_c": 51
+        }
+      ]
+    }
+  ]
+}

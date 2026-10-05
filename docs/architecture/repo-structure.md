@@ -15,8 +15,16 @@ input/context/output guardrails, RAG, embeddings and provider fallbacks.
 `src/app.ts` owns HTTP/authentication; `modules/chat-pipeline.ts` owns reply orchestration;
 `modules/mcp/` owns SDK transport, resources, tool dispatch and schemas;
 `modules/confidence/` owns evidence scoring. Memory remains a scaffold.
+`modules/qa/` owns backend question planning, database/retrieval orchestration,
+canonical row binding, controlled Thai/English customer rendering and exact
+prose evidence binding. `modules/retrieval/`
+owns Thai/English BM25, dense/RRF rankings, bounded deterministic reranking and
+tenant snapshot utilities; `modules/embeddings/` defaults to local BGE-M3.
 The API's `ai-integration/ai-safety.service.ts` persists safety decisions and handover.
-See [implementation guide](../implementation/mcp-confidence-guardrail-th.md).
+The API's `internal-ai/readonly-query.compiler.ts` and service own the protected
+model-SQL dialect and merchant-scoped read-only database execution.
+See the [QA architecture](qa-system.md), [retrieval reference](retrieval-index.md)
+and [implementation guide](../implementation/mcp-confidence-guardrail-th.md).
 
 ## `packages/shared`
 

@@ -53,7 +53,14 @@ services:
       AI_SERVICE_ALLOWED_ORIGINS: ${AI_SERVICE_ALLOWED_ORIGINS:-}
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-dev_internal_service_token}
       INTERNAL_API_BASE_URL: http://api:4000
-      AI_LLM_PROVIDER: ${AI_LLM_PROVIDER:-mock}
+      AI_LLM_PROVIDER: ${AI_LLM_PROVIDER:-ollama}
+      AI_EMBEDDING_PROVIDER: ${AI_EMBEDDING_PROVIDER:-ollama}
+      OLLAMA_EMBEDDING_MODEL: ${OLLAMA_EMBEDDING_MODEL:-bge-m3}
+      OLLAMA_EMBEDDING_DIMENSIONS: ${OLLAMA_EMBEDDING_DIMENSIONS:-1024}
+      AI_RETRIEVAL_MODE: ${AI_RETRIEVAL_MODE:-hybrid}
+      OLLAMA_BASE_URL: http://host.docker.internal:11434
+      OLLAMA_MODEL: ${OLLAMA_MODEL:-qwen3.5:9b}
+      OLLAMA_TIMEOUT_MS: ${OLLAMA_TIMEOUT_MS:-60000}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.1-flash-lite}
       GEMINI_API_BASE_URL: ${GEMINI_API_BASE_URL:-https://generativelanguage.googleapis.com/v1/interactions}
@@ -87,7 +94,8 @@ services:
       API_PORT: 4000
       AI_SERVICE_BASE_URL: http://ai-service:5000
       AI_SERVICE_TOKEN: ${AI_SERVICE_TOKEN:-dev_internal_service_token}
-      AI_SERVICE_TIMEOUT_MS: ${AI_SERVICE_TIMEOUT_MS:-20000}
+      AI_SERVICE_TIMEOUT_MS: ${AI_SERVICE_TIMEOUT_MS:-150000}
+      AI_CONTEXT_MODE: backend
       INTERNAL_SERVICE_TOKEN: ${INTERNAL_SERVICE_TOKEN:-dev_internal_service_token}
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/chatto_phase2?schema=public
       JWT_SECRET: ${JWT_SECRET:-change-me-for-local-development}

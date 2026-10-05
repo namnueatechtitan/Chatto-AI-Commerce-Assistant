@@ -27,7 +27,7 @@ Out of scope for this phase: payment, orders, subscriptions, inventory reservati
 - Frontend: Next.js + TypeScript
 - Backend: NestJS + TypeScript
 - AI Service: Node.js + TypeScript
-- AI orchestration: MCP-style resources and tools for Phase 2 mock flows
+- AI orchestration: validated MCP tools, local Qwen planning, scoped read-only SQL and hybrid RAG
 - Database: PostgreSQL
 - ORM: Prisma
 - API docs: Swagger / OpenAPI
@@ -58,7 +58,8 @@ chatto-platform/
 
 ## Docker Quick Start
 
-Docker is the only prerequisite for the default local stack. From a fresh clone:
+Docker runs the local application/database stack. The default AI answers also
+require host Ollama with the configured chat and embedding models. From a fresh clone:
 
 ```bash
 docker compose up
@@ -66,7 +67,7 @@ docker compose up
 
 Compose builds missing images automatically. Use `docker compose up --build` after changing dependencies or application source. The stack installs dependencies inside image layers, generates Prisma Client, waits for PostgreSQL, applies migrations, and starts the web app, API, AI service, and Prisma Studio. It does not mount or modify host `node_modules`.
 
-The stack works without an `.env` file using mock AI and no LINE demo seed. To enable Gemini or LINE, copy `.env.example` to `.env`, add the real credentials, and run `docker compose up --build` again. When `LINE_CHANNEL_ID` is set, startup also runs the idempotent LINE demo seed.
+The default AI configuration uses host Ollama with `qwen3.5:9b` and `bge-m3`; start Ollama and install those models before testing answers. The AI container connects to `http://host.docker.internal:11434`. Models are not bundled into the application images. Copy `.env.example` to `.env` to configure providers or LINE credentials, then run `docker compose up --build` again. When `LINE_CHANNEL_ID` is set, startup also runs the idempotent LINE demo seed.
 
 Local URLs:
 
@@ -95,7 +96,7 @@ Prisma commands in this repository load environment variables from the root `.en
 
 The API reaches the AI service through `AI_SERVICE_BASE_URL` and calls the MCP-backed `POST /mcp/chat` endpoint. See `docs/architecture/mcp-phase-2.md`.
 
-For Gemini development testing, set `AI_LLM_PROVIDER=gemini`, `GEMINI_API_KEY`, and `GEMINI_MODEL` in `.env`, then restart the AI service. Leave `AI_LLM_PROVIDER=mock` for offline/local deterministic replies. Gemini calls fall back to DB-grounded Phase 2 replies after `GEMINI_TIMEOUT_MS` so LINE webhooks can stay responsive.
+For the Gemini compatibility flow, set `AI_CONTEXT_MODE=inline`, `AI_LLM_PROVIDER=gemini`, `GEMINI_API_KEY`, and `GEMINI_MODEL` in `.env`, then restart the API and AI service. Use `AI_LLM_PROVIDER=mock` and `AI_EMBEDDING_PROVIDER=none` for offline deterministic compatibility testing. Gemini provider failures fall back to evidence-based replies or handover after `GEMINI_TIMEOUT_MS`.
 
 For real LINE testing, expose the API with a public HTTPS tunnel such as `ngrok http 4000`, then set the LINE Developers webhook URL to `https://<tunnel-host>/webhooks/line` and enable `Use webhook`. Local signed webhook tests can validate DB and AI flow, but they cannot deliver a LINE reply because fake reply tokens are rejected by LINE.
 
@@ -131,6 +132,66 @@ pnpm dev:api
 ```bash
 pnpm dev:ai-service
 ```
+
+## Current QA Architecture
+
+Read the [detailed Phase 2 QA architecture](docs/architecture/qa-system.md) for
+the LINE flow, lean per-chat payload, model planner, protected SQL dialect,
+index freshness, BM25/dense/RRF retrieval, evidence binding and handover policy.
+The [retrieval module reference](docs/architecture/retrieval-index.md) documents
+embedding reuse and retrieval controls; the
+[experiment protocol](docs/experiments/qa-architecture-comparison.md) defines the
+controlled SQL/RAG comparison.
+Saved measurements are documented in the
+[first frozen test report](docs/experiments/qa-results-20261005.md) and
+[intermediate post-debug validation](docs/experiments/qa-validation-20261005.md),
+with the current results in the
+[final validation and load report](docs/experiments/qa-validation-final-20261005.md).
+Final combined SQL/RAG passed 64/72 task checks and 46/52 answerable exact-fact
+checks, with no pipeline errors; mean/P95 local response time was 1.16/2.47
+seconds. Four distinct questions still fail, including ambiguity and follow-ups.
+Validation on inspected questions is not an independent accuracy estimate;
+independent human correctness and hallucination ratings remain pending.
+The finite load test completed 12/12 requests at each concurrency of 1/2/4;
+P95 rose from 1.44 to 4.79 seconds while throughput rose only 6.6%.
+These local queued-inference observations exclude LINE delivery and do not
+establish production capacity.
+
+The normal backend path sends settings and recent history to the AI service;
+it fetches knowledge snapshots only when their merchant revision changes.
+Product descriptions and SKUs are indexed. Price and stock values are read
+through scoped database queries after selecting products. Accepted database
+rows use controlled Thai/English wording that preserves amounts, currencies
+and quantities; prose answers use
+verified source spans. Confidence is an evidence gate, not a probability of
+correctness. Ambiguous questions get one clarification before human handover.
+Missing facts hand over directly. The semantic name fallback cannot widen
+numeric, colour, size or availability filters; source binding and uncertainty
+wording checks are safeguards rather than proofs of semantic correctness.
+
+For local development, configure these values in `.env` and start Ollama,
+PostgreSQL, the API and the AI service:
+
+```dotenv
+AI_CONTEXT_MODE=backend
+AI_LLM_PROVIDER=ollama
+OLLAMA_BASE_URL=http://127.0.0.1:11434
+OLLAMA_MODEL=qwen3.5:9b
+AI_EMBEDDING_PROVIDER=ollama
+OLLAMA_EMBEDDING_MODEL=bge-m3
+OLLAMA_EMBEDDING_DIMENSIONS=1024
+AI_SERVICE_TIMEOUT_MS=150000
+```
+
+```bash
+ollama pull qwen3.5:9b
+ollama pull bge-m3
+```
+
+The explicit `AI_CONTEXT_MODE=inline` option retains the earlier provider flow
+for compatibility. Offline tests use fake model/backend dependencies and
+`AI_EMBEDDING_PROVIDER=none`; they do not require installed models. The service
+supports read-only question answering and does not execute commerce actions.
 
 ## Run All Services
 

@@ -9,3 +9,5 @@ coverage
 .env.local
 *.log
 postgres-data
+.codex-runtime/
+tmp/

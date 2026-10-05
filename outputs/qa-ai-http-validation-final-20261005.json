@@ -1,0 +1,13 @@
+{
+  "checked_at_utc": "2026-10-05T12:20:13.554Z",
+  "ok": true,
+  "checks": [
+    "context-free greeting",
+    "real Qwen + live SQL answer",
+    "first ambiguity clarification",
+    "repeated ambiguity handover",
+    "internal authentication"
+  ],
+  "shop_writes": false,
+  "line_delivery": false
+}

@@ -56,6 +56,24 @@ Database Core V2 from the attached PDF is treated as the source of truth. This P
 - `vector_documents.embedding` is stored as `Json` in Phase 2.
 - `TODO: Replace Json embedding with pgvector in production.`
 
+The internal read-only SQL endpoint exposes server-defined `catalog` and
+`knowledge` CTEs over active records for one merchant. They are not persisted
+tables or views and require no migration. Catalog reads retain unknown stock as
+`NULL`, expose no merchant credentials/customer data, and execute in a read-only
+transaction. This adds a query boundary, not inventory or commerce operations.
+The version, snapshot and SQL routes accept ACTIVE/TRIAL merchants only. Unknown
+stock also remains `null` in the legacy product export contract.
+
+Index refresh reads `merchant_knowledge_revisions` by merchant primary key.
+Migration `20261003133000_static_knowledge_revision` adds this table and database
+triggers on products, variants and knowledge. Only static search fields and source
+lifecycle changes increment its bigint revision. Price, stock, reservations and
+timestamp updates leave it unchanged. Direct SQL writes are covered by the same
+triggers; tenant moves update both revisions, and merchant cascade deletion is
+safe. The revision is returned as a string to avoid bigint precision loss.
+Chat requests normally carry only settings and recent conversation history;
+full product/knowledge snapshots are reserved for index refresh.
+
 ## Why Commerce and Subscription Tables Are Excluded
 
 Phase 2 is focused on onboarding, channel integration, data foundations, conversations, AI scaffolding, and handover structure. Payment, order, subscription, and inventory tables are intentionally excluded so the team can avoid premature implementation of commerce operations before the messaging and AI workflow foundation is stable. This keeps the schema expandable back to the full Core V2 model later without renaming the retained Phase 2 tables.

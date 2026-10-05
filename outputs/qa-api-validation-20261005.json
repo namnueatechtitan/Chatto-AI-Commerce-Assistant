@@ -1,0 +1,49 @@
+{
+  "date": "2026-10-05",
+  "timezone": "Asia/Bangkok",
+  "unit_tests": { "passed": 25, "failed": 0 },
+  "post_heldout_guardrail_fix": {
+    "original_run": "qa-test-20261005",
+    "declared_failed_case": "T36",
+    "original_observations": 6,
+    "original_expected_decision": "handover",
+    "original_observed_decision": "clarify in all six paired observations",
+    "cause": "NFKC decomposed Thai SARA AM, so the Thai instruction-override keyword did not match normalized text.",
+    "fix": "Restore Thai SARA AM after NFKC and invisible-separator removal; block explicit database deletion and inventory-write action requests while permitting informational policy questions.",
+    "offline_safety_tests": { "passed": 25, "failed": 0 },
+    "regression_evidence": "Precomposed/decomposed Thai override and explicit destructive writes hand over before model/database calls with zero prompt/output tokens; full-width ASCII and zero-width injection checks remain effective.",
+    "interpretation": "Original held-out outcomes are preserved. A repeat after this change is post-debug validation on already observed questions, not a new independent held-out accuracy estimate."
+  },
+  "integration": {
+    "ok": true,
+    "isolated_postgresql": true,
+    "database": "chatto_qa_experiment",
+    "postgres_port": 55432,
+    "api_port": 4400,
+    "canonical_aggregate_verification": {
+      "sum_price_as_total_units": { "returned_key": "sum_price", "value": 4780 },
+      "knowledge_count_as_products": { "returned_key": "count_knowledge_rows", "value": 6 },
+      "alias_references": "ORDER BY and grouped HAVING resolve to the validated aggregate expression."
+    },
+    "checks": [
+      "live decimal price and available stock (10 on hand minus 2 reserved = 8)",
+      "UUID identifiers work with equality and IN hydration for both scoped relations",
+      "database aggregates and row-versus-distinct-product counts",
+      "tenant B cannot read A; tenant A cannot read B even with OR true",
+      "quoted injection remains a literal; writes, schemas, private data and execution functions are rejected",
+      "all new endpoints reject missing and invalid internal authentication",
+      "index version and snapshot stay scoped; all query checks leave the corpus unchanged",
+      "price, stock, reservation and timestamp writes leave the static revision unchanged; SQL reads fresh and unknown values",
+      "product description/status and variant colour edits invalidate; no-op assignments do not",
+      "direct SQL price writes keep the revision; direct SQL static category edits invalidate it",
+      "knowledge insert/edit/delete invalidate; moving a document invalidates both old and new tenants",
+      "disabled merchants cannot read version, snapshot or SQL endpoints; unknown stock remains NULL in snapshots",
+      "new merchants start at zero; product/variant lifecycle revisions persist; merchant cascade deletes remain valid",
+      "real LINE signature validation, customer/conversation/message persistence, audit and duplicate suppression",
+      "clarification persists into history; later handover is atomic and suppresses additional AI delivery"
+    ],
+    "fixture_restore": "Product/variant/knowledge state, including timestamps, restored exactly. Temporary chat records removed. Revisions intentionally remain monotonic.",
+    "external_line_delivery": false,
+    "ai_provider": "stub for persistence checks; no model calls"
+  }
+}

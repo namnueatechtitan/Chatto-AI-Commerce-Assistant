@@ -1,0 +1,1512 @@
+{
+  "summary": {
+    "concurrency": 2,
+    "started_at_utc": "2026-10-05T12:18:01.029Z",
+    "finished_at_utc": "2026-10-05T12:18:15.456Z",
+    "attempts": 12,
+    "completed": 12,
+    "errors": 0,
+    "answered": 12,
+    "exact_fact_pass_all_attempts": 1,
+    "window_ms": 14427.444199999998,
+    "throughput_completed_per_second": 0.8317481484350501,
+    "throughput_attempts_per_second": 0.8317481484350501,
+    "mean_wall_ms": 2062.397108333333,
+    "p50_wall_ms": 2026.1232499999987,
+    "p95_wall_ms": 2561.9090600000004,
+    "reported_prompt_tokens": 17832,
+    "reported_completion_tokens": 1728,
+    "requests_with_reported_usage": 12,
+    "peak_rss_after_request_bytes": 68435968,
+    "independent_questions": 3,
+    "rss_before_bytes": 67842048,
+    "rss_after_bytes": 68435968,
+    "fixture_version_unchanged": true
+  },
+  "requests": [
+    {
+      "id": "qa-load-c2-request-1",
+      "conversation_id": "qa-load-c2-request-1",
+      "case_id": "D02",
+      "concurrency": 2,
+      "sequence": 1,
+      "batch": 1,
+      "started_at_utc": "2026-10-05T12:18:01.029Z",
+      "finished_at_utc": "2026-10-05T12:18:03.515Z",
+      "status": "success",
+      "wall_ms": 2486.0426000000007,
+      "question": "Nova สีเทาขนาด S เหลือขายได้กี่ตัว",
+      "rss_after_bytes": 67776512,
+      "answer": {
+        "text": "Nova Hoodie — รุ่น grey / S — รหัสสินค้า QA-4 — สี เทา — ขนาด S — มีสินค้าพร้อมขาย 3 ชิ้น",
+        "decision": "answer",
+        "route": "sql",
+        "sources": [
+          {
+            "id": "sql:0",
+            "origin_id": "10000000-0000-4000-8000-000000000004",
+            "type": "product",
+            "title": "Nova Hoodie",
+            "text": "product_id: 10000000-0000-4000-8000-000000000004; variant_id: 20000000-0000-4000-8000-000000000004; name: Nova Hoodie; sku: QA-4; variant_name: grey / S; color: grey; size: S; description: Grey regular hoodie, 80% cotton and 20% polyester. เสื้อฮู้ด Nova สีเทา ผ้าฝ้าย 80% โพลีเอสเตอร์ 20%.; brand: Fixture Studio; category: hoodie; price: 690; currency: THB; available_qty: 3"
+          }
+        ],
+        "selectedClaims": [
+          {
+            "source_id": "sql:0",
+            "quote": "product_id: 10000000-0000-4000-8000-000000000004; variant_id: 20000000-0000-4000-8000-000000000004; name: Nova Hoodie; sku: QA-4; variant_name: grey / S; color: grey; size: S; description: Grey regular hoodie, 80% cotton and 20% polyester. เสื้อฮู้ด Nova สีเทา ผ้าฝ้าย 80% โพลีเอสเตอร์ 20%.; brand: Fixture Studio; category: hoodie; price: 690; currency: THB; available_qty: 3"
+          }
+        ],
+        "timings": {
+          "plan_ms": 1036.1242999999995,
+          "retrieval_ms": 0,
+          "sql_ms": 7.5086000000010245,
+          "generation_ms": 1442.0887000000002,
+          "total_ms": 2485.9866
+        },
+        "usage": {
+          "prompt_tokens": 1327,
+          "completion_tokens": 168
+        },
+        "retrievedIds": [
+          "10000000-0000-4000-8000-000000000004"
+        ],
+        "planningAttempts": [
+          {
+            "route": "sql",
+            "sql": "SELECT product_id,variant_id,name,sku,variant_name,color,size,description,brand,category,price,currency,available_qty FROM catalog WHERE name ILIKE '%Nova%' AND color = 'grey' AND size = 'S'",
+            "search_query": "Nova สีเทา ขนาด S เหลือขายได้กี่ตัว"
+          }
+        ],
+        "sql": "SELECT product_id,variant_id,name,sku,variant_name,color,size,description,brand,category,price,currency,available_qty FROM catalog WHERE name ILIKE '%Nova%' AND color = 'grey' AND size = 'S'",
+        "sqlAttempts": [
+          {
+            "sql": "SELECT product_id,variant_id,name,sku,variant_name,color,size,description,brand,category,price,currency,available_qty FROM catalog WHERE name ILIKE '%Nova%' AND color = 'grey' AND size = 'S'",
+            "status": "success"
+          }
+        ],
+        "sqlRows": [
+          {
+            "product_id": "10000000-0000-4000-8000-000000000004",
+            "variant_id": "20000000-0000-4000-8000-000000000004",
+            "name": "Nova Hoodie",
+            "sku": "QA-4",
+            "variant_name": "grey / S",
+            "color": "grey",
+            "size": "S",
+            "description": "Grey regular hoodie, 80% cotton and 20% polyester. เสื้อฮู้ด Nova สีเทา ผ้าฝ้าย 80% โพลีเอสเตอร์ 20%.",
+            "brand": "Fixture Studio",
+            "category": "hoodie",
+            "price": 690,
+            "currency": "THB",
+            "available_qty": 3
+          }
+        ],
+        "selectionAttempts": [
+          {
+            "answerable": true,
+            "ambiguous": false,
+            "ambiguity_kind": "none",
+            "claims": [
+              {
+                "source_id": "sql:0",
+                "quote": "variant_name: grey / S; color: grey; size: S; available_qty: 3"
+              }
+            ]
+          }
+        ],
+        "rawSelection": {
+          "answerable": true,
+          "ambiguous": false,
+          "ambiguity_kind": "none",
+          "claims": [
+            {
+              "source_id": "sql:0",
+              "quote": "variant_name: grey / S; color: grey; size: S; available_qty: 3"
+            }
+          ]
+        }
+      },
+      "grade": {
+        "decision_correct": true,
+        "fact_groups_matched": 4,
+        "fact_groups_total": 4,
+        "exact_fact_pass": true,
+        "forbidden_pattern_pass": true,
+        "forbidden_matches": [],
+        "claims_checked": 1,
+        "unbound_claim_count": 0,
+        "source_binding_pass": true,
+        "attempted_claims_checked": 1,
+        "raw_unbound_selection_claim_count": 1,
+        "gold_source_recall": 1,
+        "answerable_fixture": true,
+        "answered": true,
+        "task_check_pass": true,
+        "note": "Exact fact pattern coverage and contiguous final source-quote binding only. Raw unbound model selection quotes can be canonicalized into trusted SQL rows rather than rejected; their count is not a hallucination rate. Binding does not establish relevance, completeness, factual entailment, SQL intent accuracy or human-rated hallucination freedom."
+      }
+    },
+    {
+      "id": "qa-load-c2-request-2",
+      "conversation_id": "qa-load-c2-request-2",
+      "case_id": "D03",
+      "concurrency": 2,
+      "sequence": 2,
+      "batch": 1,
+      "started_at_utc": "2026-10-05T12:18:01.029Z",
+      "finished_at_utc": "2026-10-05T12:18:02.780Z",
+      "status": "success",
+      "wall_ms": 1750.7691000000013,
+      "question": "How long do I have to request a return?",
+      "rss_after_bytes": 67776512,
+      "answer": {
+        "text": "Request a return within 7 days of receipt for unworn items with tags.",
+        "decision": "answer",
+        "route": "rag",
+        "sources": [
+          {
+            "id": "rag:0",
+            "origin_id": "30000000-0000-4000-8000-000000000002",
+            "type": "return_policy",
+            "title": "Return policy / คืนสินค้า",
+            "text": "Return policy / คืนสินค้า: Request a return within 7 days of receipt for unworn items with tags. For a manufacturing defect, send photos to staff in this chat. คืนสินค้าภายใน 7 วันหลังได้รับ ต้องไม่ผ่านการสวมและมีป้าย หากสินค้าเสียหายจากการผลิตให้ส่งรูปให้พนักงานในแชต. This document describes a policy; it does not process a return."
+          },
+          {
+            "id": "rag:1",
+            "origin_id": "30000000-0000-4000-8000-000000000001",
+            "type": "shipping_policy",
+            "title": "Delivery policy / การจัดส่ง",
+            "text": "Delivery policy / การจัดส่ง: Dispatch within 2 business days. Estimated delivery after dispatch: Bangkok 2–3 business days, other Thai provinces 3–5 business days. Thai delivery fee: 60 THB; free for product subtotal at least 1000 THB. Estimates are not guaranteed arrival dates. จัดส่งออกภายใน 2 วันทําการ กรุงเทพฯ หลังส่งประมาณ 2–3 วันทําการ ต่างจังหวัด 3–5 วันทําการ ค่าส่งในไทย 60 บาท ยอดสินค้าตั้งแต่ 1000 บาทส่งฟรี. International fees are not provided."
+          },
+          {
+            "id": "rag:2",
+            "origin_id": "30000000-0000-4000-8000-000000000003",
+            "type": "faq",
+            "title": "Showroom hours / เวลาเปิด",
+            "text": "Showroom hours / เวลาเปิด: Showroom opens Monday–Saturday 10:00–18:00 Bangkok time and is closed on Sunday. โชว์รูมเปิดจันทร์ถึงเสาร์ 10:00–18:00 น. เวลาไทย ปิดวันอาทิตย์. Holiday exceptions are not specified."
+          },
+          {
+            "id": "rag:3",
+            "origin_id": "30000000-0000-4000-8000-000000000006",
+            "type": "faq",
+            "title": "Human assistance / ติดต่อพนักงาน",
+            "text": "Human assistance / ติดต่อพนักงาน: Human assistance is available in this chat during showroom hours; staff speak Thai and English. In-person fitting requires no appointment. ติดต่อพนักงานในแชตนี้ช่วงเวลาเปิดโชว์รูมได้ พนักงานตอบภาษาไทยและอังกฤษ ลองเสื้อที่โชว์รูมได้โดยไม่ต้องนัดหมาย. Telephone number and customer-private data are not published."
+          },
+          {
+            "id": "rag:4",
+            "origin_id": "30000000-0000-4000-8000-000000000005",
+            "type": "faq",
+            "title": "Specifications and warranty / สเปก",
+            "text": "Specifications and warranty / สเปก: Only published product specifications are verified. Waterproof certificates, safe bag carrying capacity and exact delivery dates are unavailable. Staff can investigate missing specifications. ยืนยันได้เฉพาะสเปกที่ประกาศ ไม่มีข้อมูลใบรับรองกันน้ํา น้ําหนักบรรทุกกระเป๋าที่ปลอดภัย หรือวันถึงที่รับประกัน กรุณาสอบถามพนักงาน."
+          }
+        ],
+        "selectedClaims": [
+          {
+            "source_id": "rag:0",
+            "quote": "Request a return within 7 days of receipt for unworn items with tags."
+          }
+        ],
+        "timings": {
+          "plan_ms": 380.25970000000234,
+          "retrieval_ms": 3.1207000000031258,
+          "sql_ms": 0,
+          "generation_ms": 1367.0884000000005,
+          "total_ms": 1750.7072000000007
+        },
+        "usage": {
+          "prompt_tokens": 1806,
+          "completion_tokens": 108
+        },
+        "retrievedIds": [
+          "30000000-0000-4000-8000-000000000002",
+          "30000000-0000-4000-8000-000000000001",
+          "30000000-0000-4000-8000-000000000003",
+          "30000000-0000-4000-8000-000000000006",
+          "30000000-0000-4000-8000-000000000005"
+        ],
+        "planningAttempts": [
+          {
+            "route": "rag",
+            "sql": "",
+            "search_query": "return request deadline policy"
+          }
+        ],
+        "selectionAttempts": [
+          {
+            "answerable": true,
+            "ambiguous": false,
+            "ambiguity_kind": "none",
+            "claims": [
+              {
+                "source_id": "rag:0",
+                "quote": "Request a return within 7 days of receipt for unworn items with tags."
+              }
+            ]
+          }
+        ],
+        "rawSelection": {
+          "answerable": true,
+          "ambiguous": false,
+          "ambiguity_kind": "none",
+          "claims": [
+            {
+              "source_id": "rag:0",
+              "quote": "Request a return within 7 days of receipt for unworn items with tags."
+            }
+          ]
+        }
+      },
+      "grade": {
+        "decision_correct": true,
+        "fact_groups_matched": 2,
+        "fact_groups_total": 2,
+        "exact_fact_pass": true,
+        "forbidden_pattern_pass": true,
+        "forbidden_matches": [],
+        "claims_checked": 1,
+        "unbound_claim_count": 0,
+        "source_binding_pass": true,
+        "attempted_claims_checked": 1,
+        "raw_unbound_selection_claim_count": 0,
+        "gold_source_recall": 1,
+        "answerable_fixture": true,
+        "answered": true,
+        "task_check_pass": true,
+        "note": "Exact fact pattern coverage and contiguous final source-quote binding only. Raw unbound model selection quotes can be canonicalized into trusted SQL rows rather than rejected; their count is not a hallucination rate. Binding does not establish relevance, completeness, factual entailment, SQL intent accuracy or human-rated hallucination freedom."
+      }
+    },
+    {
+      "id": "qa-load-c2-request-3",
+      "conversation_id": "qa-load-c2-request-3",
+      "case_id": "D02",
+      "concurrency": 2,
+      "sequence": 3,
+      "batch": 2,
+      "started_at_utc": "2026-10-05T12:18:03.515Z",
+      "finished_at_utc": "2026-10-05T12:18:05.191Z",
+      "status": "success",
+      "wall_ms": 1676.186600000001,
+      "question": "Nova สีเทาขนาด S เหลือขายได้กี่ตัว",
+      "rss_after_bytes": 67911680,
+      "answer": {
+        "text": "Nova Hoodie — รุ่น grey / S — รหัสสินค้า QA-4 — สี เทา — ขนาด S — มีสินค้าพร้อมขาย 3 ชิ้น",
+        "decision": "answer",
+        "route": "sql",
+        "sources": [
+          {
+            "id": "sql:0",
+            "origin_id": "10000000-0000-4000-8000-000000000004",
+            "type": "product",
+            "title": "Nova Hoodie",
+            "text": "product_id: 10000000-0000-4000-8000-000000000004; variant_id: 20000000-0000-4000-8000-000000000004; name: Nova Hoodie; sku: QA-4; variant_name: grey / S; color: grey; size: S; description: Grey regular hoodie, 80% cotton and 20% polyester. เสื้อฮู้ด Nova สีเทา ผ้าฝ้าย 80% โพลีเอสเตอร์ 20%.; brand: Fixture Studio; category: hoodie; price: 690; currency: THB; available_qty: 3"
+          }
+        ],
+        "selectedClaims": [
+          {
+            "source_id": "sql:0",
+            "quote": "product_id: 10000000-0000-4000-8000-000000000004; variant_id: 20000000-0000-4000-8000-000000000004; name: Nova Hoodie; sku: QA-4; variant_name: grey / S; color: grey; size: S; description: Grey regular hoodie, 80% cotton and 20% polyester. เสื้อฮู้ด Nova สีเทา ผ้าฝ้าย 80% โพลีเอสเตอร์ 20%.; brand: Fixture Studio; category: hoodie; price: 690; currency: THB; available_qty: 3"
+          }
+        ],
+        "timings": {
+          "plan_ms": 684.700499999999,
+          "retrieval_ms": 0,
+          "sql_ms": 6.667199999999866,
+          "generation_ms": 984.515199999998,
+          "total_ms": 1676.1353000000017
+        },
+        "usage": {
+          "prompt_tokens": 1327,
+          "completion_tokens": 168
+        },
+        "retrievedIds": [
+          "10000000-0000-4000-8000-000000000004"
+        ],
+        "planningAttempts": [
+          {
+            "route": "sql",
+            "sql": "SELECT product_id,variant_id,name,sku,variant_name,color,size,description,brand,category,price,currency,available_qty FROM catalog WHERE name ILIKE '%Nova%' AND color = 'grey' AND size = 'S'",
+            "search_query": "Nova สีเทา ขนาด S เหลือขายได้กี่ตัว"
+          }
+        ],
+        "sql": "SELECT product_id,variant_id,name,sku,variant_name,color,size,description,brand,category,price,currency,available_qty FROM catalog WHERE name ILIKE '%Nova%' AND color = 'grey' AND size = 'S'",
+        "sqlAttempts": [
+          {
+            "sql": "SELECT product_id,variant_id,name,sku,variant_name,color,size,description,brand,category,price,currency,available_qty FROM catalog WHERE name ILIKE '%Nova%' AND color = 'grey' AND size = 'S'",
+            "status": "success"
+          }
+        ],
+        "sqlRows": [
+          {
+            "product_id": "10000000-0000-4000-8000-000000000004",
+            "variant_id": "20000000-0000-4000-8000-000000000004",
+            "name": "Nova Hoodie",
+            "sku": "QA-4",
+            "variant_name": "grey / S",
+            "color": "grey",
+            "size": "S",
+            "description": "Grey regular hoodie, 80% cotton and 20% polyester. เสื้อฮู้ด Nova สีเทา ผ้าฝ้าย 80% โพลีเอสเตอร์ 20%.",
+            "brand": "Fixture Studio",
+            "category": "hoodie",
+            "price": 690,
+            "currency": "THB",
+            "available_qty": 3
+          }
+        ],
+        "selectionAttempts": [
+          {
+            "answerable": true,
+            "ambiguous": false,
+            "ambiguity_kind": "none",
+            "claims": [
+              {
+                "source_id": "sql:0",
+                "quote": "variant_name: grey / S; color: grey; size: S; available_qty: 3"
+              }
+            ]
+          }
+        ],
+        "rawSelection": {
+          "answerable": true,
+          "ambiguous": false,
+          "ambiguity_kind": "none",
+          "claims": [
+            {
+              "source_id": "sql:0",
+              "quote": "variant_name: grey / S; color: grey; size: S; available_qty: 3"
+            }
+          ]
+        }
+      },
+      "grade": {
+        "decision_correct": true,
+        "fact_groups_matched": 4,
+        "fact_groups_total": 4,
+        "exact_fact_pass": true,
+        "forbidden_pattern_pass": true,
+        "forbidden_matches": [],
+        "claims_checked": 1,
+        "unbound_claim_count": 0,
+        "source_binding_pass": true,
+        "attempted_claims_checked": 1,
+        "raw_unbound_selection_claim_count": 1,
+        "gold_source_recall": 1,
+        "answerable_fixture": true,
+        "answered": true,
+        "task_check_pass": true,
+        "note": "Exact fact pattern coverage and contiguous final source-quote binding only. Raw unbound model selection quotes can be canonicalized into trusted SQL rows rather than rejected; their count is not a hallucination rate. Binding does not establish relevance, completeness, factual entailment, SQL intent accuracy or human-rated hallucination freedom."
+      }
+    },
+    {
+      "id": "qa-load-c2-request-4",
+      "conversation_id": "qa-load-c2-request-4",
+      "case_id": "D03",
+      "concurrency": 2,
+      "sequence": 4,
+      "batch": 2,
+      "started_at_utc": "2026-10-05T12:18:03.515Z",
+      "finished_at_utc": "2026-10-05T12:18:05.829Z",
+      "status": "success",
+      "wall_ms": 2313.722899999997,
+      "question": "How long do I have to request a return?",
+      "rss_after_bytes": 67911680,
+      "answer": {
+        "text": "Request a return within 7 days of receipt for unworn items with tags.",
+        "decision": "answer",
+        "route": "rag",
+        "sources": [
+          {
+            "id": "rag:0",
+            "origin_id": "30000000-0000-4000-8000-000000000002",
+            "type": "return_policy",
+            "title": "Return policy / คืนสินค้า",
+            "text": "Return policy / คืนสินค้า: Request a return within 7 days of receipt for unworn items with tags. For a manufacturing defect, send photos to staff in this chat. คืนสินค้าภายใน 7 วันหลังได้รับ ต้องไม่ผ่านการสวมและมีป้าย หากสินค้าเสียหายจากการผลิตให้ส่งรูปให้พนักงานในแชต. This document describes a policy; it does not process a return."
+          },
+          {
+            "id": "rag:1",
+            "origin_id": "30000000-0000-4000-8000-000000000001",
+            "type": "shipping_policy",
+            "title": "Delivery policy / การจัดส่ง",
+            "text": "Delivery policy / การจัดส่ง: Dispatch within 2 business days. Estimated delivery after dispatch: Bangkok 2–3 business days, other Thai provinces 3–5 business days. Thai delivery fee: 60 THB; free for product subtotal at least 1000 THB. Estimates are not guaranteed arrival dates. จัดส่งออกภายใน 2 วันทําการ กรุงเทพฯ หลังส่งประมาณ 2–3 วันทําการ ต่างจังหวัด 3–5 วันทําการ ค่าส่งในไทย 60 บาท ยอดสินค้าตั้งแต่ 1000 บาทส่งฟรี. International fees are not provided."
+          },
+          {
+            "id": "rag:2",
+            "origin_id": "30000000-0000-4000-8000-000000000003",
+            "type": "faq",
+            "title": "Showroom hours / เวลาเปิด",
+            "text": "Showroom hours / เวลาเปิด: Showroom opens Monday–Saturday 10:00–18:00 Bangkok time and is closed on Sunday. โชว์รูมเปิดจันทร์ถึงเสาร์ 10:00–18:00 น. เวลาไทย ปิดวันอาทิตย์. Holiday exceptions are not specified."
+          },
+          {
+            "id": "rag:3",
+            "origin_id": "30000000-0000-4000-8000-000000000006",
+            "type": "faq",
+            "title": "Human assistance / ติดต่อพนักงาน",
+            "text": "Human assistance / ติดต่อพนักงาน: Human assistance is available in this chat during showroom hours; staff speak Thai and English. In-person fitting requires no appointment. ติดต่อพนักงานในแชตนี้ช่วงเวลาเปิดโชว์รูมได้ พนักงานตอบภาษาไทยและอังกฤษ ลองเสื้อที่โชว์รูมได้โดยไม่ต้องนัดหมาย. Telephone number and customer-private data are not published."
+          },
+          {
+            "id": "rag:4",
+            "origin_id": "30000000-0000-4000-8000-000000000005",
+            "type": "faq",
+            "title": "Specifications and warranty / สเปก",
+            "text": "Specifications and warranty / สเปก: Only published product specifications are verified. Waterproof certificates, safe bag carrying capacity and exact delivery dates are unavailable. Staff can investigate missing specifications. ยืนยันได้เฉพาะสเปกที่ประกาศ ไม่มีข้อมูลใบรับรองกันน้ํา น้ําหนักบรรทุกกระเป๋าที่ปลอดภัย หรือวันถึงที่รับประกัน กรุณาสอบถามพนักงาน."
+          }
+        ],
+        "selectedClaims": [
+          {
+            "source_id": "rag:0",
+            "quote": "Request a return within 7 days of receipt for unworn items with tags."
+          }
+        ],
+        "timings": {
+          "plan_ms": 1018.7865999999995,
+          "retrieval_ms": 2.6983000000000175,
+          "sql_ms": 0,
+          "generation_ms": 1291.9991999999984,
+          "total_ms": 2313.682499999999
+        },
+        "usage": {
+          "prompt_tokens": 1806,
+          "completion_tokens": 108
+        },
+        "retrievedIds": [
+          "30000000-0000-4000-8000-000000000002",
+          "30000000-0000-4000-8000-000000000001",
+          "30000000-0000-4000-8000-000000000003",
+          "30000000-0000-4000-8000-000000000006",
+          "30000000-0000-4000-8000-000000000005"
+        ],
+        "planningAttempts": [
+          {
+            "route": "rag",
+            "sql": "",
+            "search_query": "return request deadline policy"
+          }
+        ],
+        "selectionAttempts": [
+          {
+            "answerable": true,
+            "ambiguous": false,
+            "ambiguity_kind": "none",
+            "claims": [
+              {
+                "source_id": "rag:0",
+                "quote": "Request a return within 7 days of receipt for unworn items with tags."
+              }
+            ]
+          }
+        ],
+        "rawSelection": {
+          "answerable": true,
+          "ambiguous": false,
+          "ambiguity_kind": "none",
+          "claims": [
+            {
+              "source_id": "rag:0",
+              "quote": "Request a return within 7 days of receipt for unworn items with tags."
+            }
+          ]
+        }
+      },
+      "grade": {
+        "decision_correct": true,
+        "fact_groups_matched": 2,
+        "fact_groups_total": 2,
+        "exact_fact_pass": true,
+        "forbidden_pattern_pass": true,
+        "forbidden_matches": [],
+        "claims_checked": 1,
+        "unbound_claim_count": 0,
+        "source_binding_pass": true,
+        "attempted_claims_checked": 1,
+        "raw_unbound_selection_claim_count": 0,
+        "gold_source_recall": 1,
+        "answerable_fixture": true,
+        "answered": true,
+        "task_check_pass": true,
+        "note": "Exact fact pattern coverage and contiguous final source-quote binding only. Raw unbound model selection quotes can be canonicalized into trusted SQL rows rather than rejected; their count is not a hallucination rate. Binding does not establish relevance, completeness, factual entailment, SQL intent accuracy or human-rated hallucination freedom."
+      }
+    },
+    {
+      "id": "qa-load-c2-request-5",
+      "conversation_id": "qa-load-c2-request-5",
+      "case_id": "D02",
+      "concurrency": 2,
+      "sequence": 5,
+      "batch": 3,
+      "started_at_utc": "2026-10-05T12:18:05.829Z",
+      "finished_at_utc": "2026-10-05T12:18:08.333Z",
+      "status": "success",
+      "wall_ms": 2504.2439000000013,
+      "question": "Nova สีเทาขนาด S เหลือขายได้กี่ตัว",
+      "rss_after_bytes": 68083712,
+      "answer": {
+        "text": "Nova Hoodie — รุ่น grey / S — รหัสสินค้า QA-4 — สี เทา — ขนาด S — มีสินค้าพร้อมขาย 3 ชิ้น",
+        "decision": "answer",
+        "route": "sql",
+        "sources": [
+          {
+            "id": "sql:0",
+            "origin_id": "10000000-0000-4000-8000-000000000004",
+            "type": "product",
+            "title": "Nova Hoodie",
+            "text": "product_id: 10000000-0000-4000-8000-000000000004; variant_id: 20000000-0000-4000-8000-000000000004; name: Nova Hoodie; sku: QA-4; variant_name: grey / S; color: grey; size: S; description: Grey regular hoodie, 80% cotton and 20% polyester. เสื้อฮู้ด Nova สีเทา ผ้าฝ้าย 80% โพลีเอสเตอร์ 20%.; brand: Fixture Studio; category: hoodie; price: 690; currency: THB; available_qty: 3"
+          }
+        ],
+        "selectedClaims": [
+          {
+            "source_id": "sql:0",
+            "quote": "product_id: 10000000-0000-4000-8000-000000000004; variant_id: 20000000-0000-4000-8000-000000000004; name: Nova Hoodie; sku: QA-4; variant_name: grey / S; color: grey; size: S; description: Grey regular hoodie, 80% cotton and 20% polyester. เสื้อฮู้ด Nova สีเทา ผ้าฝ้าย 80% โพลีเอสเตอร์ 20%.; brand: Fixture Studio; category: hoodie; price: 690; currency: THB; available_qty: 3"
+          }
+        ],
+        "timings": {
+          "plan_ms": 1168.7440000000024,
+          "retrieval_ms": 0,
+          "sql_ms": 6.1762999999991735,
+          "generation_ms": 1329.0213999999978,
+          "total_ms": 2504.1924
+        },
+        "usage": {
+          "prompt_tokens": 1327,
+          "completion_tokens": 168
+        },
+        "retrievedIds": [
+          "10000000-0000-4000-8000-000000000004"
+        ],
+        "planningAttempts": [
+          {
+            "route": "sql",
+            "sql": "SELECT product_id,variant_id,name,sku,variant_name,color,size,description,brand,category,price,currency,available_qty FROM catalog WHERE name ILIKE '%Nova%' AND color = 'grey' AND size = 'S'",
+            "search_query": "Nova สีเทา ขนาด S เหลือขายได้กี่ตัว"
+          }
+        ],
+        "sql": "SELECT product_id,variant_id,name,sku,variant_name,color,size,description,brand,category,price,currency,available_qty FROM catalog WHERE name ILIKE '%Nova%' AND color = 'grey' AND size = 'S'",
+        "sqlAttempts": [
+          {
+            "sql": "SELECT product_id,variant_id,name,sku,variant_name,color,size,description,brand,category,price,currency,available_qty FROM catalog WHERE name ILIKE '%Nova%' AND color = 'grey' AND size = 'S'",
+            "status": "success"
+          }
+        ],
+        "sqlRows": [
+          {
+            "product_id": "10000000-0000-4000-8000-000000000004",
+            "variant_id": "20000000-0000-4000-8000-000000000004",
+            "name": "Nova Hoodie",
+            "sku": "QA-4",
+            "variant_name": "grey / S",
+            "color": "grey",
+            "size": "S",
+            "description": "Grey regular hoodie, 80% cotton and 20% polyester. เสื้อฮู้ด Nova สีเทา ผ้าฝ้าย 80% โพลีเอสเตอร์ 20%.",
+            "brand": "Fixture Studio",
+            "category": "hoodie",
+            "price": 690,
+            "currency": "THB",
+            "available_qty": 3
+          }
+        ],
+        "selectionAttempts": [
+          {
+            "answerable": true,
+            "ambiguous": false,
+            "ambiguity_kind": "none",
+            "claims": [
+              {
+                "source_id": "sql:0",
+                "quote": "variant_name: grey / S; color: grey; size: S; available_qty: 3"
+              }
+            ]
+          }
+        ],
+        "rawSelection": {
+          "answerable": true,
+          "ambiguous": false,
+          "ambiguity_kind": "none",
+          "claims": [
+            {
+              "source_id": "sql:0",
+              "quote": "variant_name: grey / S; color: grey; size: S; available_qty: 3"
+            }
+          ]
+        }
+      },
+      "grade": {
+        "decision_correct": true,
+        "fact_groups_matched": 4,
+        "fact_groups_total": 4,
+        "exact_fact_pass": true,
+        "forbidden_pattern_pass": true,
+        "forbidden_matches": [],
+        "claims_checked": 1,
+        "unbound_claim_count": 0,
+        "source_binding_pass": true,
+        "attempted_claims_checked": 1,
+        "raw_unbound_selection_claim_count": 1,
+        "gold_source_recall": 1,
+        "answerable_fixture": true,
+        "answered": true,
+        "task_check_pass": true,
+        "note": "Exact fact pattern coverage and contiguous final source-quote binding only. Raw unbound model selection quotes can be canonicalized into trusted SQL rows rather than rejected; their count is not a hallucination rate. Binding does not establish relevance, completeness, factual entailment, SQL intent accuracy or human-rated hallucination freedom."
+      }
+    },
+    {
+      "id": "qa-load-c2-request-6",
+      "conversation_id": "qa-load-c2-request-6",
+      "case_id": "D01",
+      "concurrency": 2,
+      "sequence": 6,
+      "batch": 3,
+      "started_at_utc": "2026-10-05T12:18:05.829Z",
+      "finished_at_utc": "2026-10-05T12:18:07.689Z",
+      "status": "success",
+      "wall_ms": 1860.430400000001,
+      "question": "What is the Ink Basic Tee price?",
+      "rss_after_bytes": 67928064,
+      "answer": {
+        "text": "Ink Basic Tee. variant black / M. SKU QA-2. colour black. size M. The price is 390 THB",
+        "decision": "answer",
+        "route": "sql",
+        "sources": [
+          {
+            "id": "sql:0",
+            "origin_id": "10000000-0000-4000-8000-000000000002",
+            "type": "product",
+            "title": "Ink Basic Tee",
+            "text": "product_id: 10000000-0000-4000-8000-000000000002; variant_id: 20000000-0000-4000-8000-000000000002; name: Ink Basic Tee; sku: QA-2; variant_name: black / M; color: black; size: M; description: Black regular-fit T-shirt, 100% cotton. เสื้อยืด Ink สีดำ ผ้าฝ้าย 100% ทรงปกติ. No guarantee about color after 500 washes is provided.; brand: Fixture Studio; category: shirt; price: 390; currency: THB; available_qty: 6"
+          }
+        ],
+        "selectedClaims": [
+          {
+            "source_id": "sql:0",
+            "quote": "product_id: 10000000-0000-4000-8000-000000000002; variant_id: 20000000-0000-4000-8000-000000000002; name: Ink Basic Tee; sku: QA-2; variant_name: black / M; color: black; size: M; description: Black regular-fit T-shirt, 100% cotton. เสื้อยืด Ink สีดำ ผ้าฝ้าย 100% ทรงปกติ. No guarantee about color after 500 washes is provided.; brand: Fixture Studio; category: shirt; price: 390; currency: THB; available_qty: 6"
+          }
+        ],
+        "timings": {
+          "plan_ms": 565.0938999999998,
+          "retrieval_ms": 0,
+          "sql_ms": 6.516199999998207,
+          "generation_ms": 1288.5505000000012,
+          "total_ms": 1860.3875000000007
+        },
+        "usage": {
+          "prompt_tokens": 1325,
+          "completion_tokens": 156
+        },
+        "retrievedIds": [
+          "10000000-0000-4000-8000-000000000002"
+        ],
+        "planningAttempts": [
+          {
+            "route": "sql",
+            "sql": "SELECT product_id,variant_id,name,sku,variant_name,color,size,description,brand,category,price,currency,available_qty FROM catalog WHERE name ILIKE '%Ink Basic Tee%' LIMIT 20",
+            "search_query": "Ink Basic Tee price"
+          }
+        ],
+        "sql": "SELECT product_id,variant_id,name,sku,variant_name,color,size,description,brand,category,price,currency,available_qty FROM catalog WHERE name ILIKE '%Ink Basic Tee%' LIMIT 20",
+        "sqlAttempts": [
+          {
+            "sql": "SELECT product_id,variant_id,name,sku,variant_name,color,size,description,brand,category,price,currency,available_qty FROM catalog WHERE name ILIKE '%Ink Basic Tee%' LIMIT 20",
+            "status": "success"
+          }
+        ],
+        "sqlRows": [
+          {
+            "product_id": "10000000-0000-4000-8000-000000000002",
+            "variant_id": "20000000-0000-4000-8000-000000000002",
+            "name": "Ink Basic Tee",
+            "sku": "QA-2",
+            "variant_name": "black / M",
+            "color": "black",
+            "size": "M",
+            "description": "Black regular-fit T-shirt, 100% cotton. เสื้อยืด Ink สีดำ ผ้าฝ้าย 100% ทรงปกติ. No guarantee about color after 500 washes is provided.",
+            "brand": "Fixture Studio",
+            "category": "shirt",
+            "price": 390,
+            "currency": "THB",
+            "available_qty": 6
+          }
+        ],
+        "selectionAttempts": [
+          {
+            "answerable": true,
+            "ambiguous": false,
+            "ambiguity_kind": "none",
+            "claims": [
+              {
+                "source_id": "sql:0",
+                "quote": "name: Ink Basic Tee; ... price: 390; currency: THB"
+              }
+            ]
+          }
+        ],
+        "rawSelection": {
+          "answerable": true,
+          "ambiguous": false,
+          "ambiguity_kind": "none",
+          "claims": [
+            {
+              "source_id": "sql:0",
+              "quote": "name: Ink Basic Tee; ... price: 390; currency: THB"
+            }
+          ]
+        }
+      },
+      "grade": {
+        "decision_correct": true,
+        "fact_groups_matched": 3,
+        "fact_groups_total": 3,
+        "exact_fact_pass": true,
+        "forbidden_pattern_pass": true,
+        "forbidden_matches": [],
+        "claims_checked": 1,
+        "unbound_claim_count": 0,
+        "source_binding_pass": true,
+        "attempted_claims_checked": 1,
+        "raw_unbound_selection_claim_count": 1,
+        "gold_source_recall": 1,
+        "answerable_fixture": true,
+        "answered": true,
+        "task_check_pass": true,
+        "note": "Exact fact pattern coverage and contiguous final source-quote binding only. Raw unbound model selection quotes can be canonicalized into trusted SQL rows rather than rejected; their count is not a hallucination rate. Binding does not establish relevance, completeness, factual entailment, SQL intent accuracy or human-rated hallucination freedom."
+      }
+    },
+    {
+      "id": "qa-load-c2-request-7",
+      "conversation_id": "qa-load-c2-request-7",
+      "case_id": "D01",
+      "concurrency": 2,
+      "sequence": 7,
+      "batch": 4,
+      "started_at_utc": "2026-10-05T12:18:08.333Z",
+      "finished_at_utc": "2026-10-05T12:18:10.659Z",
+      "status": "success",
+      "wall_ms": 2326.1782999999996,
+      "question": "What is the Ink Basic Tee price?",
+      "rss_after_bytes": 68268032,
+      "answer": {
+        "text": "Ink Basic Tee. variant black / M. SKU QA-2. colour black. size M. The price is 390 THB",
+        "decision": "answer",
+        "route": "sql",
+        "sources": [
+          {
+            "id": "sql:0",
+            "origin_id": "10000000-0000-4000-8000-000000000002",
+            "type": "product",
+            "title": "Ink Basic Tee",
+            "text": "product_id: 10000000-0000-4000-8000-000000000002; variant_id: 20000000-0000-4000-8000-000000000002; name: Ink Basic Tee; sku: QA-2; variant_name: black / M; color: black; size: M; description: Black regular-fit T-shirt, 100% cotton. เสื้อยืด Ink สีดำ ผ้าฝ้าย 100% ทรงปกติ. No guarantee about color after 500 washes is provided.; brand: Fixture Studio; category: shirt; price: 390; currency: THB; available_qty: 6"
+          }
+        ],
+        "selectedClaims": [
+          {
+            "source_id": "sql:0",
+            "quote": "product_id: 10000000-0000-4000-8000-000000000002; variant_id: 20000000-0000-4000-8000-000000000002; name: Ink Basic Tee; sku: QA-2; variant_name: black / M; color: black; size: M; description: Black regular-fit T-shirt, 100% cotton. เสื้อยืด Ink สีดำ ผ้าฝ้าย 100% ทรงปกติ. No guarantee about color after 500 washes is provided.; brand: Fixture Studio; category: shirt; price: 390; currency: THB; available_qty: 6"
+          }
+        ],
+        "timings": {
+          "plan_ms": 940.4462999999996,
+          "retrieval_ms": 0,
+          "sql_ms": 6.305000000000291,
+          "generation_ms": 1379.1352000000006,
+          "total_ms": 2326.124899999999
+        },
+        "usage": {
+          "prompt_tokens": 1325,
+          "completion_tokens": 156
+        },
+        "retrievedIds": [
+          "10000000-0000-4000-8000-000000000002"
+        ],
+        "planningAttempts": [
+          {
+            "route": "sql",
+            "sql": "SELECT product_id,variant_id,name,sku,variant_name,color,size,description,brand,category,price,currency,available_qty FROM catalog WHERE name ILIKE '%Ink Basic Tee%' LIMIT 20",
+            "search_query": "Ink Basic Tee price"
+          }
+        ],
+        "sql": "SELECT product_id,variant_id,name,sku,variant_name,color,size,description,brand,category,price,currency,available_qty FROM catalog WHERE name ILIKE '%Ink Basic Tee%' LIMIT 20",
+        "sqlAttempts": [
+          {
+            "sql": "SELECT product_id,variant_id,name,sku,variant_name,color,size,description,brand,category,price,currency,available_qty FROM catalog WHERE name ILIKE '%Ink Basic Tee%' LIMIT 20",
+            "status": "success"
+          }
+        ],
+        "sqlRows": [
+          {
+            "product_id": "10000000-0000-4000-8000-000000000002",
+            "variant_id": "20000000-0000-4000-8000-000000000002",
+            "name": "Ink Basic Tee",
+            "sku": "QA-2",
+            "variant_name": "black / M",
+            "color": "black",
+            "size": "M",
+            "description": "Black regular-fit T-shirt, 100% cotton. เสื้อยืด Ink สีดำ ผ้าฝ้าย 100% ทรงปกติ. No guarantee about color after 500 washes is provided.",
+            "brand": "Fixture Studio",
+            "category": "shirt",
+            "price": 390,
+            "currency": "THB",
+            "available_qty": 6
+          }
+        ],
+        "selectionAttempts": [
+          {
+            "answerable": true,
+            "ambiguous": false,
+            "ambiguity_kind": "none",
+            "claims": [
+              {
+                "source_id": "sql:0",
+                "quote": "name: Ink Basic Tee; ... price: 390; currency: THB"
+              }
+            ]
+          }
+        ],
+        "rawSelection": {
+          "answerable": true,
+          "ambiguous": false,
+          "ambiguity_kind": "none",
+          "claims": [
+            {
+              "source_id": "sql:0",
+              "quote": "name: Ink Basic Tee; ... price: 390; currency: THB"
+            }
+          ]
+        }
+      },
+      "grade": {
+        "decision_correct": true,
+        "fact_groups_matched": 3,
+        "fact_groups_total": 3,
+        "exact_fact_pass": true,
+        "forbidden_pattern_pass": true,
+        "forbidden_matches": [],
+        "claims_checked": 1,
+        "unbound_claim_count": 0,
+        "source_binding_pass": true,
+        "attempted_claims_checked": 1,
+        "raw_unbound_selection_claim_count": 1,
+        "gold_source_recall": 1,
+        "answerable_fixture": true,
+        "answered": true,
+        "task_check_pass": true,
+        "note": "Exact fact pattern coverage and contiguous final source-quote binding only. Raw unbound model selection quotes can be canonicalized into trusted SQL rows rather than rejected; their count is not a hallucination rate. Binding does not establish relevance, completeness, factual entailment, SQL intent accuracy or human-rated hallucination freedom."
+      }
+    },
+    {
+      "id": "qa-load-c2-request-8",
+      "conversation_id": "qa-load-c2-request-8",
+      "case_id": "D03",
+      "concurrency": 2,
+      "sequence": 8,
+      "batch": 4,
+      "started_at_utc": "2026-10-05T12:18:08.333Z",
+      "finished_at_utc": "2026-10-05T12:18:09.955Z",
+      "status": "success",
+      "wall_ms": 1621.2160999999978,
+      "question": "How long do I have to request a return?",
+      "rss_after_bytes": 68268032,
+      "answer": {
+        "text": "Request a return within 7 days of receipt for unworn items with tags.",
+        "decision": "answer",
+        "route": "rag",
+        "sources": [
+          {
+            "id": "rag:0",
+            "origin_id": "30000000-0000-4000-8000-000000000002",
+            "type": "return_policy",
+            "title": "Return policy / คืนสินค้า",
+            "text": "Return policy / คืนสินค้า: Request a return within 7 days of receipt for unworn items with tags. For a manufacturing defect, send photos to staff in this chat. คืนสินค้าภายใน 7 วันหลังได้รับ ต้องไม่ผ่านการสวมและมีป้าย หากสินค้าเสียหายจากการผลิตให้ส่งรูปให้พนักงานในแชต. This document describes a policy; it does not process a return."
+          },
+          {
+            "id": "rag:1",
+            "origin_id": "30000000-0000-4000-8000-000000000001",
+            "type": "shipping_policy",
+            "title": "Delivery policy / การจัดส่ง",
+            "text": "Delivery policy / การจัดส่ง: Dispatch within 2 business days. Estimated delivery after dispatch: Bangkok 2–3 business days, other Thai provinces 3–5 business days. Thai delivery fee: 60 THB; free for product subtotal at least 1000 THB. Estimates are not guaranteed arrival dates. จัดส่งออกภายใน 2 วันทําการ กรุงเทพฯ หลังส่งประมาณ 2–3 วันทําการ ต่างจังหวัด 3–5 วันทําการ ค่าส่งในไทย 60 บาท ยอดสินค้าตั้งแต่ 1000 บาทส่งฟรี. International fees are not provided."
+          },
+          {
+            "id": "rag:2",
+            "origin_id": "30000000-0000-4000-8000-000000000003",
+            "type": "faq",
+            "title": "Showroom hours / เวลาเปิด",
+            "text": "Showroom hours / เวลาเปิด: Showroom opens Monday–Saturday 10:00–18:00 Bangkok time and is closed on Sunday. โชว์รูมเปิดจันทร์ถึงเสาร์ 10:00–18:00 น. เวลาไทย ปิดวันอาทิตย์. Holiday exceptions are not specified."
+          },
+          {
+            "id": "rag:3",
+            "origin_id": "30000000-0000-4000-8000-000000000006",
+            "type": "faq",
+            "title": "Human assistance / ติดต่อพนักงาน",
+            "text": "Human assistance / ติดต่อพนักงาน: Human assistance is available in this chat during showroom hours; staff speak Thai and English. In-person fitting requires no appointment. ติดต่อพนักงานในแชตนี้ช่วงเวลาเปิดโชว์รูมได้ พนักงานตอบภาษาไทยและอังกฤษ ลองเสื้อที่โชว์รูมได้โดยไม่ต้องนัดหมาย. Telephone number and customer-private data are not published."
+          },
+          {
+            "id": "rag:4",
+            "origin_id": "30000000-0000-4000-8000-000000000005",
+            "type": "faq",
+            "title": "Specifications and warranty / สเปก",
+            "text": "Specifications and warranty / สเปก: Only published product specifications are verified. Waterproof certificates, safe bag carrying capacity and exact delivery dates are unavailable. Staff can investigate missing specifications. ยืนยันได้เฉพาะสเปกที่ประกาศ ไม่มีข้อมูลใบรับรองกันน้ํา น้ําหนักบรรทุกกระเป๋าที่ปลอดภัย หรือวันถึงที่รับประกัน กรุณาสอบถามพนักงาน."
+          }
+        ],
+        "selectedClaims": [
+          {
+            "source_id": "rag:0",
+            "quote": "Request a return within 7 days of receipt for unworn items with tags."
+          }
+        ],
+        "timings": {
+          "plan_ms": 395.8919999999998,
+          "retrieval_ms": 3.2629999999990105,
+          "sql_ms": 0,
+          "generation_ms": 1221.7543000000005,
+          "total_ms": 1621.1627999999982
+        },
+        "usage": {
+          "prompt_tokens": 1806,
+          "completion_tokens": 108
+        },
+        "retrievedIds": [
+          "30000000-0000-4000-8000-000000000002",
+          "30000000-0000-4000-8000-000000000001",
+          "30000000-0000-4000-8000-000000000003",
+          "30000000-0000-4000-8000-000000000006",
+          "30000000-0000-4000-8000-000000000005"
+        ],
+        "planningAttempts": [
+          {
+            "route": "rag",
+            "sql": "",
+            "search_query": "return request deadline policy"
+          }
+        ],
+        "selectionAttempts": [
+          {
+            "answerable": true,
+            "ambiguous": false,
+            "ambiguity_kind": "none",
+            "claims": [
+              {
+                "source_id": "rag:0",
+                "quote": "Request a return within 7 days of receipt for unworn items with tags."
+              }
+            ]
+          }
+        ],
+        "rawSelection": {
+          "answerable": true,
+          "ambiguous": false,
+          "ambiguity_kind": "none",
+          "claims": [
+            {
+              "source_id": "rag:0",
+              "quote": "Request a return within 7 days of receipt for unworn items with tags."
+            }
+          ]
+        }
+      },
+      "grade": {
+        "decision_correct": true,
+        "fact_groups_matched": 2,
+        "fact_groups_total": 2,
+        "exact_fact_pass": true,
+        "forbidden_pattern_pass": true,
+        "forbidden_matches": [],
+        "claims_checked": 1,
+        "unbound_claim_count": 0,
+        "source_binding_pass": true,
+        "attempted_claims_checked": 1,
+        "raw_unbound_selection_claim_count": 0,
+        "gold_source_recall": 1,
+        "answerable_fixture": true,
+        "answered": true,
+        "task_check_pass": true,
+        "note": "Exact fact pattern coverage and contiguous final source-quote binding only. Raw unbound model selection quotes can be canonicalized into trusted SQL rows rather than rejected; their count is not a hallucination rate. Binding does not establish relevance, completeness, factual entailment, SQL intent accuracy or human-rated hallucination freedom."
+      }
+    },
+    {
+      "id": "qa-load-c2-request-9",
+      "conversation_id": "qa-load-c2-request-9",
+      "case_id": "D03",
+      "concurrency": 2,
+      "sequence": 9,
+      "batch": 5,
+      "started_at_utc": "2026-10-05T12:18:10.659Z",
+      "finished_at_utc": "2026-10-05T12:18:12.824Z",
+      "status": "success",
+      "wall_ms": 2164.2968,
+      "question": "How long do I have to request a return?",
+      "rss_after_bytes": 68288512,
+      "answer": {
+        "text": "Request a return within 7 days of receipt for unworn items with tags.",
+        "decision": "answer",
+        "route": "rag",
+        "sources": [
+          {
+            "id": "rag:0",
+            "origin_id": "30000000-0000-4000-8000-000000000002",
+            "type": "return_policy",
+            "title": "Return policy / คืนสินค้า",
+            "text": "Return policy / คืนสินค้า: Request a return within 7 days of receipt for unworn items with tags. For a manufacturing defect, send photos to staff in this chat. คืนสินค้าภายใน 7 วันหลังได้รับ ต้องไม่ผ่านการสวมและมีป้าย หากสินค้าเสียหายจากการผลิตให้ส่งรูปให้พนักงานในแชต. This document describes a policy; it does not process a return."
+          },
+          {
+            "id": "rag:1",
+            "origin_id": "30000000-0000-4000-8000-000000000001",
+            "type": "shipping_policy",
+            "title": "Delivery policy / การจัดส่ง",
+            "text": "Delivery policy / การจัดส่ง: Dispatch within 2 business days. Estimated delivery after dispatch: Bangkok 2–3 business days, other Thai provinces 3–5 business days. Thai delivery fee: 60 THB; free for product subtotal at least 1000 THB. Estimates are not guaranteed arrival dates. จัดส่งออกภายใน 2 วันทําการ กรุงเทพฯ หลังส่งประมาณ 2–3 วันทําการ ต่างจังหวัด 3–5 วันทําการ ค่าส่งในไทย 60 บาท ยอดสินค้าตั้งแต่ 1000 บาทส่งฟรี. International fees are not provided."
+          },
+          {
+            "id": "rag:2",
+            "origin_id": "30000000-0000-4000-8000-000000000003",
+            "type": "faq",
+            "title": "Showroom hours / เวลาเปิด",
+            "text": "Showroom hours / เวลาเปิด: Showroom opens Monday–Saturday 10:00–18:00 Bangkok time and is closed on Sunday. โชว์รูมเปิดจันทร์ถึงเสาร์ 10:00–18:00 น. เวลาไทย ปิดวันอาทิตย์. Holiday exceptions are not specified."
+          },
+          {
+            "id": "rag:3",
+            "origin_id": "30000000-0000-4000-8000-000000000006",
+            "type": "faq",
+            "title": "Human assistance / ติดต่อพนักงาน",
+            "text": "Human assistance / ติดต่อพนักงาน: Human assistance is available in this chat during showroom hours; staff speak Thai and English. In-person fitting requires no appointment. ติดต่อพนักงานในแชตนี้ช่วงเวลาเปิดโชว์รูมได้ พนักงานตอบภาษาไทยและอังกฤษ ลองเสื้อที่โชว์รูมได้โดยไม่ต้องนัดหมาย. Telephone number and customer-private data are not published."
+          },
+          {
+            "id": "rag:4",
+            "origin_id": "30000000-0000-4000-8000-000000000005",
+            "type": "faq",
+            "title": "Specifications and warranty / สเปก",
+            "text": "Specifications and warranty / สเปก: Only published product specifications are verified. Waterproof certificates, safe bag carrying capacity and exact delivery dates are unavailable. Staff can investigate missing specifications. ยืนยันได้เฉพาะสเปกที่ประกาศ ไม่มีข้อมูลใบรับรองกันน้ํา น้ําหนักบรรทุกกระเป๋าที่ปลอดภัย หรือวันถึงที่รับประกัน กรุณาสอบถามพนักงาน."
+          }
+        ],
+        "selectedClaims": [
+          {
+            "source_id": "rag:0",
+            "quote": "Request a return within 7 days of receipt for unworn items with tags."
+          }
+        ],
+        "timings": {
+          "plan_ms": 898.5240000000013,
+          "retrieval_ms": 3.117499999996653,
+          "sql_ms": 0,
+          "generation_ms": 1262.319099999997,
+          "total_ms": 2164.2563999999984
+        },
+        "usage": {
+          "prompt_tokens": 1806,
+          "completion_tokens": 108
+        },
+        "retrievedIds": [
+          "30000000-0000-4000-8000-000000000002",
+          "30000000-0000-4000-8000-000000000001",
+          "30000000-0000-4000-8000-000000000003",
+          "30000000-0000-4000-8000-000000000006",
+          "30000000-0000-4000-8000-000000000005"
+        ],
+        "planningAttempts": [
+          {
+            "route": "rag",
+            "sql": "",
+            "search_query": "return request deadline policy"
+          }
+        ],
+        "selectionAttempts": [
+          {
+            "answerable": true,
+            "ambiguous": false,
+            "ambiguity_kind": "none",
+            "claims": [
+              {
+                "source_id": "rag:0",
+                "quote": "Request a return within 7 days of receipt for unworn items with tags."
+              }
+            ]
+          }
+        ],
+        "rawSelection": {
+          "answerable": true,
+          "ambiguous": false,
+          "ambiguity_kind": "none",
+          "claims": [
+            {
+              "source_id": "rag:0",
+              "quote": "Request a return within 7 days of receipt for unworn items with tags."
+            }
+          ]
+        }
+      },
+      "grade": {
+        "decision_correct": true,
+        "fact_groups_matched": 2,
+        "fact_groups_total": 2,
+        "exact_fact_pass": true,
+        "forbidden_pattern_pass": true,
+        "forbidden_matches": [],
+        "claims_checked": 1,
+        "unbound_claim_count": 0,
+        "source_binding_pass": true,
+        "attempted_claims_checked": 1,
+        "raw_unbound_selection_claim_count": 0,
+        "gold_source_recall": 1,
+        "answerable_fixture": true,
+        "answered": true,
+        "task_check_pass": true,
+        "note": "Exact fact pattern coverage and contiguous final source-quote binding only. Raw unbound model selection quotes can be canonicalized into trusted SQL rows rather than rejected; their count is not a hallucination rate. Binding does not establish relevance, completeness, factual entailment, SQL intent accuracy or human-rated hallucination freedom."
+      }
+    },
+    {
+      "id": "qa-load-c2-request-10",
+      "conversation_id": "qa-load-c2-request-10",
+      "case_id": "D01",
+      "concurrency": 2,
+      "sequence": 10,
+      "batch": 5,
+      "started_at_utc": "2026-10-05T12:18:10.660Z",
+      "finished_at_utc": "2026-10-05T12:18:12.185Z",
+      "status": "success",
+      "wall_ms": 1525.3401999999987,
+      "question": "What is the Ink Basic Tee price?",
+      "rss_after_bytes": 68288512,
+      "answer": {
+        "text": "Ink Basic Tee. variant black / M. SKU QA-2. colour black. size M. The price is 390 THB",
+        "decision": "answer",
+        "route": "sql",
+        "sources": [
+          {
+            "id": "sql:0",
+            "origin_id": "10000000-0000-4000-8000-000000000002",
+            "type": "product",
+            "title": "Ink Basic Tee",
+            "text": "product_id: 10000000-0000-4000-8000-000000000002; variant_id: 20000000-0000-4000-8000-000000000002; name: Ink Basic Tee; sku: QA-2; variant_name: black / M; color: black; size: M; description: Black regular-fit T-shirt, 100% cotton. เสื้อยืด Ink สีดำ ผ้าฝ้าย 100% ทรงปกติ. No guarantee about color after 500 washes is provided.; brand: Fixture Studio; category: shirt; price: 390; currency: THB; available_qty: 6"
+          }
+        ],
+        "selectedClaims": [
+          {
+            "source_id": "sql:0",
+            "quote": "product_id: 10000000-0000-4000-8000-000000000002; variant_id: 20000000-0000-4000-8000-000000000002; name: Ink Basic Tee; sku: QA-2; variant_name: black / M; color: black; size: M; description: Black regular-fit T-shirt, 100% cotton. เสื้อยืด Ink สีดำ ผ้าฝ้าย 100% ทรงปกติ. No guarantee about color after 500 washes is provided.; brand: Fixture Studio; category: shirt; price: 390; currency: THB; available_qty: 6"
+          }
+        ],
+        "timings": {
+          "plan_ms": 581.0886000000028,
+          "retrieval_ms": 0,
+          "sql_ms": 6.113399999998364,
+          "generation_ms": 937.8581000000013,
+          "total_ms": 1525.2870000000003
+        },
+        "usage": {
+          "prompt_tokens": 1325,
+          "completion_tokens": 156
+        },
+        "retrievedIds": [
+          "10000000-0000-4000-8000-000000000002"
+        ],
+        "planningAttempts": [
+          {
+            "route": "sql",
+            "sql": "SELECT product_id,variant_id,name,sku,variant_name,color,size,description,brand,category,price,currency,available_qty FROM catalog WHERE name ILIKE '%Ink Basic Tee%' LIMIT 20",
+            "search_query": "Ink Basic Tee price"
+          }
+        ],
+        "sql": "SELECT product_id,variant_id,name,sku,variant_name,color,size,description,brand,category,price,currency,available_qty FROM catalog WHERE name ILIKE '%Ink Basic Tee%' LIMIT 20",
+        "sqlAttempts": [
+          {
+            "sql": "SELECT product_id,variant_id,name,sku,variant_name,color,size,description,brand,category,price,currency,available_qty FROM catalog WHERE name ILIKE '%Ink Basic Tee%' LIMIT 20",
+            "status": "success"
+          }
+        ],
+        "sqlRows": [
+          {
+            "product_id": "10000000-0000-4000-8000-000000000002",
+            "variant_id": "20000000-0000-4000-8000-000000000002",
+            "name": "Ink Basic Tee",
+            "sku": "QA-2",
+            "variant_name": "black / M",
+            "color": "black",
+            "size": "M",
+            "description": "Black regular-fit T-shirt, 100% cotton. เสื้อยืด Ink สีดำ ผ้าฝ้าย 100% ทรงปกติ. No guarantee about color after 500 washes is provided.",
+            "brand": "Fixture Studio",
+            "category": "shirt",
+            "price": 390,
+            "currency": "THB",
+            "available_qty": 6
+          }
+        ],
+        "selectionAttempts": [
+          {
+            "answerable": true,
+            "ambiguous": false,
+            "ambiguity_kind": "none",
+            "claims": [
+              {
+                "source_id": "sql:0",
+                "quote": "name: Ink Basic Tee; ... price: 390; currency: THB"
+              }
+            ]
+          }
+        ],
+        "rawSelection": {
+          "answerable": true,
+          "ambiguous": false,
+          "ambiguity_kind": "none",
+          "claims": [
+            {
+              "source_id": "sql:0",
+              "quote": "name: Ink Basic Tee; ... price: 390; currency: THB"
+            }
+          ]
+        }
+      },
+      "grade": {
+        "decision_correct": true,
+        "fact_groups_matched": 3,
+        "fact_groups_total": 3,
+        "exact_fact_pass": true,
+        "forbidden_pattern_pass": true,
+        "forbidden_matches": [],
+        "claims_checked": 1,
+        "unbound_claim_count": 0,
+        "source_binding_pass": true,
+        "attempted_claims_checked": 1,
+        "raw_unbound_selection_claim_count": 1,
+        "gold_source_recall": 1,
+        "answerable_fixture": true,
+        "answered": true,
+        "task_check_pass": true,
+        "note": "Exact fact pattern coverage and contiguous final source-quote binding only. Raw unbound model selection quotes can be canonicalized into trusted SQL rows rather than rejected; their count is not a hallucination rate. Binding does not establish relevance, completeness, factual entailment, SQL intent accuracy or human-rated hallucination freedom."
+      }
+    },
+    {
+      "id": "qa-load-c2-request-11",
+      "conversation_id": "qa-load-c2-request-11",
+      "case_id": "D02",
+      "concurrency": 2,
+      "sequence": 11,
+      "batch": 6,
+      "started_at_utc": "2026-10-05T12:18:12.824Z",
+      "finished_at_utc": "2026-10-05T12:18:15.456Z",
+      "status": "success",
+      "wall_ms": 2632.3886999999995,
+      "question": "Nova สีเทาขนาด S เหลือขายได้กี่ตัว",
+      "rss_after_bytes": 68435968,
+      "answer": {
+        "text": "Nova Hoodie — รุ่น grey / S — รหัสสินค้า QA-4 — สี เทา — ขนาด S — มีสินค้าพร้อมขาย 3 ชิ้น",
+        "decision": "answer",
+        "route": "sql",
+        "sources": [
+          {
+            "id": "sql:0",
+            "origin_id": "10000000-0000-4000-8000-000000000004",
+            "type": "product",
+            "title": "Nova Hoodie",
+            "text": "product_id: 10000000-0000-4000-8000-000000000004; variant_id: 20000000-0000-4000-8000-000000000004; name: Nova Hoodie; sku: QA-4; variant_name: grey / S; color: grey; size: S; description: Grey regular hoodie, 80% cotton and 20% polyester. เสื้อฮู้ด Nova สีเทา ผ้าฝ้าย 80% โพลีเอสเตอร์ 20%.; brand: Fixture Studio; category: hoodie; price: 690; currency: THB; available_qty: 3"
+          }
+        ],
+        "selectedClaims": [
+          {
+            "source_id": "sql:0",
+            "quote": "product_id: 10000000-0000-4000-8000-000000000004; variant_id: 20000000-0000-4000-8000-000000000004; name: Nova Hoodie; sku: QA-4; variant_name: grey / S; color: grey; size: S; description: Grey regular hoodie, 80% cotton and 20% polyester. เสื้อฮู้ด Nova สีเทา ผ้าฝ้าย 80% โพลีเอสเตอร์ 20%.; brand: Fixture Studio; category: hoodie; price: 690; currency: THB; available_qty: 3"
+          }
+        ],
+        "timings": {
+          "plan_ms": 1181.0027999999984,
+          "retrieval_ms": 0,
+          "sql_ms": 7.421799999996438,
+          "generation_ms": 1443.6532000000007,
+          "total_ms": 2632.3341
+        },
+        "usage": {
+          "prompt_tokens": 1327,
+          "completion_tokens": 168
+        },
+        "retrievedIds": [
+          "10000000-0000-4000-8000-000000000004"
+        ],
+        "planningAttempts": [
+          {
+            "route": "sql",
+            "sql": "SELECT product_id,variant_id,name,sku,variant_name,color,size,description,brand,category,price,currency,available_qty FROM catalog WHERE name ILIKE '%Nova%' AND color = 'grey' AND size = 'S'",
+            "search_query": "Nova สีเทา ขนาด S เหลือขายได้กี่ตัว"
+          }
+        ],
+        "sql": "SELECT product_id,variant_id,name,sku,variant_name,color,size,description,brand,category,price,currency,available_qty FROM catalog WHERE name ILIKE '%Nova%' AND color = 'grey' AND size = 'S'",
+        "sqlAttempts": [
+          {
+            "sql": "SELECT product_id,variant_id,name,sku,variant_name,color,size,description,brand,category,price,currency,available_qty FROM catalog WHERE name ILIKE '%Nova%' AND color = 'grey' AND size = 'S'",
+            "status": "success"
+          }
+        ],
+        "sqlRows": [
+          {
+            "product_id": "10000000-0000-4000-8000-000000000004",
+            "variant_id": "20000000-0000-4000-8000-000000000004",
+            "name": "Nova Hoodie",
+            "sku": "QA-4",
+            "variant_name": "grey / S",
+            "color": "grey",
+            "size": "S",
+            "description": "Grey regular hoodie, 80% cotton and 20% polyester. เสื้อฮู้ด Nova สีเทา ผ้าฝ้าย 80% โพลีเอสเตอร์ 20%.",
+            "brand": "Fixture Studio",
+            "category": "hoodie",
+            "price": 690,
+            "currency": "THB",
+            "available_qty": 3
+          }
+        ],
+        "selectionAttempts": [
+          {
+            "answerable": true,
+            "ambiguous": false,
+            "ambiguity_kind": "none",
+            "claims": [
+              {
+                "source_id": "sql:0",
+                "quote": "variant_name: grey / S; color: grey; size: S; available_qty: 3"
+              }
+            ]
+          }
+        ],
+        "rawSelection": {
+          "answerable": true,
+          "ambiguous": false,
+          "ambiguity_kind": "none",
+          "claims": [
+            {
+              "source_id": "sql:0",
+              "quote": "variant_name: grey / S; color: grey; size: S; available_qty: 3"
+            }
+          ]
+        }
+      },
+      "grade": {
+        "decision_correct": true,
+        "fact_groups_matched": 4,
+        "fact_groups_total": 4,
+        "exact_fact_pass": true,
+        "forbidden_pattern_pass": true,
+        "forbidden_matches": [],
+        "claims_checked": 1,
+        "unbound_claim_count": 0,
+        "source_binding_pass": true,
+        "attempted_claims_checked": 1,
+        "raw_unbound_selection_claim_count": 1,
+        "gold_source_recall": 1,
+        "answerable_fixture": true,
+        "answered": true,
+        "task_check_pass": true,
+        "note": "Exact fact pattern coverage and contiguous final source-quote binding only. Raw unbound model selection quotes can be canonicalized into trusted SQL rows rather than rejected; their count is not a hallucination rate. Binding does not establish relevance, completeness, factual entailment, SQL intent accuracy or human-rated hallucination freedom."
+      }
+    },
+    {
+      "id": "qa-load-c2-request-12",
+      "conversation_id": "qa-load-c2-request-12",
+      "case_id": "D01",
+      "concurrency": 2,
+      "sequence": 12,
+      "batch": 6,
+      "started_at_utc": "2026-10-05T12:18:12.824Z",
+      "finished_at_utc": "2026-10-05T12:18:14.712Z",
+      "status": "success",
+      "wall_ms": 1887.9496999999974,
+      "question": "What is the Ink Basic Tee price?",
+      "rss_after_bytes": 68435968,
+      "answer": {
+        "text": "Ink Basic Tee. variant black / M. SKU QA-2. colour black. size M. The price is 390 THB",
+        "decision": "answer",
+        "route": "sql",
+        "sources": [
+          {
+            "id": "sql:0",
+            "origin_id": "10000000-0000-4000-8000-000000000002",
+            "type": "product",
+            "title": "Ink Basic Tee",
+            "text": "product_id: 10000000-0000-4000-8000-000000000002; variant_id: 20000000-0000-4000-8000-000000000002; name: Ink Basic Tee; sku: QA-2; variant_name: black / M; color: black; size: M; description: Black regular-fit T-shirt, 100% cotton. เสื้อยืด Ink สีดำ ผ้าฝ้าย 100% ทรงปกติ. No guarantee about color after 500 washes is provided.; brand: Fixture Studio; category: shirt; price: 390; currency: THB; available_qty: 6"
+          }
+        ],
+        "selectedClaims": [
+          {
+            "source_id": "sql:0",
+            "quote": "product_id: 10000000-0000-4000-8000-000000000002; variant_id: 20000000-0000-4000-8000-000000000002; name: Ink Basic Tee; sku: QA-2; variant_name: black / M; color: black; size: M; description: Black regular-fit T-shirt, 100% cotton. เสื้อยืด Ink สีดำ ผ้าฝ้าย 100% ทรงปกติ. No guarantee about color after 500 washes is provided.; brand: Fixture Studio; category: shirt; price: 390; currency: THB; available_qty: 6"
+          }
+        ],
+        "timings": {
+          "plan_ms": 570.4364000000023,
+          "retrieval_ms": 0,
+          "sql_ms": 5.48949999999968,
+          "generation_ms": 1311.7653000000028,
+          "total_ms": 1887.9004999999997
+        },
+        "usage": {
+          "prompt_tokens": 1325,
+          "completion_tokens": 156
+        },
+        "retrievedIds": [
+          "10000000-0000-4000-8000-000000000002"
+        ],
+        "planningAttempts": [
+          {
+            "route": "sql",
+            "sql": "SELECT product_id,variant_id,name,sku,variant_name,color,size,description,brand,category,price,currency,available_qty FROM catalog WHERE name ILIKE '%Ink Basic Tee%' LIMIT 20",
+            "search_query": "Ink Basic Tee price"
+          }
+        ],
+        "sql": "SELECT product_id,variant_id,name,sku,variant_name,color,size,description,brand,category,price,currency,available_qty FROM catalog WHERE name ILIKE '%Ink Basic Tee%' LIMIT 20",
+        "sqlAttempts": [
+          {
+            "sql": "SELECT product_id,variant_id,name,sku,variant_name,color,size,description,brand,category,price,currency,available_qty FROM catalog WHERE name ILIKE '%Ink Basic Tee%' LIMIT 20",
+            "status": "success"
+          }
+        ],
+        "sqlRows": [
+          {
+            "product_id": "10000000-0000-4000-8000-000000000002",
+            "variant_id": "20000000-0000-4000-8000-000000000002",
+            "name": "Ink Basic Tee",
+            "sku": "QA-2",
+            "variant_name": "black / M",
+            "color": "black",
+            "size": "M",
+            "description": "Black regular-fit T-shirt, 100% cotton. เสื้อยืด Ink สีดำ ผ้าฝ้าย 100% ทรงปกติ. No guarantee about color after 500 washes is provided.",
+            "brand": "Fixture Studio",
+            "category": "shirt",
+            "price": 390,
+            "currency": "THB",
+            "available_qty": 6
+          }
+        ],
+        "selectionAttempts": [
+          {
+            "answerable": true,
+            "ambiguous": false,
+            "ambiguity_kind": "none",
+            "claims": [
+              {
+                "source_id": "sql:0",
+                "quote": "name: Ink Basic Tee; ... price: 390; currency: THB"
+              }
+            ]
+          }
+        ],
+        "rawSelection": {
+          "answerable": true,
+          "ambiguous": false,
+          "ambiguity_kind": "none",
+          "claims": [
+            {
+              "source_id": "sql:0",
+              "quote": "name: Ink Basic Tee; ... price: 390; currency: THB"
+            }
+          ]
+        }
+      },
+      "grade": {
+        "decision_correct": true,
+        "fact_groups_matched": 3,
+        "fact_groups_total": 3,
+        "exact_fact_pass": true,
+        "forbidden_pattern_pass": true,
+        "forbidden_matches": [],
+        "claims_checked": 1,
+        "unbound_claim_count": 0,
+        "source_binding_pass": true,
+        "attempted_claims_checked": 1,
+        "raw_unbound_selection_claim_count": 1,
+        "gold_source_recall": 1,
+        "answerable_fixture": true,
+        "answered": true,
+        "task_check_pass": true,
+        "note": "Exact fact pattern coverage and contiguous final source-quote binding only. Raw unbound model selection quotes can be canonicalized into trusted SQL rows rather than rejected; their count is not a hallucination rate. Binding does not establish relevance, completeness, factual entailment, SQL intent accuracy or human-rated hallucination freedom."
+      }
+    }
+  ]
+}

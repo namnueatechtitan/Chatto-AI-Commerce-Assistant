@@ -1,0 +1,208 @@
+{
+  "summary": [
+    [
+      "Metric",
+      "Hybrid RAG + live lookup",
+      "Text-to-SQL",
+      "Combined router"
+    ],
+    [
+      "Recorded attempts",
+      72,
+      72,
+      72
+    ],
+    [
+      "Completed decisions",
+      72,
+      72,
+      72
+    ],
+    [
+      "Errors",
+      0,
+      0,
+      0
+    ],
+    [
+      "Expected answerable attempts",
+      52,
+      52,
+      52
+    ],
+    [
+      "Answered / answerable",
+      0.7307692307692307,
+      0.8076923076923077,
+      0.9230769230769231
+    ],
+    [
+      "Exact facts pass / answerable",
+      0.6538461538461539,
+      0.7692307692307693,
+      0.8846153846153846
+    ],
+    [
+      "Task checks pass / all attempts",
+      0.7222222222222222,
+      0.75,
+      0.8888888888888888
+    ],
+    [
+      "Decision correct / all attempts",
+      0.7777777777777778,
+      0.7777777777777778,
+      0.9166666666666666
+    ],
+    [
+      "Unbound final evidence claims",
+      0,
+      0,
+      0
+    ],
+    [
+      "Raw unbound quote attempts",
+      21,
+      12,
+      12
+    ],
+    [
+      "Mean wall ms · all attempts",
+      1466.3772944444418,
+      1046.5491847222193,
+      1155.3819847222207
+    ],
+    [
+      "Median wall ms · all attempts",
+      1650.7736499999883,
+      1143.5614499999938,
+      1137.8226499999982
+    ],
+    [
+      "P95 wall ms · interpolated",
+      2664.8251250000053,
+      1842.1534249999936,
+      2465.955050000004
+    ],
+    [
+      "Mean prompt tokens · completed",
+      1663.138888888889,
+      1037.25,
+      1294.8055555555557
+    ],
+    [
+      "Mean output tokens · completed",
+      190.125,
+      127.27777777777777,
+      142.94444444444446
+    ],
+    [
+      "Mean planning ms · completed",
+      443.3344791666655,
+      562.6086916666665,
+      449.6209277777801
+    ],
+    [
+      "Mean retrieval ms · completed",
+      11.58160416666562,
+      0,
+      3.753036111111391
+    ],
+    [
+      "Mean SQL ms · completed",
+      4.718686111110578,
+      4.97239444444454,
+      5.00463194444492
+    ],
+    [
+      "Mean evidence selection ms",
+      1006.2790930555543,
+      478.59180555555605,
+      696.244588888891
+    ]
+  ],
+  "errorScan": "{\"kind\":\"notice\",\"message\":\"Cell search matched 0 entries.\"}",
+  "mainSource": {
+    "hybrid": {
+      "attempts": 72,
+      "completed": 72,
+      "errors": 0,
+      "expected_answerable": 52,
+      "answered_answerable": 38,
+      "answer_coverage": 0.7307692307692307,
+      "exact_fact_pass_all_answerable": 0.6538461538461539,
+      "task_check_pass_all_attempts": 0.7222222222222222,
+      "decision_correct_all_attempts": 0.7777777777777778,
+      "unbound_claim_count": 0,
+      "attempted_claims_checked": 80,
+      "raw_unbound_selection_claim_count": 21,
+      "source_binding_pass_answered": 1,
+      "mean_attempt_wall_ms": 1466.3772944444418,
+      "p95_attempt_wall_ms": 2664.8251250000053,
+      "mean_client_wall_ms": 1466.3772944444418,
+      "median_client_wall_ms": 1650.7736499999883,
+      "p95_client_wall_ms": 2664.8251250000053,
+      "mean_prompt_tokens": 1663.138888888889,
+      "mean_completion_tokens": 190.125,
+      "mean_plan_ms": 443.3344791666656,
+      "mean_retrieval_ms": 11.58160416666562,
+      "mean_sql_ms": 4.718686111110578,
+      "mean_generation_ms": 1006.2790930555545,
+      "independent_cases": 36
+    },
+    "sql": {
+      "attempts": 72,
+      "completed": 72,
+      "errors": 0,
+      "expected_answerable": 52,
+      "answered_answerable": 42,
+      "answer_coverage": 0.8076923076923077,
+      "exact_fact_pass_all_answerable": 0.7692307692307693,
+      "task_check_pass_all_attempts": 0.75,
+      "decision_correct_all_attempts": 0.7777777777777778,
+      "unbound_claim_count": 0,
+      "attempted_claims_checked": 48,
+      "raw_unbound_selection_claim_count": 12,
+      "source_binding_pass_answered": 1,
+      "mean_attempt_wall_ms": 1046.5491847222193,
+      "p95_attempt_wall_ms": 1842.1534249999936,
+      "mean_client_wall_ms": 1046.5491847222193,
+      "median_client_wall_ms": 1143.5614499999938,
+      "p95_client_wall_ms": 1842.1534249999936,
+      "mean_prompt_tokens": 1037.25,
+      "mean_completion_tokens": 127.27777777777777,
+      "mean_plan_ms": 562.6086916666665,
+      "mean_retrieval_ms": 0,
+      "mean_sql_ms": 4.97239444444454,
+      "mean_generation_ms": 478.59180555555616,
+      "independent_cases": 36
+    },
+    "combined": {
+      "attempts": 72,
+      "completed": 72,
+      "errors": 0,
+      "expected_answerable": 52,
+      "answered_answerable": 48,
+      "answer_coverage": 0.9230769230769231,
+      "exact_fact_pass_all_answerable": 0.8846153846153846,
+      "task_check_pass_all_attempts": 0.8888888888888888,
+      "decision_correct_all_attempts": 0.9166666666666666,
+      "unbound_claim_count": 0,
+      "attempted_claims_checked": 72,
+      "raw_unbound_selection_claim_count": 12,
+      "source_binding_pass_answered": 1,
+      "mean_attempt_wall_ms": 1155.3819847222207,
+      "p95_attempt_wall_ms": 2465.955050000004,
+      "mean_client_wall_ms": 1155.3819847222207,
+      "median_client_wall_ms": 1137.8226499999982,
+      "p95_client_wall_ms": 2465.955050000004,
+      "mean_prompt_tokens": 1294.8055555555557,
+      "mean_completion_tokens": 142.94444444444446,
+      "mean_plan_ms": 449.62092777778,
+      "mean_retrieval_ms": 3.753036111111391,
+      "mean_sql_ms": 5.00463194444492,
+      "mean_generation_ms": 696.244588888891,
+      "independent_cases": 36
+    }
+  }
+}

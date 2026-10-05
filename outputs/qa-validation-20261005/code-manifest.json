@@ -1,0 +1,350 @@
+{
+  "captured_at_utc": "2026-10-05T11:54:26.797Z",
+  "sha256": "37cf06b961766d130bef35ffedcc35c2f9a95abdd326a33fa806a5992b773d81",
+  "files": [
+    {
+      "path": "apps/ai-service/src/experiments/qa/dataset.ts",
+      "kind": "source",
+      "status": "present",
+      "bytes": 16624,
+      "sha256": "ed623316d4affdf8f91f1c52c2254c258b0a30faf160568515f8fff34fde7749"
+    },
+    {
+      "path": "apps/ai-service/dist/experiments/qa/dataset.js",
+      "kind": "compiled_runtime",
+      "status": "present",
+      "bytes": 15867,
+      "sha256": "77a319199291224fbeba048b346f36c76dc319715cf5d9ba47c9a5cc50d1d2f2"
+    },
+    {
+      "path": "apps/ai-service/src/experiments/qa/grading.ts",
+      "kind": "source",
+      "status": "present",
+      "bytes": 5303,
+      "sha256": "5c6615198034965fac0a4e831a30949e3792fbbf39f88a686c6c0c85083ec981"
+    },
+    {
+      "path": "apps/ai-service/dist/experiments/qa/grading.js",
+      "kind": "compiled_runtime",
+      "status": "present",
+      "bytes": 4750,
+      "sha256": "355867085390b5e77d7c66f99dc14d7e7eccb151e85620d355760fdfd55be0e3"
+    },
+    {
+      "path": "apps/ai-service/src/experiments/qa/load.ts",
+      "kind": "source",
+      "status": "present",
+      "bytes": 16009,
+      "sha256": "82957e565adb87cd2dbeeede15881266c0519bc87476244376fa0beb3ed161fe"
+    },
+    {
+      "path": "apps/ai-service/dist/experiments/qa/load.js",
+      "kind": "compiled_runtime",
+      "status": "present",
+      "bytes": 16710,
+      "sha256": "4253dcea4218094baa54d43c5a6034b5fc617a2740a757c0230a8a1e8d932d15"
+    },
+    {
+      "path": "apps/ai-service/src/experiments/qa/run.ts",
+      "kind": "source",
+      "status": "present",
+      "bytes": 21826,
+      "sha256": "8a4bbe6c979e19e52ab4dbf4d86c862ccbf54212ed01ac75ac5cf6ae93f5a62f"
+    },
+    {
+      "path": "apps/ai-service/dist/experiments/qa/run.js",
+      "kind": "compiled_runtime",
+      "status": "present",
+      "bytes": 23013,
+      "sha256": "7a674a8e2a002a52e13d2d5e52c77933a5897cc142a105a8251dfa0e66ed95b7"
+    },
+    {
+      "path": "apps/ai-service/src/modules/embeddings/index.ts",
+      "kind": "source",
+      "status": "present",
+      "bytes": 8644,
+      "sha256": "27a4b693146a0fc65e9bca99bf4c451a50940ed0d6bc198a6263ecb64da5746c"
+    },
+    {
+      "path": "apps/ai-service/dist/modules/embeddings/index.js",
+      "kind": "compiled_runtime",
+      "status": "present",
+      "bytes": 8430,
+      "sha256": "95d3e752ee998f4ba2bf79aadf7fb27ad46c60428e8889536ee382dd85f8d968"
+    },
+    {
+      "path": "apps/ai-service/src/modules/guardrails/index.ts",
+      "kind": "source",
+      "status": "present",
+      "bytes": 9564,
+      "sha256": "64d11513a15ea4d76b48d823c219a5cd4c999ee1ef36368abb4964d39ec5264f"
+    },
+    {
+      "path": "apps/ai-service/dist/modules/guardrails/index.js",
+      "kind": "compiled_runtime",
+      "status": "present",
+      "bytes": 9528,
+      "sha256": "bd03015e286a452fea574f98527a02c4e00d3a10f37200777147e1522aec582f"
+    },
+    {
+      "path": "apps/ai-service/src/modules/llm/ollama-client.ts",
+      "kind": "source",
+      "status": "present",
+      "bytes": 1680,
+      "sha256": "432975eca5bb517eed55c3fc354841313faf2dd6d70e03b553c3c4c327951fbe"
+    },
+    {
+      "path": "apps/ai-service/dist/modules/llm/ollama-client.js",
+      "kind": "compiled_runtime",
+      "status": "present",
+      "bytes": 1576,
+      "sha256": "36cc1afc91a74838cda8b9f9e2e4b54754635d10a2a8eea80399414187a4df51"
+    },
+    {
+      "path": "apps/ai-service/src/modules/mcp/context.ts",
+      "kind": "source",
+      "status": "present",
+      "bytes": 2424,
+      "sha256": "a0964d006ae88c2bbdae38f7f39b8c5c1949583d4363c9cf1cc4076f0ee10b28"
+    },
+    {
+      "path": "apps/ai-service/dist/modules/mcp/context.js",
+      "kind": "compiled_runtime",
+      "status": "present",
+      "bytes": 2549,
+      "sha256": "12cf5102daab639c7324fd2084f00af8885eea42e245ba30e9362132ed5d41f8"
+    },
+    {
+      "path": "apps/ai-service/src/modules/qa/backend.ts",
+      "kind": "source",
+      "status": "present",
+      "bytes": 1582,
+      "sha256": "13905cf37dcf1a910738a16f430b747a0ff4c82e5cf25961026d84f2e6e874b7"
+    },
+    {
+      "path": "apps/ai-service/dist/modules/qa/backend.js",
+      "kind": "compiled_runtime",
+      "status": "present",
+      "bytes": 1268,
+      "sha256": "56cd93fa0a58e381acb51f8748e7e34de1105030434bf4936a62ec3a27f7a787"
+    },
+    {
+      "path": "apps/ai-service/src/modules/qa/customer-renderer.ts",
+      "kind": "source",
+      "status": "present",
+      "bytes": 8460,
+      "sha256": "20696897a11d34ce774a49206e88c97672ba67145bc04159ccf9d2f60629567c"
+    },
+    {
+      "path": "apps/ai-service/dist/modules/qa/customer-renderer.js",
+      "kind": "compiled_runtime",
+      "status": "present",
+      "bytes": 9060,
+      "sha256": "80ffc7a7cae24daecf40ec1c41c956fff9ba91e127fae2950ff5b11999dd7f4b"
+    },
+    {
+      "path": "apps/ai-service/src/modules/qa/engine.ts",
+      "kind": "source",
+      "status": "present",
+      "bytes": 22854,
+      "sha256": "3126b200f8e3476af97999f9d2800b82f2c4af0be213c3f08eeca41e6f20c943"
+    },
+    {
+      "path": "apps/ai-service/dist/modules/qa/engine.js",
+      "kind": "compiled_runtime",
+      "status": "present",
+      "bytes": 23552,
+      "sha256": "4d0acb5fa79c4dd4f037594c3b660e2dadda289081db3871eccb281aee2082bb"
+    },
+    {
+      "path": "apps/ai-service/src/modules/qa/fallback.ts",
+      "kind": "source",
+      "status": "present",
+      "bytes": 1482,
+      "sha256": "dd4bc4d3937e9124c3a782fd48041863487b7e98361ddd3f250111bb263acc13"
+    },
+    {
+      "path": "apps/ai-service/dist/modules/qa/fallback.js",
+      "kind": "compiled_runtime",
+      "status": "present",
+      "bytes": 1778,
+      "sha256": "2f08b6cfcbff51b07b9b304284f5b223323b54fcf872d6a73807d5d9657d3249"
+    },
+    {
+      "path": "apps/ai-service/src/modules/qa/grounding.ts",
+      "kind": "source",
+      "status": "present",
+      "bytes": 1460,
+      "sha256": "5426a7a80182ed6a0ed8061038f114b3e29140acf8b611cb5f3d66a95172649e"
+    },
+    {
+      "path": "apps/ai-service/dist/modules/qa/grounding.js",
+      "kind": "compiled_runtime",
+      "status": "present",
+      "bytes": 1465,
+      "sha256": "32a29cf03151477a83d02714c38c9fa93c7a3446b743965bc404c9e2202d231d"
+    },
+    {
+      "path": "apps/ai-service/src/modules/rag/document-chunker.ts",
+      "kind": "source",
+      "status": "present",
+      "bytes": 5098,
+      "sha256": "15f985a0dca23e5df0c3d8fd59968fa158ee2d16c11b262cc2a72b4fa6d6e77e"
+    },
+    {
+      "path": "apps/ai-service/dist/modules/rag/document-chunker.js",
+      "kind": "compiled_runtime",
+      "status": "present",
+      "bytes": 5102,
+      "sha256": "b67f080badb796d576c9697f1a9b2443ff2185eb4aaf75fbcbd1542d5a923c19"
+    },
+    {
+      "path": "apps/ai-service/src/modules/rag/index.ts",
+      "kind": "source",
+      "status": "present",
+      "bytes": 1745,
+      "sha256": "af1872deb8bed6df3a87fe03d9447db5d86aa87a148b31bd4838582041414e67"
+    },
+    {
+      "path": "apps/ai-service/dist/modules/rag/index.js",
+      "kind": "compiled_runtime",
+      "status": "present",
+      "bytes": 1917,
+      "sha256": "51ad7214a080ccd95b12fe11d225224aa06eef8c928ca7e7ec1e2a0c5743bb80"
+    },
+    {
+      "path": "apps/ai-service/src/modules/rag/vector-document.builder.ts",
+      "kind": "source",
+      "status": "present",
+      "bytes": 2946,
+      "sha256": "92cfe51644c4e2a0cc343dc65066d5904cd8d9ef3e239b88c0041dfda4d074a2"
+    },
+    {
+      "path": "apps/ai-service/dist/modules/rag/vector-document.builder.js",
+      "kind": "compiled_runtime",
+      "status": "present",
+      "bytes": 3117,
+      "sha256": "45947720d481cce01b3ee8b1dd75582b4ccafb9abca9243157af264cbd17aca2"
+    },
+    {
+      "path": "apps/ai-service/src/modules/retrieval/bm25.ts",
+      "kind": "source",
+      "status": "present",
+      "bytes": 2709,
+      "sha256": "aca3cf4ea2ba8984eefb0f1fa2563ceea44578083030388cbdede53fe37d0cd2"
+    },
+    {
+      "path": "apps/ai-service/dist/modules/retrieval/bm25.js",
+      "kind": "compiled_runtime",
+      "status": "present",
+      "bytes": 2907,
+      "sha256": "7d6b15372a4310734d1941bd668f553a9c05e07f56fe3c7ee4af55faecd95c90"
+    },
+    {
+      "path": "apps/ai-service/src/modules/retrieval/index.ts",
+      "kind": "source",
+      "status": "present",
+      "bytes": 7088,
+      "sha256": "bc74b08ff4fd3cae1ff5435fd41cba77ac1c1cb5d0c3c8cff54264cd2808c752"
+    },
+    {
+      "path": "apps/ai-service/dist/modules/retrieval/index.js",
+      "kind": "compiled_runtime",
+      "status": "present",
+      "bytes": 7609,
+      "sha256": "e9b8b7eba81c1f91e9e8a125a8eb55f71172b18b5cd6747a4c29dea2afedfcbd"
+    },
+    {
+      "path": "apps/ai-service/src/modules/retrieval/knowledge-index.ts",
+      "kind": "source",
+      "status": "present",
+      "bytes": 2617,
+      "sha256": "dcba29aa0b12983002bacec7e10591ab873adf34a74048c3f36fe23af0a636ab"
+    },
+    {
+      "path": "apps/ai-service/dist/modules/retrieval/knowledge-index.js",
+      "kind": "compiled_runtime",
+      "status": "present",
+      "bytes": 2441,
+      "sha256": "fc4c28672ea2ac2ca06cce3ea638b551ad0842b7304fa20a00eaca4b0e36a30a"
+    },
+    {
+      "path": "apps/api/src/modules/internal-ai/internal-ai.controller.ts",
+      "kind": "source",
+      "status": "present",
+      "bytes": 3364,
+      "sha256": "3c4f6c3f8a7455b996b7842920f25174d17140be73a00da72fb57b1f729f3b95"
+    },
+    {
+      "path": "apps/api/dist/modules/internal-ai/internal-ai.controller.js",
+      "kind": "compiled_runtime",
+      "status": "present",
+      "bytes": 6778,
+      "sha256": "c28ca29c725517d56c8c2d2ee051eaf6ab055b0f11332af8467e6233d75aa087"
+    },
+    {
+      "path": "apps/api/src/modules/internal-ai/internal-ai.service.ts",
+      "kind": "source",
+      "status": "present",
+      "bytes": 12100,
+      "sha256": "2c6dad1c69c06fece9d9c7407015d6fce17f6fef31424bbf6375bf7999df9f52"
+    },
+    {
+      "path": "apps/api/dist/modules/internal-ai/internal-ai.service.js",
+      "kind": "compiled_runtime",
+      "status": "present",
+      "bytes": 14000,
+      "sha256": "45eee31871036be2b9973c2587a95d0f9dd65a06cfd9275e38e3d8341b018ff3"
+    },
+    {
+      "path": "apps/api/src/modules/internal-ai/readonly-query.compiler.ts",
+      "kind": "source",
+      "status": "present",
+      "bytes": 9844,
+      "sha256": "1aa7f9efaad68ec71852822aaccfba31a471d39b18627bc4ab7275971b309168"
+    },
+    {
+      "path": "apps/api/dist/modules/internal-ai/readonly-query.compiler.js",
+      "kind": "compiled_runtime",
+      "status": "present",
+      "bytes": 10890,
+      "sha256": "53c6db7021895e940edf3d4a19ef1e00617ad8878c64460354b0fc3b3caacbd9"
+    },
+    {
+      "path": "apps/api/src/modules/internal-ai/readonly-query.service.ts",
+      "kind": "source",
+      "status": "present",
+      "bytes": 3509,
+      "sha256": "73e7dc1cb822ed8af9219f5dad88b327cc8e8c1d1027337f182732a199151045"
+    },
+    {
+      "path": "apps/api/dist/modules/internal-ai/readonly-query.service.js",
+      "kind": "compiled_runtime",
+      "status": "present",
+      "bytes": 4704,
+      "sha256": "828d9cf608d1db63226f3bd92b6f272099444d93a583bb87d9424a143ef7dfe6"
+    },
+    {
+      "path": "apps/api/prisma/schema.prisma",
+      "kind": "database_schema",
+      "status": "present",
+      "bytes": 27476,
+      "sha256": "79bd730af8723a4395652335eb5d49b67c1a50a3741b609fdf24431d7c4ce7d4"
+    },
+    {
+      "path": "apps/api/prisma/migrations/20261003133000_static_knowledge_revision/migration.sql",
+      "kind": "database_migration",
+      "status": "present",
+      "bytes": 3594,
+      "sha256": "728d5214b2f8b6f5116b6b4b729d36a7de0b1fd017774702c5a1c3657a2e1149"
+    },
+    {
+      "path": "apps/ai-service/scripts/qa-seed.cjs",
+      "kind": "fixture_source",
+      "status": "present",
+      "bytes": 11274,
+      "sha256": "5a1b493ec32aed32e14999612be39fbcbba6a0899202626a5e0b02dc81228f4a"
+    }
+  ],
+  "note": "SHA-256 of explicit implementation sources and built JavaScript. Missing runtime files are disclosed. This is provenance, not a claim that code has been committed or independently audited."
+}

@@ -1,0 +1,99 @@
+{
+  "experiment_id": "qa-2026-10-03T03-04-13-999Z",
+  "started_at_utc": "2026-10-03T03:04:14.000Z",
+  "split": "dev",
+  "cases": 6,
+  "repetitions": 1,
+  "retrieval_repetitions": 1,
+  "seed": 20261003,
+  "modes": [
+    "hybrid",
+    "sql",
+    "combined"
+  ],
+  "retrieval_modes": [
+    "dense",
+    "bm25",
+    "hybrid",
+    "hybrid_rerank"
+  ],
+  "dataset_sha256": "bded8744993d90306d645cc4a1b7b23fd45060ab52970abe86ed2195389bb9d9",
+  "selected_cases_sha256": "aadd57e99401419a54b36569a26fb43c35f6fdbc289fd75a03385adfb9ab6d5a",
+  "corpus_sha256": "ad802f9812f2d79edd299d25ab0f2d0d29196de1ed04ddd455254ab459680161",
+  "git": {
+    "commit": "7d7fe3960734134b800922204038addd0569b05e",
+    "dirty": true
+  },
+  "environment": {
+    "version": {
+      "version": "0.33.3"
+    },
+    "selected_models": [
+      {
+        "name": "qwen3.5:9b",
+        "model": "qwen3.5:9b",
+        "modified_at": "2026-10-03T09:37:52.8271011+07:00",
+        "size": 6594474711,
+        "digest": "6488c96fa5faab64bb65cbd30d4289e20e6130ef535a93ef9a49f42eda893ea7",
+        "details": {
+          "parent_model": "",
+          "format": "gguf",
+          "family": "qwen35",
+          "families": [
+            "qwen35"
+          ],
+          "parameter_size": "9.7B",
+          "quantization_level": "Q4_K_M",
+          "context_length": 262144,
+          "embedding_length": 4096
+        },
+        "capabilities": [
+          "vision",
+          "completion",
+          "tools",
+          "thinking"
+        ]
+      },
+      {
+        "name": "bge-m3:latest",
+        "model": "bge-m3:latest",
+        "modified_at": "2026-10-03T09:37:12.4250374+07:00",
+        "size": 1157672605,
+        "digest": "7907646426070047a77226ac3e684fbbe8410524f7b4a74d02837e43f2146bab",
+        "details": {
+          "parent_model": "",
+          "format": "gguf",
+          "family": "bert",
+          "families": [
+            "bert"
+          ],
+          "parameter_size": "566.70M",
+          "quantization_level": "F16",
+          "context_length": 8192,
+          "embedding_length": 1024
+        },
+        "capabilities": [
+          "embedding"
+        ]
+      }
+    ],
+    "gpu": "NVIDIA GeForce RTX 5090, 610.88, 32607 MiB",
+    "platform": "win32",
+    "release": "10.0.26200",
+    "cpu": "Intel(R) Core(TM) Ultra 9 285K",
+    "logical_cpus": 24,
+    "total_ram_bytes": 137128312832,
+    "node": "v22.14.0"
+  },
+  "controls": {
+    "temperature": 0,
+    "model_seed": 42,
+    "context_tokens": 8192,
+    "output_tokens": 700,
+    "thinking": false,
+    "stream": false
+  },
+  "protocol": "Same installed Qwen model and isolated PostgreSQL records across modes; case order and paired mode order shuffled with fixed seed. Each case's DB state is identical across its paired modes. Warm-ups excluded. Historical workbook results are not reused or relabelled.",
+  "interpretation": "Hybrid means semantic/BM25 retrieval with a fixed validated catalog lookup for current structured fields. SQL means natural-language SELECT over scoped catalog/knowledge. Combined plans SQL, RAG or both. Exact fact screening and quote binding are not human accuracy or hallucination scores.",
+  "dataset_partition": "Six development examples and 36 held-out test questions are separately declared. Only the chosen split is scored. Prompts and gold are frozen before the test run; no automatic test-driven tuning is performed."
+}

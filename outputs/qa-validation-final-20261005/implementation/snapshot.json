@@ -1,0 +1,1157 @@
+{
+  "captured_at_utc": "2026-10-05T12:12:30.503Z",
+  "git_base": "7d7fe3960734134b800922204038addd0569b05e",
+  "note": "Source/runtime overlay plus tracked patch; environment files, credentials, model weights and node_modules excluded. Restore base, apply patch, overlay current files, install pinned dependencies and compile.",
+  "files": [
+    {
+      "path": "apps\\ai-service\\src\\app.ts",
+      "bytes": 5176,
+      "sha256": "6c7355c828b8fddf495360526b66ec9bc47bbfa3d6d473a65257a4cca3fa1bd1"
+    },
+    {
+      "path": "apps\\ai-service\\src\\experiments\\qa\\dataset.ts",
+      "bytes": 16624,
+      "sha256": "ed623316d4affdf8f91f1c52c2254c258b0a30faf160568515f8fff34fde7749"
+    },
+    {
+      "path": "apps\\ai-service\\src\\experiments\\qa\\grading.ts",
+      "bytes": 5374,
+      "sha256": "e550d9b7a8157e244aee0ef92c74b6423043cc5d63781912bde6ced3af2d197a"
+    },
+    {
+      "path": "apps\\ai-service\\src\\experiments\\qa\\load.ts",
+      "bytes": 16009,
+      "sha256": "82957e565adb87cd2dbeeede15881266c0519bc87476244376fa0beb3ed161fe"
+    },
+    {
+      "path": "apps\\ai-service\\src\\experiments\\qa\\run.ts",
+      "bytes": 21980,
+      "sha256": "af579e6b7bf4f23f3f2bb3dcd09ac3fcfe4f77e8c86c7807fdbeb82225a2ef60"
+    },
+    {
+      "path": "apps\\ai-service\\src\\index.ts",
+      "bytes": 1189,
+      "sha256": "0aba295a90cd7d46cbbf7d825cc40abbb1ca88e75f9bc3e021ea721368c2ddc9"
+    },
+    {
+      "path": "apps\\ai-service\\src\\modules\\chat-pipeline.ts",
+      "bytes": 10482,
+      "sha256": "d98b4cd6b82ae949e5470c36ad7c0e921f3c535bce4b1c1b1e64370a94d794ed"
+    },
+    {
+      "path": "apps\\ai-service\\src\\modules\\confidence\\index.ts",
+      "bytes": 2618,
+      "sha256": "97bacaf4d3e3549f084d786110fff1a56a6449047308279c499e4070bede6e7e"
+    },
+    {
+      "path": "apps\\ai-service\\src\\modules\\context-builder\\index.ts",
+      "bytes": 674,
+      "sha256": "d64b7e63d0d287355653919fc1d9d809b7948091062199cb90556639b9251a61"
+    },
+    {
+      "path": "apps\\ai-service\\src\\modules\\embeddings\\index.ts",
+      "bytes": 8644,
+      "sha256": "27a4b693146a0fc65e9bca99bf4c451a50940ed0d6bc198a6263ecb64da5746c"
+    },
+    {
+      "path": "apps\\ai-service\\src\\modules\\evaluation\\index.ts",
+      "bytes": 399,
+      "sha256": "692884152a278355b59009a8a2e4fe70d5a6bbc3c438843a3e220aa403e1f807"
+    },
+    {
+      "path": "apps\\ai-service\\src\\modules\\guardrails\\index.ts",
+      "bytes": 9564,
+      "sha256": "64d11513a15ea4d76b48d823c219a5cd4c999ee1ef36368abb4964d39ec5264f"
+    },
+    {
+      "path": "apps\\ai-service\\src\\modules\\intent-classifier\\index.ts",
+      "bytes": 2217,
+      "sha256": "a80852d86245ef222d4f464bed6d0678548161c64796ddb182b099bb61ba9cc6"
+    },
+    {
+      "path": "apps\\ai-service\\src\\modules\\llm\\gemini-client.ts",
+      "bytes": 5274,
+      "sha256": "a8b0539c92bfdb465f6792c56a7e8c29820ac07473c67e641833021ca1564804"
+    },
+    {
+      "path": "apps\\ai-service\\src\\modules\\llm\\index.ts",
+      "bytes": 2230,
+      "sha256": "079f145b7e77a7b5c9406ae7f391922e92d892ed6dca6a16e7979d46634f7d19"
+    },
+    {
+      "path": "apps\\ai-service\\src\\modules\\llm\\llm.types.ts",
+      "bytes": 727,
+      "sha256": "f2808c40a80a6567e72f9f27f9dc0fb868272ba5e2b82dc49634d5de1cd3e054"
+    },
+    {
+      "path": "apps\\ai-service\\src\\modules\\llm\\ollama-client.ts",
+      "bytes": 1680,
+      "sha256": "432975eca5bb517eed55c3fc354841313faf2dd6d70e03b553c3c4c327951fbe"
+    },
+    {
+      "path": "apps\\ai-service\\src\\modules\\mcp\\context.ts",
+      "bytes": 2424,
+      "sha256": "a0964d006ae88c2bbdae38f7f39b8c5c1949583d4363c9cf1cc4076f0ee10b28"
+    },
+    {
+      "path": "apps\\ai-service\\src\\modules\\mcp\\resources.ts",
+      "bytes": 3054,
+      "sha256": "a1ba8cc5eb481c473f2e7e61899e1600b85c5c8e8e0be8273f5edba21577a2c5"
+    },
+    {
+      "path": "apps\\ai-service\\src\\modules\\mcp\\schemas.ts",
+      "bytes": 6101,
+      "sha256": "aaed95d10faf3f220d9d9754cd80acc7b5a34c6d7d8acbfad5e7acd7dac3c0eb"
+    },
+    {
+      "path": "apps\\ai-service\\src\\modules\\mcp\\server.ts",
+      "bytes": 2692,
+      "sha256": "f108074761188f8216f865f13dab11b8f52481cdaa45939b6c6320ce30269a68"
+    },
+    {
+      "path": "apps\\ai-service\\src\\modules\\mcp\\tools.ts",
+      "bytes": 5522,
+      "sha256": "748a99a4b219c8e6b50f8fb0b6d5a36139c33ed77d9318d4aca37038b932849e"
+    },
+    {
+      "path": "apps\\ai-service\\src\\modules\\memory\\index.ts",
+      "bytes": 82,
+      "sha256": "0b9789e0842ecf3e4bd2c43d34fe3de8d747a98872fee918a0251c300e473ec9"
+    },
+    {
+      "path": "apps\\ai-service\\src\\modules\\mock-ai-reply\\index.ts",
+      "bytes": 6061,
+      "sha256": "730de40847b6f531e71d3ae361b93d7a114bfaebea505aeae89d2f910d2364cd"
+    },
+    {
+      "path": "apps\\ai-service\\src\\modules\\prompt-manager\\index.ts",
+      "bytes": 1642,
+      "sha256": "29f7545657c9d60ff8ee3049fdb45795216200efcdf2b583f414d9c64e9aa8b3"
+    },
+    {
+      "path": "apps\\ai-service\\src\\modules\\qa\\backend.ts",
+      "bytes": 1582,
+      "sha256": "13905cf37dcf1a910738a16f430b747a0ff4c82e5cf25961026d84f2e6e874b7"
+    },
+    {
+      "path": "apps\\ai-service\\src\\modules\\qa\\customer-renderer.ts",
+      "bytes": 8460,
+      "sha256": "20696897a11d34ce774a49206e88c97672ba67145bc04159ccf9d2f60629567c"
+    },
+    {
+      "path": "apps\\ai-service\\src\\modules\\qa\\engine.ts",
+      "bytes": 23939,
+      "sha256": "a2ac170ff6df27a429b064f9c13840e2044040c9fc69d6125547f037b9335b6a"
+    },
+    {
+      "path": "apps\\ai-service\\src\\modules\\qa\\fallback.ts",
+      "bytes": 1482,
+      "sha256": "dd4bc4d3937e9124c3a782fd48041863487b7e98361ddd3f250111bb263acc13"
+    },
+    {
+      "path": "apps\\ai-service\\src\\modules\\qa\\grounding.ts",
+      "bytes": 1460,
+      "sha256": "5426a7a80182ed6a0ed8061038f114b3e29140acf8b611cb5f3d66a95172649e"
+    },
+    {
+      "path": "apps\\ai-service\\src\\modules\\rag\\document-chunker.ts",
+      "bytes": 5098,
+      "sha256": "15f985a0dca23e5df0c3d8fd59968fa158ee2d16c11b262cc2a72b4fa6d6e77e"
+    },
+    {
+      "path": "apps\\ai-service\\src\\modules\\rag\\index.ts",
+      "bytes": 1745,
+      "sha256": "af1872deb8bed6df3a87fe03d9447db5d86aa87a148b31bd4838582041414e67"
+    },
+    {
+      "path": "apps\\ai-service\\src\\modules\\rag\\vector-document.builder.ts",
+      "bytes": 2946,
+      "sha256": "92cfe51644c4e2a0cc343dc65066d5904cd8d9ef3e239b88c0041dfda4d074a2"
+    },
+    {
+      "path": "apps\\ai-service\\src\\modules\\retrieval\\bm25.ts",
+      "bytes": 2709,
+      "sha256": "aca3cf4ea2ba8984eefb0f1fa2563ceea44578083030388cbdede53fe37d0cd2"
+    },
+    {
+      "path": "apps\\ai-service\\src\\modules\\retrieval\\index.ts",
+      "bytes": 7088,
+      "sha256": "bc74b08ff4fd3cae1ff5435fd41cba77ac1c1cb5d0c3c8cff54264cd2808c752"
+    },
+    {
+      "path": "apps\\ai-service\\src\\modules\\retrieval\\knowledge-index.ts",
+      "bytes": 2617,
+      "sha256": "dcba29aa0b12983002bacec7e10591ab873adf34a74048c3f36fe23af0a636ab"
+    },
+    {
+      "path": "apps\\ai-service\\src\\modules\\vector-store\\index.ts",
+      "bytes": 2076,
+      "sha256": "e2f8b60586f8518ddfcf5c43f5ce7f87cd9bc8dec97b63d857368ad16ec142d5"
+    },
+    {
+      "path": "apps\\ai-service\\src\\types\\ai-contract.types.ts",
+      "bytes": 6982,
+      "sha256": "61624c31bbde4bcbfaea975b339100698800306e4373d678a09ee4a2c355aa87"
+    },
+    {
+      "path": "apps\\ai-service\\src\\types\\ai-response.ts",
+      "bytes": 158,
+      "sha256": "698a8cf53cfd0cd816a0605e64e2cd92e09ccd6c031954b608031cfdd9caab8d"
+    },
+    {
+      "path": "apps\\api\\src\\app.module.ts",
+      "bytes": 3169,
+      "sha256": "ae4d20ac8fa188fa0bca5c4a14adb99511a9f06951fc422d59f284943338d37f"
+    },
+    {
+      "path": "apps\\api\\src\\auth\\auth.controller.ts",
+      "bytes": 1191,
+      "sha256": "0d0e36d84554aaff54a673caa7e7f8661bcd5f71d1d22f67d960b7f0d7d48182"
+    },
+    {
+      "path": "apps\\api\\src\\auth\\auth.module.ts",
+      "bytes": 252,
+      "sha256": "e6f54dbc3cb15b48ade337f0c810f6d17b84141ca747ea309352b68aad5ccbea"
+    },
+    {
+      "path": "apps\\api\\src\\auth\\auth.service.ts",
+      "bytes": 1286,
+      "sha256": "d0b4a4032d89606c4a459bf47ea93de90e61c1ef51d213fa2b1280770c963a42"
+    },
+    {
+      "path": "apps\\api\\src\\auth\\dto\\login.dto.ts",
+      "bytes": 572,
+      "sha256": "1a897df525b6108d3159d47c5212536ec9a23d592ae5075541c6769deadca68b"
+    },
+    {
+      "path": "apps\\api\\src\\auth\\dto\\register.dto.ts",
+      "bytes": 955,
+      "sha256": "55f339c40225a371c8b4696efdb5427e483a32deb3d5bce21b4e0dfd9e295d0f"
+    },
+    {
+      "path": "apps\\api\\src\\common\\placeholders\\placeholder-resource.factory.ts",
+      "bytes": 3141,
+      "sha256": "6d1da8ec0be160855833fd306981e5d697d95cda84cea9261c928abad441ab1e"
+    },
+    {
+      "path": "apps\\api\\src\\health\\health.controller.ts",
+      "bytes": 441,
+      "sha256": "521cfca1e7cfcad7e73141772de673fba45b32fa85183d4f492067dea8060897"
+    },
+    {
+      "path": "apps\\api\\src\\health\\health.module.ts",
+      "bytes": 266,
+      "sha256": "fcfd1298b7038aafa5585a557063d15e3caceb1d885c6724a14f42ceedd241d8"
+    },
+    {
+      "path": "apps\\api\\src\\health\\health.service.ts",
+      "bytes": 271,
+      "sha256": "c1456515c5201780fca5af14f7d95639ccddd81b5a3cf6890edf082121285ea5"
+    },
+    {
+      "path": "apps\\api\\src\\main.ts",
+      "bytes": 1224,
+      "sha256": "d179e35f2fef8579125ff91a2f3f767e65438679123cd06e00644046b9fd96e3"
+    },
+    {
+      "path": "apps\\api\\src\\modules\\ai-action-logs.module.ts",
+      "bytes": 287,
+      "sha256": "ddd67161a1b106041475185e573b36c58ea6a07b9d028a69330e88833cc9255c"
+    },
+    {
+      "path": "apps\\api\\src\\modules\\ai-integration\\ai-chat-request.mapper.ts",
+      "bytes": 1040,
+      "sha256": "b6b3ec18debc95f2b40e4429d9cb1c6b47cd564c084a8e9287a4287487144339"
+    },
+    {
+      "path": "apps\\api\\src\\modules\\ai-integration\\ai-contract.types.ts",
+      "bytes": 5020,
+      "sha256": "1ad1e467a72562acc6359301c186b3305d38852a5ac685b6b85a3fa652081e30"
+    },
+    {
+      "path": "apps\\api\\src\\modules\\ai-integration\\ai-integration.module.ts",
+      "bytes": 412,
+      "sha256": "2a918a62651bd95561723e48fbdc980931a629e4e76900a93f7e3824c3c8ca42"
+    },
+    {
+      "path": "apps\\api\\src\\modules\\ai-integration\\ai-integration.service.ts",
+      "bytes": 5256,
+      "sha256": "24233d6d29ec2b58cf70c3ffeafffa7e6ad4ec59f0ea9ec87f6a28849daa12c2"
+    },
+    {
+      "path": "apps\\api\\src\\modules\\ai-integration\\ai-response.validator.ts",
+      "bytes": 2850,
+      "sha256": "fd8e2c6cd8667cbd7d1f762eb981e4bfbdfe2330dec501df188fcb62a61f4d2a"
+    },
+    {
+      "path": "apps\\api\\src\\modules\\ai-integration\\ai-safety.service.ts",
+      "bytes": 4679,
+      "sha256": "63b16c28faa7fd0587e864cd24badf12c5d1ff0ba1e99741a7f47ae3a3392c34"
+    },
+    {
+      "path": "apps\\api\\src\\modules\\ai-integration\\dto\\ai-chat-request.dto.ts",
+      "bytes": 472,
+      "sha256": "2fbc2bab01c5b125ab61f3362beadb769957721ba23d8741be9e4d5c1008bf27"
+    },
+    {
+      "path": "apps\\api\\src\\modules\\ai-settings.module.ts",
+      "bytes": 277,
+      "sha256": "ed300b96dbba2861b5c86bcdea9f4b0529f401ce9b8de4d631166cd2df9043c0"
+    },
+    {
+      "path": "apps\\api\\src\\modules\\channels.module.ts",
+      "bytes": 265,
+      "sha256": "82c24da821b6534ac13545719915ffc13daf15f4498198ad27a74fe598ad06cf"
+    },
+    {
+      "path": "apps\\api\\src\\modules\\conversations\\conversations.controller.ts",
+      "bytes": 798,
+      "sha256": "58778c9e1bc35c641a09c4c0ecb10b39604ab583d6f34cfd937bacc2e4ace0b5"
+    },
+    {
+      "path": "apps\\api\\src\\modules\\conversations\\conversations.service.ts",
+      "bytes": 1962,
+      "sha256": "19a4f272054e5a1991c117c331c158580b074894bcdf136bff251de95e7e2367"
+    },
+    {
+      "path": "apps\\api\\src\\modules\\conversations\\dto\\latest-message.dto.ts",
+      "bytes": 546,
+      "sha256": "14f765aafe36cc798da5e6b571d5184328b95cb0abc6f9b2aa2855b50fcb8214"
+    },
+    {
+      "path": "apps\\api\\src\\modules\\conversations.module.ts",
+      "bytes": 749,
+      "sha256": "43aa1528a495249e20d948e0f3f8ab9165c18e533e133a48d1bb3b21f8d0d6ca"
+    },
+    {
+      "path": "apps\\api\\src\\modules\\customer-memories.module.ts",
+      "bytes": 299,
+      "sha256": "19c9bdb0c09aabe2bb032944aa5720f0c4123f7b092aab0646b9c6cafdaffc34"
+    },
+    {
+      "path": "apps\\api\\src\\modules\\customers.module.ts",
+      "bytes": 269,
+      "sha256": "85b3921c8711ab1b6e54d5efa7346db1bcfeb3044c971835abaef3cc69e144df"
+    },
+    {
+      "path": "apps\\api\\src\\modules\\guardrail-events.module.ts",
+      "bytes": 296,
+      "sha256": "315a29649a90bc9dcdc5d109f4c974bf7848be4cd48e27661c602f17b2b5b711"
+    },
+    {
+      "path": "apps\\api\\src\\modules\\handover-assignments.module.ts",
+      "bytes": 312,
+      "sha256": "80488bd6b1abc627dcb624820114e78ef1ca0558d7617dcb9e22b68af34e20e7"
+    },
+    {
+      "path": "apps\\api\\src\\modules\\handover-messages.module.ts",
+      "bytes": 300,
+      "sha256": "d05aadec650e265f8015ea9f9f3f6dd878aa2c61065e8ae2d47d9b42dc8e4d8c"
+    },
+    {
+      "path": "apps\\api\\src\\modules\\handover-tickets.module.ts",
+      "bytes": 296,
+      "sha256": "94b7b6d6fe9f9e43fa416f78f1bd1db718b48e1710bda2875787738aeb5d5155"
+    },
+    {
+      "path": "apps\\api\\src\\modules\\internal-ai\\dto\\readonly-query.dto.ts",
+      "bytes": 211,
+      "sha256": "7cfb660e38d1b41d46253509574f008295afe1c888bcfb7fbb1205f0fa2dec75"
+    },
+    {
+      "path": "apps\\api\\src\\modules\\internal-ai\\internal-ai.controller.ts",
+      "bytes": 3364,
+      "sha256": "3c4f6c3f8a7455b996b7842920f25174d17140be73a00da72fb57b1f729f3b95"
+    },
+    {
+      "path": "apps\\api\\src\\modules\\internal-ai\\internal-ai.module.ts",
+      "bytes": 490,
+      "sha256": "5a267bce579acf1af3f86db1fcc8dfca8f559db314d9c4b0a757389559f70ffa"
+    },
+    {
+      "path": "apps\\api\\src\\modules\\internal-ai\\internal-ai.service.ts",
+      "bytes": 12100,
+      "sha256": "2c6dad1c69c06fece9d9c7407015d6fce17f6fef31424bbf6375bf7999df9f52"
+    },
+    {
+      "path": "apps\\api\\src\\modules\\internal-ai\\readonly-query.compiler.ts",
+      "bytes": 9844,
+      "sha256": "1aa7f9efaad68ec71852822aaccfba31a471d39b18627bc4ab7275971b309168"
+    },
+    {
+      "path": "apps\\api\\src\\modules\\internal-ai\\readonly-query.service.ts",
+      "bytes": 3509,
+      "sha256": "73e7dc1cb822ed8af9219f5dad88b327cc8e8c1d1027337f182732a199151045"
+    },
+    {
+      "path": "apps\\api\\src\\modules\\knowledge-base-documents.module.ts",
+      "bytes": 327,
+      "sha256": "e2e726cc84c0aaa6b9e5dfb436c52635654e9e174aea200aff1bb6888a885bbd"
+    },
+    {
+      "path": "apps\\api\\src\\modules\\line-webhook-events.module.ts",
+      "bytes": 307,
+      "sha256": "fde59740b8e2a07cb60e70c820421f13da3e31ea17c60e0a90b5fcadc2f54e75"
+    },
+    {
+      "path": "apps\\api\\src\\modules\\line-webhooks\\line-signature.service.ts",
+      "bytes": 1165,
+      "sha256": "aba0d3c5cd6963caecb818c6f7ab8367fb4d3dbe33db18d64b4e57745ea9a72d"
+    },
+    {
+      "path": "apps\\api\\src\\modules\\line-webhooks\\line-webhooks.controller.ts",
+      "bytes": 1002,
+      "sha256": "e292f48dc3a4b88017f5bd180758554e5d33bb97f75ef7e9af8d7152b3513145"
+    },
+    {
+      "path": "apps\\api\\src\\modules\\line-webhooks\\line-webhooks.module.ts",
+      "bytes": 501,
+      "sha256": "89857819cc793ef6a4f28609cd427ac840ad9d322e8cebed68d03d3eccb78531"
+    },
+    {
+      "path": "apps\\api\\src\\modules\\line-webhooks\\line-webhooks.service.ts",
+      "bytes": 22748,
+      "sha256": "75fe72b7de8471f3d35f41012f69bdf9519c44babea8d461607cac2cbd7c77d2"
+    },
+    {
+      "path": "apps\\api\\src\\modules\\line-webhooks\\types\\line-webhook.types.ts",
+      "bytes": 1335,
+      "sha256": "3f97143349c0957999a747fac26b4c6677eb7083d54289aa9719fa3973d6d72a"
+    },
+    {
+      "path": "apps\\api\\src\\modules\\merchant-users.module.ts",
+      "bytes": 288,
+      "sha256": "cc0fbd0003557b5caafedcf2ad6cd0926b9d7d9ae1c00309046257a574c35341"
+    },
+    {
+      "path": "apps\\api\\src\\modules\\merchants.module.ts",
+      "bytes": 269,
+      "sha256": "ff707bdb513614771c6a28e4fd08a4a68450f40cb94d8ba655e18a81b57fc90a"
+    },
+    {
+      "path": "apps\\api\\src\\modules\\messages.module.ts",
+      "bytes": 265,
+      "sha256": "413cdc55b57c68714b810dd42c990f61971d4b8e3891b18a997c17c8bff2a035"
+    },
+    {
+      "path": "apps\\api\\src\\modules\\permissions.module.ts",
+      "bytes": 277,
+      "sha256": "0c882a84f340fd0a8ea1060cb17c9a38873f5947aa9f3a13f1b058db81fe848e"
+    },
+    {
+      "path": "apps\\api\\src\\modules\\platforms.module.ts",
+      "bytes": 269,
+      "sha256": "ece1ba801972ba8cb0fc2cc133e4d6cd032d6897b31124b2432269e73eea8864"
+    },
+    {
+      "path": "apps\\api\\src\\modules\\product-images.module.ts",
+      "bytes": 288,
+      "sha256": "6bd0bb12b78341d54347347b1b7f8f330ba3ffbad60b59a9c61c9b2f5691c482"
+    },
+    {
+      "path": "apps\\api\\src\\modules\\product-variants.module.ts",
+      "bytes": 296,
+      "sha256": "bddc2d623eac5d262264e7b0698349bc10b0ef90ed1ffd4fd9c7ab0cdc6da1c8"
+    },
+    {
+      "path": "apps\\api\\src\\modules\\products.module.ts",
+      "bytes": 265,
+      "sha256": "eafabac5acb2ccb99fac31dac6bf3006f98ef177e6a614a6c4391ae36e361a7b"
+    },
+    {
+      "path": "apps\\api\\src\\modules\\prompt-versions.module.ts",
+      "bytes": 292,
+      "sha256": "2fe82f605e29bb325f21aa40d020fd06ddd5d33c78941f977f1520233a29a0d1"
+    },
+    {
+      "path": "apps\\api\\src\\modules\\roles.module.ts",
+      "bytes": 253,
+      "sha256": "5e03d5fc74d813f94dde98790a923775577a6796b47dc7e8b266e2817b812371"
+    },
+    {
+      "path": "apps\\api\\src\\modules\\users.module.ts",
+      "bytes": 253,
+      "sha256": "437eaf9672f17e47f9c7046a0cbd46fa8cb82cabff91fdfe1650698116b83244"
+    },
+    {
+      "path": "apps\\api\\src\\modules\\vector-documents.module.ts",
+      "bytes": 296,
+      "sha256": "1629c25b60bf60c2560ae13c0f8a65b40493f1612dd570feeb53c9e9117f1bf0"
+    },
+    {
+      "path": "apps\\api\\src\\prisma\\prisma.module.ts",
+      "bytes": 221,
+      "sha256": "519dd3920402d5af684872d31d75dfc30dc77e70a599ea56341e9aaead417cd7"
+    },
+    {
+      "path": "apps\\api\\src\\prisma\\prisma.service.ts",
+      "bytes": 262,
+      "sha256": "fc8f9ee0b5016a9d906d326544137a63209292f3096c516a0bec73be6c481f05"
+    },
+    {
+      "path": "apps\\ai-service\\dist\\app.js",
+      "bytes": 5897,
+      "sha256": "9b32f97d49b9346a28f524ebb83e2d1979ad9fc849259596e46f020765010cd8"
+    },
+    {
+      "path": "apps\\ai-service\\dist\\experiments\\model-comparison\\checkpoint.js",
+      "bytes": 7241,
+      "sha256": "c4fa99eecb04811b553194a5c906e41afb4545a0f043f8a62620d5883df1dfd0"
+    },
+    {
+      "path": "apps\\ai-service\\dist\\experiments\\model-comparison\\dataset.js",
+      "bytes": 33412,
+      "sha256": "b2f3c63727aee2e1447c32080a2c599992df5a06e12a93afa3fd2f8674633010"
+    },
+    {
+      "path": "apps\\ai-service\\dist\\experiments\\model-comparison\\run.js",
+      "bytes": 20185,
+      "sha256": "e1c0edb7010c62e81243a1f189ed02a23f491df35d9534714ba43a8581d702fe"
+    },
+    {
+      "path": "apps\\ai-service\\dist\\experiments\\model-comparison\\types.js",
+      "bytes": 110,
+      "sha256": "b0d2bc4142d0c62d43f996aaeb64f22c4889ac853f8a3765758b505d972d0149"
+    },
+    {
+      "path": "apps\\ai-service\\dist\\experiments\\qa\\dataset.js",
+      "bytes": 15867,
+      "sha256": "77a319199291224fbeba048b346f36c76dc319715cf5d9ba47c9a5cc50d1d2f2"
+    },
+    {
+      "path": "apps\\ai-service\\dist\\experiments\\qa\\grading.js",
+      "bytes": 4829,
+      "sha256": "81f4118682609de6b807ec85fab9c324338f94dfa5c365ede3397f0e923e4b18"
+    },
+    {
+      "path": "apps\\ai-service\\dist\\experiments\\qa\\load.js",
+      "bytes": 16710,
+      "sha256": "4253dcea4218094baa54d43c5a6034b5fc617a2740a757c0230a8a1e8d932d15"
+    },
+    {
+      "path": "apps\\ai-service\\dist\\experiments\\qa\\run.js",
+      "bytes": 23013,
+      "sha256": "7a674a8e2a002a52e13d2d5e52c77933a5897cc142a105a8251dfa0e66ed95b7"
+    },
+    {
+      "path": "apps\\ai-service\\dist\\index.js",
+      "bytes": 1547,
+      "sha256": "49161e5659218061407a603018160d1a5344df2405f541e1cc072b1fa1affa52"
+    },
+    {
+      "path": "apps\\ai-service\\dist\\modules\\chat-pipeline.js",
+      "bytes": 10904,
+      "sha256": "16a2d6faeafd034672d9381e17ec0995ebbd1f7e75efe24bf82661b9ae1a9ff9"
+    },
+    {
+      "path": "apps\\ai-service\\dist\\modules\\confidence\\index.js",
+      "bytes": 2464,
+      "sha256": "ffa96dfee4d27ce9cfa4bcf62857b0a97d8f44c82654add706e3d99770ec107b"
+    },
+    {
+      "path": "apps\\ai-service\\dist\\modules\\context-builder\\index.js",
+      "bytes": 740,
+      "sha256": "1f9a8beb8bc20e1654d1c0badd2da501f670dc0bbef965ba3c65ef5457fc17f8"
+    },
+    {
+      "path": "apps\\ai-service\\dist\\modules\\embeddings\\index.js",
+      "bytes": 8430,
+      "sha256": "95d3e752ee998f4ba2bf79aadf7fb27ad46c60428e8889536ee382dd85f8d968"
+    },
+    {
+      "path": "apps\\ai-service\\dist\\modules\\evaluation\\index.js",
+      "bytes": 539,
+      "sha256": "8f531dd9e0fca6f96b06dc1123f71ad617c4ed7b8c8de484eee83f920a988eba"
+    },
+    {
+      "path": "apps\\ai-service\\dist\\modules\\guardrails\\index.js",
+      "bytes": 9528,
+      "sha256": "bd03015e286a452fea574f98527a02c4e00d3a10f37200777147e1522aec582f"
+    },
+    {
+      "path": "apps\\ai-service\\dist\\modules\\intent-classifier\\index.js",
+      "bytes": 2582,
+      "sha256": "be7f7d9b1ae172b0766a1358218560218ab816963eecea697f3a0f2abc2b1aad"
+    },
+    {
+      "path": "apps\\ai-service\\dist\\modules\\llm\\gemini-client.js",
+      "bytes": 5295,
+      "sha256": "0d14278084f8a10a6ed47e61a154c024b851c21a27b0a7adbe01acc33d17690b"
+    },
+    {
+      "path": "apps\\ai-service\\dist\\modules\\llm\\index.js",
+      "bytes": 2413,
+      "sha256": "ef1c696fd0d6d30855d7938b98aa637326898bd49614e8d034481c3deaa581e3"
+    },
+    {
+      "path": "apps\\ai-service\\dist\\modules\\llm\\llm-prompt.js",
+      "bytes": 1229,
+      "sha256": "2153bd6b7f56a175902e400a4d28b414a91132d212e51f1b6a07f6e25b7b0db7"
+    },
+    {
+      "path": "apps\\ai-service\\dist\\modules\\llm\\llm.types.js",
+      "bytes": 114,
+      "sha256": "a40122aca6810bb4ffd2bfdf5590b715028134754a2fc05abd409da96eb59976"
+    },
+    {
+      "path": "apps\\ai-service\\dist\\modules\\llm\\ollama-client.js",
+      "bytes": 1576,
+      "sha256": "36cc1afc91a74838cda8b9f9e2e4b54754635d10a2a8eea80399414187a4df51"
+    },
+    {
+      "path": "apps\\ai-service\\dist\\modules\\llm\\stream-lines.js",
+      "bytes": 1224,
+      "sha256": "47cf924e64020cabdf94db5cc5b9fdbe202854163114a5b02152c519a0b49a7f"
+    },
+    {
+      "path": "apps\\ai-service\\dist\\modules\\mcp\\context.js",
+      "bytes": 2549,
+      "sha256": "12cf5102daab639c7324fd2084f00af8885eea42e245ba30e9362132ed5d41f8"
+    },
+    {
+      "path": "apps\\ai-service\\dist\\modules\\mcp\\resources.js",
+      "bytes": 3341,
+      "sha256": "994b7e96c467694f31032d7cd2fb89f5c101d018b69156902de680d64610d518"
+    },
+    {
+      "path": "apps\\ai-service\\dist\\modules\\mcp\\schemas.js",
+      "bytes": 7394,
+      "sha256": "63af5de4fa3bdb6587669387b7f33e3b42f487214adb2ef82a37585fffb15b3a"
+    },
+    {
+      "path": "apps\\ai-service\\dist\\modules\\mcp\\server.js",
+      "bytes": 2788,
+      "sha256": "2e10457e3d01e86f218d15a0cb597f237e81ae02df729f729f7a96a8ad1cdff1"
+    },
+    {
+      "path": "apps\\ai-service\\dist\\modules\\mcp\\tools.js",
+      "bytes": 5896,
+      "sha256": "ae8b214b1365029c5fa0a0fbf2ed950483ad68d24eb74cd98e3710a025a3445d"
+    },
+    {
+      "path": "apps\\ai-service\\dist\\modules\\memory\\index.js",
+      "bytes": 259,
+      "sha256": "91d79cdef809fa2527cbc0f2bb54b18d43de407976f413bb47cc727080825209"
+    },
+    {
+      "path": "apps\\ai-service\\dist\\modules\\mock-ai-reply\\index.js",
+      "bytes": 6217,
+      "sha256": "f0412a24d77dfa0cba5940dda8eec847a7d87718bf36728e69e69512d656e063"
+    },
+    {
+      "path": "apps\\ai-service\\dist\\modules\\openai-client\\index.js",
+      "bytes": 352,
+      "sha256": "1ac08867a3a022700414640628745383d21a53b6178be62835b176f66b57a1c8"
+    },
+    {
+      "path": "apps\\ai-service\\dist\\modules\\prompt-manager\\index.js",
+      "bytes": 1897,
+      "sha256": "4edee90f747e885391180bc89fa7eba4f23a39168acb4fc84ff8dd5c7189c19b"
+    },
+    {
+      "path": "apps\\ai-service\\dist\\modules\\qa\\backend.js",
+      "bytes": 1268,
+      "sha256": "56cd93fa0a58e381acb51f8748e7e34de1105030434bf4936a62ec3a27f7a787"
+    },
+    {
+      "path": "apps\\ai-service\\dist\\modules\\qa\\customer-renderer.js",
+      "bytes": 9060,
+      "sha256": "80ffc7a7cae24daecf40ec1c41c956fff9ba91e127fae2950ff5b11999dd7f4b"
+    },
+    {
+      "path": "apps\\ai-service\\dist\\modules\\qa\\engine.js",
+      "bytes": 24813,
+      "sha256": "a247858d566ac3e8b3412b07bc091a90feb9ab9d75bd9274d6bb13169057e132"
+    },
+    {
+      "path": "apps\\ai-service\\dist\\modules\\qa\\fallback.js",
+      "bytes": 1778,
+      "sha256": "2f08b6cfcbff51b07b9b304284f5b223323b54fcf872d6a73807d5d9657d3249"
+    },
+    {
+      "path": "apps\\ai-service\\dist\\modules\\qa\\grounding.js",
+      "bytes": 1465,
+      "sha256": "32a29cf03151477a83d02714c38c9fa93c7a3446b743965bc404c9e2202d231d"
+    },
+    {
+      "path": "apps\\ai-service\\dist\\modules\\rag\\document-chunker.js",
+      "bytes": 5102,
+      "sha256": "b67f080badb796d576c9697f1a9b2443ff2185eb4aaf75fbcbd1542d5a923c19"
+    },
+    {
+      "path": "apps\\ai-service\\dist\\modules\\rag\\index.js",
+      "bytes": 1917,
+      "sha256": "51ad7214a080ccd95b12fe11d225224aa06eef8c928ca7e7ec1e2a0c5743bb80"
+    },
+    {
+      "path": "apps\\ai-service\\dist\\modules\\rag\\vector-document.builder.js",
+      "bytes": 3117,
+      "sha256": "45947720d481cce01b3ee8b1dd75582b4ccafb9abca9243157af264cbd17aca2"
+    },
+    {
+      "path": "apps\\ai-service\\dist\\modules\\retrieval\\bm25.js",
+      "bytes": 2907,
+      "sha256": "7d6b15372a4310734d1941bd668f553a9c05e07f56fe3c7ee4af55faecd95c90"
+    },
+    {
+      "path": "apps\\ai-service\\dist\\modules\\retrieval\\index.js",
+      "bytes": 7609,
+      "sha256": "e9b8b7eba81c1f91e9e8a125a8eb55f71172b18b5cd6747a4c29dea2afedfcbd"
+    },
+    {
+      "path": "apps\\ai-service\\dist\\modules\\retrieval\\knowledge-index.js",
+      "bytes": 2441,
+      "sha256": "fc4c28672ea2ac2ca06cce3ea638b551ad0842b7304fa20a00eaca4b0e36a30a"
+    },
+    {
+      "path": "apps\\ai-service\\dist\\modules\\vector-store\\index.js",
+      "bytes": 2086,
+      "sha256": "be36af59732b82dc99e500b902f1fc3058e51ad2a087c1d8913e61a0fe5f045a"
+    },
+    {
+      "path": "apps\\ai-service\\dist\\types\\ai-contract.types.js",
+      "bytes": 122,
+      "sha256": "1d1d8c24889bbd9a2dbccced8266deb2718950d19cd80c6f3baeb8a7147712fa"
+    },
+    {
+      "path": "apps\\ai-service\\dist\\types\\ai-response.js",
+      "bytes": 116,
+      "sha256": "11f6ccd8339f80ba242a7c037e414e800e07a74da0bb1a655d728e629f971dcb"
+    },
+    {
+      "path": "apps\\api\\dist\\app.module.js",
+      "bytes": 5030,
+      "sha256": "964d44e167c997f04f48978ead02789719e0c2a580d9cdefa034f7d0cc3938b7"
+    },
+    {
+      "path": "apps\\api\\dist\\auth\\auth.controller.js",
+      "bytes": 3223,
+      "sha256": "2d86a7be8c4ea180a4e77f326457e584e6c118ae193892c6dd8fdb717c5a56b0"
+    },
+    {
+      "path": "apps\\api\\dist\\auth\\auth.module.js",
+      "bytes": 1142,
+      "sha256": "9f40b3216fa58eb1928027c71ed0557c83f089c06f908a9b674529978ea715f6"
+    },
+    {
+      "path": "apps\\api\\dist\\auth\\auth.service.js",
+      "bytes": 2214,
+      "sha256": "a68a874bc8087399bd1a6d976cd4ad2c9e8def26f5bf82ce0152a706cfd720a9"
+    },
+    {
+      "path": "apps\\api\\dist\\auth\\dto\\login.dto.js",
+      "bytes": 1741,
+      "sha256": "0c8338d029e01b42c3d7673505982067225b61beadcf899bb9eaf66dbeb79523"
+    },
+    {
+      "path": "apps\\api\\dist\\auth\\dto\\register.dto.js",
+      "bytes": 2540,
+      "sha256": "a9fd03e4feb95249d503e70b3e1d56a734512e357f8e78e8cfa395b26d6ef169"
+    },
+    {
+      "path": "apps\\api\\dist\\common\\placeholders\\placeholder-resource.factory.js",
+      "bytes": 6049,
+      "sha256": "da18c2281b85f3d91319da0133c9c6873c46375fd1d3b54b4b8179b7063f87e0"
+    },
+    {
+      "path": "apps\\api\\dist\\health\\health.controller.js",
+      "bytes": 1834,
+      "sha256": "d5fe7c57dbfd065cf86ae70facd199f416f8b482a80c64a6720315d80aa8b6fa"
+    },
+    {
+      "path": "apps\\api\\dist\\health\\health.module.js",
+      "bytes": 1176,
+      "sha256": "91e0f2875bad622435e862b31a36f80e0676a29e5f11c33e1388c980bffcf352"
+    },
+    {
+      "path": "apps\\api\\dist\\health\\health.service.js",
+      "bytes": 1157,
+      "sha256": "7fd5ac1ca3ca251da8985e8766ef7631b076173edea41386c630ae0455706dc0"
+    },
+    {
+      "path": "apps\\api\\dist\\main.js",
+      "bytes": 1370,
+      "sha256": "1d86166e7ab683309fbea07cf5e78d1370717f0fc2a814d7bab998e648e3dbb9"
+    },
+    {
+      "path": "apps\\api\\dist\\modules\\ai-action-logs.module.js",
+      "bytes": 479,
+      "sha256": "2816b5b2fb673c0f16abb64bfccb61c7c2b25b7fd24cff91c2b6a93b8a2836f1"
+    },
+    {
+      "path": "apps\\api\\dist\\modules\\ai-integration\\ai-chat-request.mapper.js",
+      "bytes": 864,
+      "sha256": "3edef217434ff3395d370f22e683e2d382d4f5d4df54fac95eb0e3b1c4f366fe"
+    },
+    {
+      "path": "apps\\api\\dist\\modules\\ai-integration\\ai-contract.types.js",
+      "bytes": 122,
+      "sha256": "1d1d8c24889bbd9a2dbccced8266deb2718950d19cd80c6f3baeb8a7147712fa"
+    },
+    {
+      "path": "apps\\api\\dist\\modules\\ai-integration\\ai-integration.module.js",
+      "bytes": 1446,
+      "sha256": "f2b18d7c7526ed931f2d352e4eb045eff7a2b64f2357c8eda2e0d5139716ac0b"
+    },
+    {
+      "path": "apps\\api\\dist\\modules\\ai-integration\\ai-integration.service.js",
+      "bytes": 6529,
+      "sha256": "a90c811068a2d102bf35955c39fe237cb327edc3903beb3bfc6127ee16018c1b"
+    },
+    {
+      "path": "apps\\api\\dist\\modules\\ai-integration\\ai-response.validator.js",
+      "bytes": 2864,
+      "sha256": "8c99ddca873db9e4e27ab104b7c036d4f4d1360e1363d9ec708e1d41aacd4e2f"
+    },
+    {
+      "path": "apps\\api\\dist\\modules\\ai-integration\\ai-safety.service.js",
+      "bytes": 6176,
+      "sha256": "ed588bae1be15253b20f04ef692cb48ea3ab88a93daef9a038177b3a6d7f72f9"
+    },
+    {
+      "path": "apps\\api\\dist\\modules\\ai-integration\\dto\\ai-chat-request.dto.js",
+      "bytes": 341,
+      "sha256": "a36ff999e9a8385cf8498132726bb881c7e088e7a96408bfc98c586e3517a2b8"
+    },
+    {
+      "path": "apps\\api\\dist\\modules\\ai-settings.module.js",
+      "bytes": 464,
+      "sha256": "66dd8832b0c5a75267e95d44309c89323b128d3d101a63de6b9371e8053129c8"
+    },
+    {
+      "path": "apps\\api\\dist\\modules\\channels.module.js",
+      "bytes": 447,
+      "sha256": "78acaa0ef553635218cc269dc7f29d0dcd252239f753837f654fed8d1cf5c7d6"
+    },
+    {
+      "path": "apps\\api\\dist\\modules\\conversations\\conversations.controller.js",
+      "bytes": 2327,
+      "sha256": "39a6edeba121ba7f4a0f24514f5bd1ab587efa8369f18d1012e7a980b37581d3"
+    },
+    {
+      "path": "apps\\api\\dist\\modules\\conversations\\conversations.service.js",
+      "bytes": 3423,
+      "sha256": "1680c8310e30780549e16b209e2484be43bde8386aa447bedc0fd6c1e074ebf8"
+    },
+    {
+      "path": "apps\\api\\dist\\modules\\conversations\\dto\\latest-message.dto.js",
+      "bytes": 2244,
+      "sha256": "a7d5f846d137cd252a67f527fb09ee2894dfc97a1c44cf9445477c69a25292c5"
+    },
+    {
+      "path": "apps\\api\\dist\\modules\\conversations.module.js",
+      "bytes": 1787,
+      "sha256": "9a7a294be3eeb949003ff372a819c3d0fa2af061cbba60aa89ebc45dd29c4779"
+    },
+    {
+      "path": "apps\\api\\dist\\modules\\customer-memories.module.js",
+      "bytes": 498,
+      "sha256": "38035c685d435f54566ed5b08b8f58a8004b21b7690915855aca699e65678744"
+    },
+    {
+      "path": "apps\\api\\dist\\modules\\customers.module.js",
+      "bytes": 453,
+      "sha256": "f83844e565fd7721eaf14a29e500aeeb376437f8d7cc9f6d7671254529dcd2f1"
+    },
+    {
+      "path": "apps\\api\\dist\\modules\\guardrail-events.module.js",
+      "bytes": 493,
+      "sha256": "c760f0a9bda72267efe3cd5b929522c8f1abd5d236faa0c14d8db6a45c0c5de9"
+    },
+    {
+      "path": "apps\\api\\dist\\modules\\handover-assignments.module.js",
+      "bytes": 517,
+      "sha256": "c242a7b5db2ef4ec3d78342322ed1a50a78f7901c7b900c06a39f3f3f936505e"
+    },
+    {
+      "path": "apps\\api\\dist\\modules\\handover-messages.module.js",
+      "bytes": 499,
+      "sha256": "cfdacabc947518c62ccb1dd5b6bb5326c3412888ac7906576def748e3d2f2cb9"
+    },
+    {
+      "path": "apps\\api\\dist\\modules\\handover-tickets.module.js",
+      "bytes": 493,
+      "sha256": "6bbc4224a0a575b0b007443e21845f36966188abddb59d5c3b16a519488b907f"
+    },
+    {
+      "path": "apps\\api\\dist\\modules\\internal-ai\\dto\\readonly-query.dto.js",
+      "bytes": 1424,
+      "sha256": "4116f07b8acecb1c3b729f339db1612678d0e3dc17855b1614cab94651ae5173"
+    },
+    {
+      "path": "apps\\api\\dist\\modules\\internal-ai\\internal-ai.controller.js",
+      "bytes": 6778,
+      "sha256": "c28ca29c725517d56c8c2d2ee051eaf6ab055b0f11332af8467e6233d75aa087"
+    },
+    {
+      "path": "apps\\api\\dist\\modules\\internal-ai\\internal-ai.module.js",
+      "bytes": 1540,
+      "sha256": "888639faf00b4ffeef71ff3acabe3032491d14af78f50eb198b641efa7d11031"
+    },
+    {
+      "path": "apps\\api\\dist\\modules\\internal-ai\\internal-ai.service.js",
+      "bytes": 14000,
+      "sha256": "45eee31871036be2b9973c2587a95d0f9dd65a06cfd9275e38e3d8341b018ff3"
+    },
+    {
+      "path": "apps\\api\\dist\\modules\\internal-ai\\readonly-query.compiler.js",
+      "bytes": 10890,
+      "sha256": "53c6db7021895e940edf3d4a19ef1e00617ad8878c64460354b0fc3b3caacbd9"
+    },
+    {
+      "path": "apps\\api\\dist\\modules\\internal-ai\\readonly-query.service.js",
+      "bytes": 4704,
+      "sha256": "828d9cf608d1db63226f3bd92b6f272099444d93a583bb87d9424a143ef7dfe6"
+    },
+    {
+      "path": "apps\\api\\dist\\modules\\knowledge-base-documents.module.js",
+      "bytes": 539,
+      "sha256": "018dedf7473169ac46f797c6d3d4b06814dbc46404786a7e624722963e3366ce"
+    },
+    {
+      "path": "apps\\api\\dist\\modules\\line-webhook-events.module.js",
+      "bytes": 509,
+      "sha256": "aed6711fef28898bbc1f6a2cea4584a9569037851cc6a326e7677be5cbac11c1"
+    },
+    {
+      "path": "apps\\api\\dist\\modules\\line-webhooks\\line-signature.service.js",
+      "bytes": 2332,
+      "sha256": "966731a6922d44c9ae1e9d13928c3479043fa73bf71e048a591a2006d9369d15"
+    },
+    {
+      "path": "apps\\api\\dist\\modules\\line-webhooks\\line-webhooks.controller.js",
+      "bytes": 2407,
+      "sha256": "e273b9e065697c7482cd8784b575b7848457878e384f7456218c2d104859c705"
+    },
+    {
+      "path": "apps\\api\\dist\\modules\\line-webhooks\\line-webhooks.module.js",
+      "bytes": 1550,
+      "sha256": "71c563b979bb1960ce2c70e4f3e618ec72a04cf4de3764d598d4aaec8c99ede8"
+    },
+    {
+      "path": "apps\\api\\dist\\modules\\line-webhooks\\line-webhooks.service.js",
+      "bytes": 23143,
+      "sha256": "fa7d53ac142a5ef2243a34f53bca767c0e03a7a82b98209fd483ccd46a2c6734"
+    },
+    {
+      "path": "apps\\api\\dist\\modules\\line-webhooks\\types\\line-webhook.types.js",
+      "bytes": 123,
+      "sha256": "cc415398106fbfc9f8ac648e25abf7f62c9e35180ad93b1ac2f397fc25a02794"
+    },
+    {
+      "path": "apps\\api\\dist\\modules\\merchant-users.module.js",
+      "bytes": 481,
+      "sha256": "35c49ef9f188a986fefcf1930608313aaf22a91dc04e0ac669f22908e6b47bbd"
+    },
+    {
+      "path": "apps\\api\\dist\\modules\\merchants.module.js",
+      "bytes": 453,
+      "sha256": "a33542588e727d350e27e4d88991042640aa9ae79cdfc3e049beafe567b6d49a"
+    },
+    {
+      "path": "apps\\api\\dist\\modules\\messages.module.js",
+      "bytes": 447,
+      "sha256": "833b709ffe5ce6b724bb1ac435c2ce40980f7f939725c7692e09ce91bbebd951"
+    },
+    {
+      "path": "apps\\api\\dist\\modules\\permissions.module.js",
+      "bytes": 465,
+      "sha256": "022327cb55d4ed5ec6d6808a77240ed60465511a92f30ccf07730441e15b8556"
+    },
+    {
+      "path": "apps\\api\\dist\\modules\\platforms.module.js",
+      "bytes": 453,
+      "sha256": "cb705665bf180d1bdc89e22786b437fbb2aaa9fa78a3dd0c92c96554997fc3a8"
+    },
+    {
+      "path": "apps\\api\\dist\\modules\\product-images.module.js",
+      "bytes": 481,
+      "sha256": "0498ce4a01680e7b9957f3425f01e565d63b35dab9fdef9c360fae36595f9aab"
+    },
+    {
+      "path": "apps\\api\\dist\\modules\\product-variants.module.js",
+      "bytes": 493,
+      "sha256": "b20e25fc1789a9f8200b9ac7e2b4c024493a9b487b2b828acd2901222e024414"
+    },
+    {
+      "path": "apps\\api\\dist\\modules\\products.module.js",
+      "bytes": 447,
+      "sha256": "68cdea1d1fdc84065a8791da3c935de355330c3046c2f176ba7c27651decc7f3"
+    },
+    {
+      "path": "apps\\api\\dist\\modules\\prompt-versions.module.js",
+      "bytes": 487,
+      "sha256": "c5a48a0800ce639d65f67ee31c2d1f17c8be08dbdc51a2715d51dbaf6ef4495d"
+    },
+    {
+      "path": "apps\\api\\dist\\modules\\roles.module.js",
+      "bytes": 429,
+      "sha256": "c7ba231697bc1ecd2ee1c5a82099e28d9e1975f9ab2ad9886290fc4e02d55261"
+    },
+    {
+      "path": "apps\\api\\dist\\modules\\users.module.js",
+      "bytes": 429,
+      "sha256": "b406aeaaa41248f1ecedc2c6cea642d8bd85e1f7a8ede681a3df5e16a0b38ff0"
+    },
+    {
+      "path": "apps\\api\\dist\\modules\\vector-documents.module.js",
+      "bytes": 493,
+      "sha256": "a69c6da7a69cd72ee073dd3ac9b172164caeb110f355356729418d259f3e25df"
+    },
+    {
+      "path": "apps\\api\\dist\\prisma\\prisma.module.js",
+      "bytes": 1134,
+      "sha256": "bd50cc179c8ded790745340f8e9b3f68dbc45a6dd9e5cc6db5e6927b72695278"
+    },
+    {
+      "path": "apps\\api\\dist\\prisma\\prisma.service.js",
+      "bytes": 1092,
+      "sha256": "3b4e698cd570e1a815e44d0090810fe8d4ba5ea460f1cd6339b4fdd64b7b77a9"
+    },
+    {
+      "path": "apps\\ai-service\\scripts\\ai-behavior.test.cjs",
+      "bytes": 6770,
+      "sha256": "e14be464ff0e810a954b4f8b7eb90183f4e8e8aa2761d1c39dd53a778e25b335"
+    },
+    {
+      "path": "apps\\ai-service\\scripts\\customer-renderer.test.cjs",
+      "bytes": 8187,
+      "sha256": "82a24df222959c20a83518cbb185df2bd9ccd0d4026bb530bb3e6bacee0c2ba2"
+    },
+    {
+      "path": "apps\\ai-service\\scripts\\demo-safety.ps1",
+      "bytes": 1485,
+      "sha256": "881ed07a8eedaed424e7b39ca40ef70a090e93c7f4f22159ce4d483656bd499c"
+    },
+    {
+      "path": "apps\\ai-service\\scripts\\qa-ai-http.cjs",
+      "bytes": 2398,
+      "sha256": "f17871d1a36c338c37e04be00a64414de24d622ca7e0af14630497b9766241bd"
+    },
+    {
+      "path": "apps\\ai-service\\scripts\\qa-engine.test.cjs",
+      "bytes": 35803,
+      "sha256": "a1b8b13c6d788a53988470d8ebb87a1c8062867b69b6b73bbd0974162d12d9a9"
+    },
+    {
+      "path": "apps\\ai-service\\scripts\\qa-experiment.test.cjs",
+      "bytes": 13817,
+      "sha256": "2fb6efe617c5ef96d4bc1f51900b4cddda8d38547299213826b0e8b3b71802be"
+    },
+    {
+      "path": "apps\\ai-service\\scripts\\qa-grounding.test.cjs",
+      "bytes": 1010,
+      "sha256": "e8a417be53d97b71a79a900f6bfbfb0ffc0ddf390d5d981b4cc38ef3c469cdde"
+    },
+    {
+      "path": "apps\\ai-service\\scripts\\qa-load.test.cjs",
+      "bytes": 3719,
+      "sha256": "19ac8ba40c8839158ed1eb2421366d2ddfa7ecc5d84cb707191a003511308957"
+    },
+    {
+      "path": "apps\\ai-service\\scripts\\qa-seed.cjs",
+      "bytes": 11274,
+      "sha256": "5a1b493ec32aed32e14999612be39fbcbba6a0899202626a5e0b02dc81228f4a"
+    },
+    {
+      "path": "apps\\ai-service\\scripts\\retrieval.test.cjs",
+      "bytes": 8988,
+      "sha256": "a8cd4cf777a93fa34ea3e7ebb2107ea8c03ee0a69cfb1b23a128162c0b59cbd8"
+    },
+    {
+      "path": "apps\\ai-service\\scripts\\safety.test.cjs",
+      "bytes": 18244,
+      "sha256": "8c86292bc81e557c10e4bf47de9401e08f650438edad2816dc57a451091540c4"
+    },
+    {
+      "path": "apps\\api\\scripts\\ai-safety.test.cjs",
+      "bytes": 9964,
+      "sha256": "a95a42ccc36732f354bfb267eaa6c4b73fde45ce5f794a07ba8af6adfa3ad299"
+    },
+    {
+      "path": "apps\\api\\scripts\\prisma-runner.cjs",
+      "bytes": 1510,
+      "sha256": "9d62530caa39c55ff9912d1b6aa79bb9cc8c523f486335c62f8f8b08b065d6ff"
+    },
+    {
+      "path": "apps\\api\\scripts\\qa-api-integration.cjs",
+      "bytes": 23655,
+      "sha256": "0fa3530cbfd3cd87f472abf9cb523ef2dd89f63c5e720dc7658cc7a2e09111a5"
+    },
+    {
+      "path": "apps\\api\\scripts\\readonly-query.test.cjs",
+      "bytes": 14655,
+      "sha256": "f2d437a29c6431ae4680237500dec99ac9951852097d2e1b1cfe385a676f53f9"
+    },
+    {
+      "path": "apps\\api\\scripts\\seed-runner.cjs",
+      "bytes": 1528,
+      "sha256": "f0004feff88a56b761fd0ec12d3e467159f2f808bd55bb6a6b436b9a9158bf49"
+    },
+    {
+      "path": "apps\\api\\prisma\\migrations\\20260620085648_phase_2_foundation\\migration.sql",
+      "bytes": 29278,
+      "sha256": "ed4e68d82b0d5e4e82e09c97a5f486bc3bf764218e616d59fe7ab4ead6de300d"
+    },
+    {
+      "path": "apps\\api\\prisma\\migrations\\20261003133000_static_knowledge_revision\\migration.sql",
+      "bytes": 3594,
+      "sha256": "728d5214b2f8b6f5116b6b4b729d36a7de0b1fd017774702c5a1c3657a2e1149"
+    },
+    {
+      "path": "apps\\api\\prisma\\schema.prisma",
+      "bytes": 27476,
+      "sha256": "79bd730af8723a4395652335eb5d49b67c1a50a3741b609fdf24431d7c4ce7d4"
+    },
+    {
+      "path": "apps\\api\\prisma\\seed.ts",
+      "bytes": 3381,
+      "sha256": "714524476635200b87020939ad79cd2815e4869adb57ab16d18a5c8bcbbc0641"
+    },
+    {
+      "path": "scripts\\setup-local-models.ps1",
+      "bytes": 1331,
+      "sha256": "a5a084a6f8908ce97dad08e8514bc86597fe520e26226ee4e8cd75df079cef3c"
+    },
+    {
+      "path": "package.json",
+      "bytes": 1018,
+      "sha256": "cca39c1fff3d9f2d83306dd7da786cf23141aba1604270419399b52e9699f828"
+    },
+    {
+      "path": "pnpm-lock.yaml",
+      "bytes": 120296,
+      "sha256": "a6c529b9d540d47bfdd118ff43469c6e365236bfe4fb2775e7aa8a9307fc6630"
+    },
+    {
+      "path": "pnpm-workspace.yaml",
+      "bytes": 43,
+      "sha256": "5e5ddd04430189ef06cfb4f36d45f805c18c64da1aec437353cdad61a2f6fdee"
+    },
+    {
+      "path": "apps/ai-service/package.json",
+      "bytes": 720,
+      "sha256": "05dd336b2a82e005851ba1fad6edddf1acfbd34e24c6ccc533ad88dfbe9d1288"
+    },
+    {
+      "path": "apps/api/package.json",
+      "bytes": 1263,
+      "sha256": "f1f9caeb15a1a0e70048ad10ece6c3aca8f58f9b7853bab26c75d0c922a37ae9"
+    },
+    {
+      "path": "apps/ai-service/tsconfig.json",
+      "bytes": 237,
+      "sha256": "a2bea2f451006fee724d182407ba66d3e59e5ce8d21ddbaee5b712d7b148f46a"
+    },
+    {
+      "path": "apps/api/tsconfig.json",
+      "bytes": 380,
+      "sha256": "75555f9005127522aa0ca29ca47f5dee6701ff800b4ad46c46a86693e70852ef"
+    },
+    {
+      "path": "apps/api/tsconfig.build.json",
+      "bytes": 78,
+      "sha256": "b8ad79c4435911666fcaeda26cbfde61e68e4ea6d094b85cd2624fbaa870cbfb"
+    }
+  ]
+}

@@ -78,6 +78,21 @@
 - `GET /guardrail-events`
 - `GET /customer-memories`
 
+- API internal: `POST /internal/ai/query` with `{merchant_id, sql}`; one validated
+  read-only SELECT over scoped `catalog` or `knowledge`, returning at most 50 rows.
+  Aggregate result keys are server-generated (for example `sum_price`,
+  `count_distinct_product_id`, `count_catalog_rows`), irrespective of model aliases.
+- API internal: `GET /internal/ai/knowledge-version?merchant_id=<UUID>` for the
+  durable static-source revision (`version`, `revision` as a decimal string,
+  `updated_at`). This uses indexed merchant metadata rather than corpus aggregates.
+  Price and stock writes do not change this revision; searchable text and source
+  lifecycle changes do, through database triggers.
+- API internal: `GET /internal/ai/knowledge-snapshot?merchant_id=<UUID>` for index
+  refresh. These require the internal service bearer token and an ACTIVE/TRIAL
+  merchant. Missing, inactive or suspended merchants receive 404. Product variant
+  `stock_qty` and `available_qty` may be `null` when stock is not recorded;
+  `reserved_qty` remains numeric and defaults to zero when absent.
+
 The API calls the internal REST orchestration route `POST /mcp/chat`.
 The distinct `POST /mcp` endpoint uses the official MCP SDK and Streamable HTTP.
 All operational AI routes require a service bearer token. Merchant resources and
@@ -88,6 +103,10 @@ The chat response retains `reply.text`, `reply.confidence`, `sources`, `actions:
 and `handover_required`. It adds `confidence` (score, threshold, level, decision,
 reasons, signals), `guardrails` (input/context/output checks), and `handover_reason`.
 The API validates these fields and persists safety decisions before delivery.
+It also accepts `clarification_required` with confidence decision `clarify` for
+an uncertain first question; this keeps the conversation AI-active. The default
+chat context is lean (`ai_options.backend_retrieval=true`), containing merchant
+settings and recent history. `AI_CONTEXT_MODE=inline` is the legacy opt-in.
 See [full behavior and examples](../implementation/mcp-confidence-guardrail-th.md).
 
 ## Handover

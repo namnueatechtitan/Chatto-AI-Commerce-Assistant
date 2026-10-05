@@ -1,0 +1,7 @@
+{
+  "wall_ms": 355.7936,
+  "document_count": 14,
+  "embedding_identity": "ollama:bge-m3:1024",
+  "vector_dimensions": 1024,
+  "snapshot_version": "e23c51ace039a97bffa03b179f28745a4b92ce5ec439d1f999d79115347573fb"
+}

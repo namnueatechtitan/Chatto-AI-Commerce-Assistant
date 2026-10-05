@@ -1,0 +1,154 @@
+[
+  {
+    "mode": "hybrid",
+    "case_id": "D01",
+    "result": {
+      "text": "I do not have enough reliable information. A staff member will help with this question.",
+      "decision": "handover",
+      "route": "rag",
+      "sources": [
+        {
+          "id": "rag:0",
+          "type": "faq",
+          "title": "Fabric care / การดูแลผ้า",
+          "text": "Fabric care / การดูแลผ้า: Cloud and Ink: cold gentle wash; no bleach. Moss: hand wash in cool water and dry in shade. เสื้อ Cloud และ Ink ซักน้ําเย็นแบบอ่อนโยน ห้ามฟอกขาว ส่วน Moss ซักมือด้วยน้ําเย็นและตากในร่ม. No fabric durability test after 500 washes is provided."
+        },
+        {
+          "id": "rag:1",
+          "type": "shipping_policy",
+          "title": "Delivery policy / การจัดส่ง",
+          "text": "Delivery policy / การจัดส่ง: Dispatch within 2 business days. Estimated delivery after dispatch: Bangkok 2–3 business days, other Thai provinces 3–5 business days. Thai delivery fee: 60 THB; free for product subtotal at least 1000 THB. Estimates are not guaranteed arrival dates. จัดส่งออกภายใน 2 วันทําการ กรุงเทพฯ หลังส่งประมาณ 2–3 วันทําการ ต่างจังหวัด 3–5 วันทําการ ค่าส่งในไทย 60 บาท ยอดสินค้าตั้งแต่ 1000 บาทส่งฟรี. International fees are not provided."
+        }
+      ],
+      "selectedClaims": [],
+      "timings": {
+        "plan_ms": 535.1540000000005,
+        "retrieval_ms": 1869.3109999999997,
+        "sql_ms": 0,
+        "generation_ms": 0,
+        "total_ms": 2415.4053000000004
+      },
+      "usage": {
+        "prompt_tokens": 347,
+        "completion_tokens": 62
+      },
+      "retrievedIds": [
+        "10000000-0000-4000-8000-000000000002",
+        "30000000-0000-4000-8000-000000000004",
+        "30000000-0000-4000-8000-000000000001",
+        "10000000-0000-4000-8000-000000000005",
+        "10000000-0000-4000-8000-000000000008"
+      ],
+      "sql": "SELECT product_id,name,sku,variant_name,color,size,price,currency,available_qty FROM catalog WHERE product_id IN ('10000000-0000-4000-8000-000000000002','10000000-0000-4000-8000-000000000005','10000000-0000-4000-8000-000000000008') LIMIT 20",
+      "reason": "KNOWLEDGE_BACKEND_503"
+    }
+  },
+  {
+    "mode": "sql",
+    "case_id": "D01",
+    "result": {
+      "text": "I do not have enough reliable information. A staff member will help with this question.",
+      "decision": "handover",
+      "route": "sql",
+      "sources": [
+        {
+          "id": "sql:0",
+          "type": "product",
+          "title": "Ink Basic Tee",
+          "text": "name: Ink Basic Tee; sku: QA-2; price: 390; currency: THB; available_qty: 6; product_id: 10000000-0000-4000-8000-000000000002"
+        }
+      ],
+      "selectedClaims": [],
+      "timings": {
+        "plan_ms": 476.54979999999887,
+        "retrieval_ms": 0,
+        "sql_ms": 7.221299999997427,
+        "generation_ms": 543.5941000000021,
+        "total_ms": 1028.1823999999997
+      },
+      "usage": {
+        "prompt_tokens": 679,
+        "completion_tokens": 129
+      },
+      "retrievedIds": [
+        "10000000-0000-4000-8000-000000000002"
+      ],
+      "sql": "SELECT name, sku, price, currency, available_qty, product_id FROM catalog WHERE name ILIKE '%Ink Basic Tee%' LIMIT 20",
+      "sqlRows": [
+        {
+          "name": "Ink Basic Tee",
+          "sku": "QA-2",
+          "price": 390,
+          "currency": "THB",
+          "available_qty": 6,
+          "product_id": "10000000-0000-4000-8000-000000000002"
+        }
+      ],
+      "rawSelection": {
+        "answerable": true,
+        "claims": [
+          {
+            "source_id": "sql:0",
+            "quote": "Ink Basic Tee; price: 390; currency: THB"
+          }
+        ],
+        "ambiguous": false
+      },
+      "reason": "UNSUPPORTED_CLAIM"
+    }
+  },
+  {
+    "mode": "combined",
+    "case_id": "D01",
+    "result": {
+      "text": "I do not have enough reliable information. A staff member will help with this question.",
+      "decision": "handover",
+      "route": "sql",
+      "sources": [
+        {
+          "id": "sql:0",
+          "type": "product",
+          "title": "Ink Basic Tee",
+          "text": "name: Ink Basic Tee; sku: QA-2; price: 390; currency: THB; available_qty: 6; product_id: 10000000-0000-4000-8000-000000000002"
+        }
+      ],
+      "selectedClaims": [],
+      "timings": {
+        "plan_ms": 517.025700000002,
+        "retrieval_ms": 0,
+        "sql_ms": 6.260700000002544,
+        "generation_ms": 516.6355000000003,
+        "total_ms": 1040.181199999999
+      },
+      "usage": {
+        "prompt_tokens": 643,
+        "completion_tokens": 129
+      },
+      "retrievedIds": [
+        "10000000-0000-4000-8000-000000000002"
+      ],
+      "sql": "SELECT name, sku, price, currency, available_qty, product_id FROM catalog WHERE name ILIKE '%Ink Basic Tee%' LIMIT 20",
+      "sqlRows": [
+        {
+          "name": "Ink Basic Tee",
+          "sku": "QA-2",
+          "price": 390,
+          "currency": "THB",
+          "available_qty": 6,
+          "product_id": "10000000-0000-4000-8000-000000000002"
+        }
+      ],
+      "rawSelection": {
+        "answerable": true,
+        "claims": [
+          {
+            "source_id": "sql:0",
+            "quote": "Ink Basic Tee; price: 390; currency: THB"
+          }
+        ],
+        "ambiguous": false
+      },
+      "reason": "UNSUPPORTED_CLAIM"
+    }
+  }
+]

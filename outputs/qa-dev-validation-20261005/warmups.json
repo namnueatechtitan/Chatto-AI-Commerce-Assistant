@@ -1,0 +1,289 @@
+[
+  {
+    "mode": "hybrid",
+    "case_id": "D01",
+    "result": {
+      "text": "Ink Basic Tee. variant black / M. SKU QA-2. colour black. size M. The price is 390 THB",
+      "decision": "answer",
+      "route": "rag",
+      "sources": [
+        {
+          "id": "rag:0",
+          "origin_id": "30000000-0000-4000-8000-000000000004",
+          "type": "faq",
+          "title": "Fabric care / การดูแลผ้า",
+          "text": "Fabric care / การดูแลผ้า: Cloud and Ink: cold gentle wash; no bleach. Moss: hand wash in cool water and dry in shade. เสื้อ Cloud และ Ink ซักน้ําเย็นแบบอ่อนโยน ห้ามฟอกขาว ส่วน Moss ซักมือด้วยน้ําเย็นและตากในร่ม. No fabric durability test after 500 washes is provided."
+        },
+        {
+          "id": "rag:1",
+          "origin_id": "30000000-0000-4000-8000-000000000001",
+          "type": "shipping_policy",
+          "title": "Delivery policy / การจัดส่ง",
+          "text": "Delivery policy / การจัดส่ง: Dispatch within 2 business days. Estimated delivery after dispatch: Bangkok 2–3 business days, other Thai provinces 3–5 business days. Thai delivery fee: 60 THB; free for product subtotal at least 1000 THB. Estimates are not guaranteed arrival dates. จัดส่งออกภายใน 2 วันทําการ กรุงเทพฯ หลังส่งประมาณ 2–3 วันทําการ ต่างจังหวัด 3–5 วันทําการ ค่าส่งในไทย 60 บาท ยอดสินค้าตั้งแต่ 1000 บาทส่งฟรี. International fees are not provided."
+        },
+        {
+          "id": "lookup:0",
+          "origin_id": "10000000-0000-4000-8000-000000000002",
+          "type": "product",
+          "title": "Ink Basic Tee QA-2",
+          "text": "product_id: 10000000-0000-4000-8000-000000000002; name: Ink Basic Tee; description: Black regular-fit T-shirt, 100% cotton. เสื้อยืด Ink สีดำ ผ้าฝ้าย 100% ทรงปกติ. No guarantee about color after 500 washes is provided.; sku: QA-2; variant_name: black / M; color: black; size: M; price: 390; currency: THB; available_qty: 6"
+        },
+        {
+          "id": "lookup:1",
+          "origin_id": "10000000-0000-4000-8000-000000000005",
+          "type": "product",
+          "title": "Sand Canvas Tote QA-5",
+          "text": "product_id: 10000000-0000-4000-8000-000000000005; name: Sand Canvas Tote; description: Sand-colored cotton canvas tote, width 35 cm, height 40 cm. One open compartment; no zip. กระเป๋า Sand สีทราย ผ้าแคนวาสฝ้าย กว้าง 35 ซม. สูง 40 ซม. ไม่มีซิป. Weight capacity and waterproof rating are not specified.; sku: QA-5; variant_name: sand / one size; color: sand; size: one size; price: 290; currency: THB; available_qty: 10"
+        },
+        {
+          "id": "lookup:2",
+          "origin_id": "10000000-0000-4000-8000-000000000008",
+          "type": "product",
+          "title": "Rain Light Jacket QA-8",
+          "text": "product_id: 10000000-0000-4000-8000-000000000008; name: Rain Light Jacket; description: Navy lightweight nylon jacket. เสื้อแจ็กเก็ต Rain สีน้ำเงินเข้ม ผ้าไนลอน น้ำหนักเบา. No waterproof certification or laboratory rating is published.; sku: QA-8; variant_name: navy / M; color: navy; size: M; price: 1290; currency: THB; available_qty: 2"
+        }
+      ],
+      "selectedClaims": [
+        {
+          "source_id": "lookup:0",
+          "quote": "product_id: 10000000-0000-4000-8000-000000000002; name: Ink Basic Tee; description: Black regular-fit T-shirt, 100% cotton. เสื้อยืด Ink สีดำ ผ้าฝ้าย 100% ทรงปกติ. No guarantee about color after 500 washes is provided.; sku: QA-2; variant_name: black / M; color: black; size: M; price: 390; currency: THB; available_qty: 6"
+        }
+      ],
+      "timings": {
+        "plan_ms": 586.7288000000001,
+        "retrieval_ms": 42.018100000000004,
+        "sql_ms": 6.525600000000168,
+        "generation_ms": 703.6800999999998,
+        "total_ms": 1342.6589
+      },
+      "usage": {
+        "prompt_tokens": 1954,
+        "completion_tokens": 156
+      },
+      "retrievedIds": [
+        "10000000-0000-4000-8000-000000000002",
+        "30000000-0000-4000-8000-000000000004",
+        "30000000-0000-4000-8000-000000000001",
+        "10000000-0000-4000-8000-000000000005",
+        "10000000-0000-4000-8000-000000000008"
+      ],
+      "planningAttempts": [
+        {
+          "route": "sql",
+          "sql": "SELECT product_id,variant_id,name,sku,variant_name,color,size,description,brand,category,price,currency,available_qty FROM catalog WHERE name ILIKE '%Ink Basic Tee%' LIMIT 20",
+          "search_query": "Ink Basic Tee price"
+        }
+      ],
+      "sql": "SELECT product_id,name,description,sku,variant_name,color,size,price,currency,available_qty FROM catalog WHERE product_id IN ('10000000-0000-4000-8000-000000000002','10000000-0000-4000-8000-000000000005','10000000-0000-4000-8000-000000000008') LIMIT 20",
+      "sqlRows": [
+        {
+          "product_id": "10000000-0000-4000-8000-000000000002",
+          "name": "Ink Basic Tee",
+          "description": "Black regular-fit T-shirt, 100% cotton. เสื้อยืด Ink สีดำ ผ้าฝ้าย 100% ทรงปกติ. No guarantee about color after 500 washes is provided.",
+          "sku": "QA-2",
+          "variant_name": "black / M",
+          "color": "black",
+          "size": "M",
+          "price": 390,
+          "currency": "THB",
+          "available_qty": 6
+        },
+        {
+          "product_id": "10000000-0000-4000-8000-000000000005",
+          "name": "Sand Canvas Tote",
+          "description": "Sand-colored cotton canvas tote, width 35 cm, height 40 cm. One open compartment; no zip. กระเป๋า Sand สีทราย ผ้าแคนวาสฝ้าย กว้าง 35 ซม. สูง 40 ซม. ไม่มีซิป. Weight capacity and waterproof rating are not specified.",
+          "sku": "QA-5",
+          "variant_name": "sand / one size",
+          "color": "sand",
+          "size": "one size",
+          "price": 290,
+          "currency": "THB",
+          "available_qty": 10
+        },
+        {
+          "product_id": "10000000-0000-4000-8000-000000000008",
+          "name": "Rain Light Jacket",
+          "description": "Navy lightweight nylon jacket. เสื้อแจ็กเก็ต Rain สีน้ำเงินเข้ม ผ้าไนลอน น้ำหนักเบา. No waterproof certification or laboratory rating is published.",
+          "sku": "QA-8",
+          "variant_name": "navy / M",
+          "color": "navy",
+          "size": "M",
+          "price": 1290,
+          "currency": "THB",
+          "available_qty": 2
+        }
+      ],
+      "rawSelection": {
+        "answerable": true,
+        "ambiguous": false,
+        "ambiguity_kind": "none",
+        "claims": [
+          {
+            "source_id": "lookup:0",
+            "quote": "name: Ink Basic Tee; ... price: 390; currency: THB"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "mode": "sql",
+    "case_id": "D01",
+    "result": {
+      "text": "Ink Basic Tee. variant black / M. SKU QA-2. colour black. size M. The price is 390 THB",
+      "decision": "answer",
+      "route": "sql",
+      "sources": [
+        {
+          "id": "sql:0",
+          "origin_id": "10000000-0000-4000-8000-000000000002",
+          "type": "product",
+          "title": "Ink Basic Tee",
+          "text": "product_id: 10000000-0000-4000-8000-000000000002; variant_id: 20000000-0000-4000-8000-000000000002; name: Ink Basic Tee; sku: QA-2; variant_name: black / M; color: black; size: M; description: Black regular-fit T-shirt, 100% cotton. เสื้อยืด Ink สีดำ ผ้าฝ้าย 100% ทรงปกติ. No guarantee about color after 500 washes is provided.; brand: Fixture Studio; category: shirt; price: 390; currency: THB; available_qty: 6"
+        }
+      ],
+      "selectedClaims": [
+        {
+          "source_id": "sql:0",
+          "quote": "product_id: 10000000-0000-4000-8000-000000000002; variant_id: 20000000-0000-4000-8000-000000000002; name: Ink Basic Tee; sku: QA-2; variant_name: black / M; color: black; size: M; description: Black regular-fit T-shirt, 100% cotton. เสื้อยืด Ink สีดำ ผ้าฝ้าย 100% ทรงปกติ. No guarantee about color after 500 washes is provided.; brand: Fixture Studio; category: shirt; price: 390; currency: THB; available_qty: 6"
+        }
+      ],
+      "timings": {
+        "plan_ms": 590.3699000000001,
+        "retrieval_ms": 0,
+        "sql_ms": 6.046200000000226,
+        "generation_ms": 634.3224,
+        "total_ms": 1232.3439000000003
+      },
+      "usage": {
+        "prompt_tokens": 1316,
+        "completion_tokens": 156
+      },
+      "retrievedIds": [
+        "10000000-0000-4000-8000-000000000002"
+      ],
+      "planningAttempts": [
+        {
+          "route": "sql",
+          "sql": "SELECT product_id,variant_id,name,sku,variant_name,color,size,description,brand,category,price,currency,available_qty FROM catalog WHERE name ILIKE '%Ink Basic Tee%' LIMIT 20",
+          "search_query": "Ink Basic Tee price"
+        }
+      ],
+      "sql": "SELECT product_id,variant_id,name,sku,variant_name,color,size,description,brand,category,price,currency,available_qty FROM catalog WHERE name ILIKE '%Ink Basic Tee%' LIMIT 20",
+      "sqlAttempts": [
+        {
+          "sql": "SELECT product_id,variant_id,name,sku,variant_name,color,size,description,brand,category,price,currency,available_qty FROM catalog WHERE name ILIKE '%Ink Basic Tee%' LIMIT 20",
+          "status": "success"
+        }
+      ],
+      "sqlRows": [
+        {
+          "product_id": "10000000-0000-4000-8000-000000000002",
+          "variant_id": "20000000-0000-4000-8000-000000000002",
+          "name": "Ink Basic Tee",
+          "sku": "QA-2",
+          "variant_name": "black / M",
+          "color": "black",
+          "size": "M",
+          "description": "Black regular-fit T-shirt, 100% cotton. เสื้อยืด Ink สีดำ ผ้าฝ้าย 100% ทรงปกติ. No guarantee about color after 500 washes is provided.",
+          "brand": "Fixture Studio",
+          "category": "shirt",
+          "price": 390,
+          "currency": "THB",
+          "available_qty": 6
+        }
+      ],
+      "rawSelection": {
+        "answerable": true,
+        "ambiguous": false,
+        "ambiguity_kind": "none",
+        "claims": [
+          {
+            "source_id": "sql:0",
+            "quote": "name: Ink Basic Tee; ... price: 390; currency: THB"
+          }
+        ]
+      }
+    }
+  },
+  {
+    "mode": "combined",
+    "case_id": "D01",
+    "result": {
+      "text": "Ink Basic Tee. variant black / M. SKU QA-2. colour black. size M. The price is 390 THB",
+      "decision": "answer",
+      "route": "sql",
+      "sources": [
+        {
+          "id": "sql:0",
+          "origin_id": "10000000-0000-4000-8000-000000000002",
+          "type": "product",
+          "title": "Ink Basic Tee",
+          "text": "product_id: 10000000-0000-4000-8000-000000000002; variant_id: 20000000-0000-4000-8000-000000000002; name: Ink Basic Tee; sku: QA-2; variant_name: black / M; color: black; size: M; description: Black regular-fit T-shirt, 100% cotton. เสื้อยืด Ink สีดำ ผ้าฝ้าย 100% ทรงปกติ. No guarantee about color after 500 washes is provided.; brand: Fixture Studio; category: shirt; price: 390; currency: THB; available_qty: 6"
+        }
+      ],
+      "selectedClaims": [
+        {
+          "source_id": "sql:0",
+          "quote": "product_id: 10000000-0000-4000-8000-000000000002; variant_id: 20000000-0000-4000-8000-000000000002; name: Ink Basic Tee; sku: QA-2; variant_name: black / M; color: black; size: M; description: Black regular-fit T-shirt, 100% cotton. เสื้อยืด Ink สีดำ ผ้าฝ้าย 100% ทรงปกติ. No guarantee about color after 500 washes is provided.; brand: Fixture Studio; category: shirt; price: 390; currency: THB; available_qty: 6"
+        }
+      ],
+      "timings": {
+        "plan_ms": 553.4662999999996,
+        "retrieval_ms": 0,
+        "sql_ms": 6.584500000000389,
+        "generation_ms": 593.9765999999995,
+        "total_ms": 1154.4444999999996
+      },
+      "usage": {
+        "prompt_tokens": 1280,
+        "completion_tokens": 156
+      },
+      "retrievedIds": [
+        "10000000-0000-4000-8000-000000000002"
+      ],
+      "planningAttempts": [
+        {
+          "route": "sql",
+          "sql": "SELECT product_id,variant_id,name,sku,variant_name,color,size,description,brand,category,price,currency,available_qty FROM catalog WHERE name ILIKE '%Ink Basic Tee%' LIMIT 20",
+          "search_query": "Ink Basic Tee price"
+        }
+      ],
+      "sql": "SELECT product_id,variant_id,name,sku,variant_name,color,size,description,brand,category,price,currency,available_qty FROM catalog WHERE name ILIKE '%Ink Basic Tee%' LIMIT 20",
+      "sqlAttempts": [
+        {
+          "sql": "SELECT product_id,variant_id,name,sku,variant_name,color,size,description,brand,category,price,currency,available_qty FROM catalog WHERE name ILIKE '%Ink Basic Tee%' LIMIT 20",
+          "status": "success"
+        }
+      ],
+      "sqlRows": [
+        {
+          "product_id": "10000000-0000-4000-8000-000000000002",
+          "variant_id": "20000000-0000-4000-8000-000000000002",
+          "name": "Ink Basic Tee",
+          "sku": "QA-2",
+          "variant_name": "black / M",
+          "color": "black",
+          "size": "M",
+          "description": "Black regular-fit T-shirt, 100% cotton. เสื้อยืด Ink สีดำ ผ้าฝ้าย 100% ทรงปกติ. No guarantee about color after 500 washes is provided.",
+          "brand": "Fixture Studio",
+          "category": "shirt",
+          "price": 390,
+          "currency": "THB",
+          "available_qty": 6
+        }
+      ],
+      "rawSelection": {
+        "answerable": true,
+        "ambiguous": false,
+        "ambiguity_kind": "none",
+        "claims": [
+          {
+            "source_id": "sql:0",
+            "quote": "name: Ink Basic Tee; ... price: 390; currency: THB"
+          }
+        ]
+      }
+    }
+  }
+]

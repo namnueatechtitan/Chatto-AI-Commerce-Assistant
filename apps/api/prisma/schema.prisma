@@ -111,6 +111,7 @@ model User {
   googleId                      String?              @unique @map("google_id") @db.VarChar(255)
   lineId                        String?              @unique @map("line_id") @db.VarChar(255)
   sessions                      AuthSession[]
+  activatedAiSettings           AiSetting[]          @relation("AiActivationActor")
   globalRole                    String               @map("global_role") @db.VarChar(50)
   status                        UserStatus           @default(ACTIVE)
   merchantUsers                 MerchantUser[]
@@ -520,6 +521,18 @@ model Message {
   @@map("messages")
 }
 
+enum AiResponseLength {
+  SHORT    @map("short")
+  MEDIUM   @map("medium")
+  DETAILED @map("detailed")
+}
+
+enum AiFallbackBehavior {
+  NOTIFY_AND_HANDOFF   @map("notify_and_handoff")
+  HANDOFF_IMMEDIATELY  @map("handoff_immediately")
+  GENERAL_KNOWLEDGE   @map("general_knowledge")
+}
+
 model AiSetting {
   id                     String    @id @default(uuid()) @db.Uuid
   merchantId             String    @db.Uuid @map("merchant_id")
@@ -533,6 +546,23 @@ model AiSetting {
   allowedTopics          Json?     @map("allowed_topics")
   forbiddenActions       Json?     @map("forbidden_actions")
   storeRules             Json?     @map("store_rules")
+  pronoun                String?   @db.VarChar(80)
+  useEmoji               Boolean   @default(true) @map("use_emoji")
+  responseLength         AiResponseLength @default(MEDIUM) @map("response_length")
+  recommendProducts      Boolean   @default(true) @map("recommend_products")
+  checkStock             Boolean   @default(true) @map("check_stock")
+  compareProducts        Boolean   @default(true) @map("compare_products")
+  answerFaq              Boolean   @default(true) @map("answer_faq")
+  showPrices             Boolean   @default(true) @map("show_prices")
+  showPromotions         Boolean   @default(true) @map("show_promotions")
+  recommendRelatedProducts Boolean @default(true) @map("recommend_related_products")
+  fallbackBehavior       AiFallbackBehavior @default(NOTIFY_AND_HANDOFF) @map("fallback_behavior")
+  rulesConfigured        Boolean   @default(false) @map("rules_configured")
+  aiEnabled              Boolean   @default(false) @map("ai_enabled")
+  aiActivatedAt          DateTime? @map("ai_activated_at")
+  aiActivatedByUserId    String?   @db.Uuid @map("ai_activated_by_user_id")
+  activationActor        User?     @relation("AiActivationActor", fields: [aiActivatedByUserId], references: [id], onDelete: SetNull, map: "ai_settings_activation_actor_fkey")
+  rules                  MerchantAiRule[]
   merchant               Merchant  @relation(fields: [merchantId], references: [id], onDelete: Cascade)
   createdAt              DateTime  @default(now()) @map("created_at")
   updatedAt              DateTime  @updatedAt @map("updated_at")
@@ -540,6 +570,20 @@ model AiSetting {
   @@unique([merchantId])
   @@index([merchantId])
   @@map("ai_settings")
+}
+
+model MerchantAiRule {
+  id           String    @id @default(uuid()) @db.Uuid
+  aiSettingsId String    @map("ai_settings_id") @db.Uuid
+  text         String    @db.VarChar(500)
+  sortOrder    Int       @map("sort_order")
+  isEnabled    Boolean   @default(true) @map("is_enabled")
+  aiSettings   AiSetting @relation(fields: [aiSettingsId], references: [id], onDelete: Cascade)
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+
+  @@index([aiSettingsId, sortOrder])
+  @@map("merchant_ai_rules")
 }
 
 model PromptVersion {

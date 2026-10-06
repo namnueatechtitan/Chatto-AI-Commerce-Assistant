@@ -1,56 +1,29 @@
-import Link from "next/link";
+"use client";
 import { Bell, ChevronDown, Menu } from "lucide-react";
-
-import { dashboardOverview } from "../../lib/mock-data";
+import type { RefObject } from "react";
 import type { AuthUser } from "../../lib/auth";
+import type { MerchantMembership } from "../../lib/merchants";
+import { useDashboardReadiness } from "../../hooks/use-dashboard-readiness";
+import { ProfileAvatar } from "../onboarding/profile-avatar";
 import { LogoutButton } from "../auth/logout-button";
+import styles from "./merchant-dashboard.module.css";
 
-export function TopNavbar({ user }: { user: AuthUser }) {
-  return (
-    <header className="sticky top-0 z-20 border-b border-border/80 bg-white/95 backdrop-blur">
-      <div className="flex items-center justify-between gap-4 px-4 py-4 sm:px-6 lg:px-8">
-        <Link
-          aria-label="Go to dashboard overview"
-          className="flex size-11 items-center justify-center rounded-2xl border border-border bg-slate-50 text-slate-700 transition-colors hover:bg-slate-100"
-          href="/dashboard"
-        >
-          <Menu className="size-5" />
-        </Link>
-
-        <div className="flex min-w-0 flex-wrap items-center justify-end gap-3 sm:gap-4">
-          <div className="hidden items-center gap-3 rounded-full bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700 md:flex">
-            <span className="size-2 rounded-full bg-success" />
-            {dashboardOverview.aiStatus}
-          </div>
-
-          <button
-            aria-label="Open notifications"
-            className="relative flex size-10 items-center justify-center rounded-full border border-border bg-white text-slate-600 transition-colors hover:bg-slate-50"
-            type="button"
-          >
-            <Bell className="size-5" />
-            <span className="absolute -right-0.5 -top-1 inline-flex h-5 min-w-5 items-center justify-center rounded-full bg-danger px-1 text-[0.625rem] font-semibold text-white">
-              99+
-            </span>
-          </button>
-
-          <div className="flex min-w-0 max-w-[22rem] items-center gap-3 rounded-full border border-border bg-white px-2 py-1.5 shadow-soft">
-            <div className="flex size-11 items-center justify-center rounded-full bg-gradient-to-br from-emerald-300 via-lime-300 to-emerald-500 text-sm font-semibold text-slate-900">
-              {user.name.slice(0, 2).toUpperCase()}
-            </div>
-            <div className="hidden min-w-0 sm:block">
-              <div className="truncate text-sm font-semibold text-slate-950">
-                {user.name}
-              </div>
-              <div className="truncate text-xs text-slate-500">
-                {user.email}
-              </div>
-            </div>
-            <ChevronDown className="size-4 text-slate-500" />
-          </div>
-          <LogoutButton />
-        </div>
-      </div>
-    </header>
-  );
+export function AiRuntimeStatus({ enabled, loading, error }: { enabled?: boolean; loading: boolean; error: string | null }) {
+  const label = error ? "ตรวจสอบสถานะ AI ไม่สำเร็จ" : loading ? "กำลังตรวจสอบสถานะ AI…"
+    : enabled === true ? "Chatto AI กำลังทำงานอยู่" : enabled === false ? "Chatto AI หยุดการตอบอัตโนมัติ" : "เลือกร้านค้าเพื่อดูสถานะ AI";
+  return <span role="status" className={`${styles.runtime} ${enabled === true && !error ? styles.running : ""}`}><span aria-hidden="true" />{label}</span>;
+}
+export function TopNavbar({ user, selected, onMenu, menuOpen, menuButtonRef }: {
+  user: AuthUser; selected: MerchantMembership | null; onMenu: () => void; menuOpen: boolean;
+  menuButtonRef: RefObject<HTMLButtonElement | null>;
+}) {
+  const { readiness, loading, error } = useDashboardReadiness(selected?.merchant.id ?? null);
+  return <header className={styles.navbar}>
+    <button ref={menuButtonRef} className={styles.iconButton} aria-label="เปิดเมนูร้านค้า" aria-expanded={menuOpen} onClick={onMenu}><Menu size={24} /></button>
+    <div className={styles.navRight}>
+      <AiRuntimeStatus enabled={readiness?.aiEnabled} loading={loading} error={error} />
+      <details className={styles.notifications}><summary aria-label="Open notifications" className={styles.iconButton}><Bell size={22} /></summary><div className={styles.popover}>ยังไม่มีระบบแจ้งเตือน</div></details>
+      <details className={styles.profile}><summary><ProfileAvatar src={user.avatarUrl} /><span><strong>{user.name}</strong><small>{selected?.role.name ?? "ยังไม่ได้เลือกร้าน"}</small></span><ChevronDown size={18} aria-hidden="true" /></summary><div className={styles.popover}><LogoutButton /></div></details>
+    </div>
+  </header>;
 }

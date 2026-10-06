@@ -13,6 +13,7 @@ import type {
 } from "../ai-integration/ai-contract.types";
 
 import { PrismaService } from "../../prisma/prisma.service";
+import { MerchantAiSettingsService } from "../merchant-ai-settings/merchant-ai-settings.service";
 
 function toNumber(value: unknown): number | null {
   if (value === null || value === undefined) return null;
@@ -45,30 +46,9 @@ function availableQty(stockOnHand?: number | null, stockReserved?: number | null
   return Math.max((stockOnHand ?? 0) - (stockReserved ?? 0), 0);
 }
 
-function jsonToStringArray(value: unknown): string[] {
-  if (!value) return [];
-
-  if (Array.isArray(value)) {
-    return value.map(String).filter(Boolean);
-  }
-
-  if (typeof value === "string") {
-    return [value];
-  }
-
-  if (typeof value === "object") {
-    return Object.values(value as Record<string, unknown>)
-      .flatMap((item) => (Array.isArray(item) ? item : [item]))
-      .map(String)
-      .filter(Boolean);
-  }
-
-  return [];
-}
-
 @Injectable()
 export class InternalAiService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(private readonly prisma: PrismaService, private readonly settings: MerchantAiSettingsService) {}
 
   private requireMerchantId(merchantId: string): void {
     if (typeof merchantId !== "string" || !isUUID(merchantId)) throw new BadRequestException("merchant_id must be a UUID");
@@ -377,25 +357,22 @@ export class InternalAiService {
       throw new NotFoundException("Merchant not found");
     }
 
-    const aiSetting = await this.prisma.aiSetting.findUnique({
-      where: {
-        merchantId,
-      },
-    });
+    const settings = await this.settings.getSettingsForMerchant(merchantId);
 
     return {
       merchant_id: merchantId,
       store_name: merchant.shopName,
-      bot_name: aiSetting?.botName ?? "Chatto",
-      default_language: aiSetting?.language ?? "en",
-      ai_tone: aiSetting?.tone ?? "friendly",
-      rules: jsonToStringArray(aiSetting?.storeRules),
+      bot_name: settings.assistantName,
+      default_language: settings.language,
+      ai_tone: settings.tone,
+      rules: settings.rules.map(rule => rule.text),
+      ai_profile: settings,
       enabled_features: {
         product_qa: true,
-        recommendation: true,
+        recommendation: settings.capabilities.recommendProducts,
         checkout: false,
-        memory: aiSetting?.memoryEnabled ?? false,
-        human_handover: true,
+        memory: settings.capabilities.rememberCustomerInterest,
+        human_handover: false,
       },
     };
   }

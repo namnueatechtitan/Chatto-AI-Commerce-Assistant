@@ -36,7 +36,8 @@ test('Phase C+D isolated database: signed channel → scoped DB → real AI agen
   process.env.INTERNAL_SERVICE_TOKEN = randomBytes(32).toString('hex');
   const prisma = new PrismaClient({ datasources: { db: { url: value } } }); await prisma.$connect();
   const merchants = new MerchantsService(prisma), ownership = new StoreInformationService(prisma, merchants);
-  const sessions = new AuthSessionService(prisma), cipher = new CredentialCipherService(), internal = new InternalAiService(prisma);
+  const settings = new (require('../dist/modules/merchant-ai-settings/merchant-ai-settings.service').MerchantAiSettingsService)(prisma, ownership);
+  const sessions = new AuthSessionService(prisma), cipher = new CredentialCipherService(), internal = new InternalAiService(prisma, settings);
   const runtime = new LineChannelRuntimeService(prisma, cipher);
   const role = await prisma.role.create({ data: { name: 'Owner', status: 'active' } });
   const replies = [], requests = [], responses = [];
@@ -140,6 +141,11 @@ test('Phase C+D isolated database: signed channel → scoped DB → real AI agen
     assert.equal((await onboarding.status(a.user.id, a.merchant.id)).completedSteps, 4);
   });
   await t.test('A/B complete pipeline isolates same LINE user, provider event/message ID and forged merchant claims', async () => {
+    const activation = new (require('../dist/modules/merchant-activation/merchant-activation.service').MerchantActivationService)(prisma, ownership);
+    for (const who of [a,b]) {
+      await settings.update(who.user.id, who.merchant.id, { assistantName: who.merchant.shopName, tone: 'friendly' });
+      await activation.activate(who.user.id, who.merchant.id);
+    }
     const input = event('shared-provider-event', { merchant_id: b.merchant.id });
     assert.equal((await send(a, [input], { merchant_id: b.merchant.id })).status, 200);
     assert.equal((await send(b, [input])).status, 200);

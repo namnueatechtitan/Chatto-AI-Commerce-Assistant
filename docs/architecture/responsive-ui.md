@@ -14,6 +14,10 @@ Layout sizes, typography, spacing, radii and icon sizes use rem. Percent/fr and 
 
 Below 1200px the root is 100%, and existing tablet/mobile rearrangements remain. Mobile controls keep readable 16px text and touch sizes. Dashboard desktop composition uses a named desktop breakpoint rather than changing between xl/2xl across laptop widths. Native merchant pages preserve their appearance while inheriting the same sizing system.
 
+Onboarding overview, store, LINE, AI context and activation share a viewport-height sticky branding panel while the two-column layout is active (768px and wider). Native document scrolling moves the right-hand setup content; the left logo, headline and illustration remain stationary. Wheel/keyboard navigation and form focus/`scrollIntoView` keep their standard browser behavior. At mobile widths the existing single-column page scrolls normally.
+
+Login also uses a sticky, viewport-height left panel at 768px and wider. Its branding spacing and heading size respond to viewport height so the full existing mascot image fits in the remaining flex area with its intrinsic aspect ratio. The right authentication panel uses native document scrolling when content exceeds the screen. The left logo width is height-constrained rather than strictly proportional to viewport width. Below 768px both sections retain normal single-column flow. Google/LINE form actions and authentication behavior are unchanged. The production build and actual local development page were checked at 12 desktop/mobile sizes, including short 1920×600 and 1366×480 screens with native wheel scrolling.
+
 The reference dashboard keeps three statistics columns (six cards in two rows) and four lower summary cards throughout desktop sizes. A chart legend stacks within its narrow card instead of overflowing, widget badges wrap when necessary, and lower cards keep their intrinsic height. Sticky navigation scrolls independently on short laptop screens. SVG chart labels/strokes use rem and donut radii follow their frame.
 
 ## Verification

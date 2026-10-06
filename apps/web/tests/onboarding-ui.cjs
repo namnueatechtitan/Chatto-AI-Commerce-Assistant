@@ -40,6 +40,9 @@ const api = http.createServer(async (request, response) => {
   }
   if (!request.headers.cookie?.includes("chatto_session=")) { response.writeHead(401); response.end("{}"); return; }
   if (url.pathname === "/auth/profile") { response.end(JSON.stringify({ user })); return; }
+  if (url.pathname.endsWith('/ai-settings') && request.method === 'GET') {
+    response.end(JSON.stringify({ ...require('../../api/dist/modules/merchant-ai-settings/merchant-ai-settings.types').DEFAULT_MERCHANT_AI_SETTINGS, canEdit: lineRole === 'Owner' })); return;
+  }
   const linePath = `/merchants/${merchant.id}/line-channel`;
   if (url.pathname === linePath || url.pathname.startsWith(linePath + '/')) {
     if (lineFailure) { response.writeHead(lineFailure); response.end('{}'); return; }
@@ -184,8 +187,13 @@ async function ready(check, label, ms = 15000) {
   await send("Network.setCacheDisabled", {cacheDisabled:true});
   const signIn = () => send("Network.setCookie", { name: "chatto_session", value: "s".repeat(43), url: "http://localhost:3002", httpOnly: true, sameSite: "Lax" });
   const goto = async (pathname, text) => {
-    await send("Page.navigate", { url: `http://localhost:3002${pathname}` });
+    const navigation = await send("Page.navigate", { url: `http://localhost:3002${pathname}` });
+    if (navigation.loaderId) await ready(async () => {
+      const tree = await send("Page.getFrameTree");
+      return tree.frameTree.frame.loaderId === navigation.loaderId;
+    }, "new document committed");
     await ready(() => evaluate(`document.body.innerText.includes(${JSON.stringify(text)})`), pathname);
+    if (pathname.split('?')[0] === '/onboarding/store' && text === 'ข้อมูลพื้นฐานร้าน') await ready(() => evaluate("document.querySelector('#description')?.getBoundingClientRect().height > 0 && Object.keys(document.querySelector('#description')).some(key => key.startsWith('__reactProps$'))"), 'store form hydrated');
     await evaluate("document.fonts.ready.then(() => true)");
   };
   await signIn();

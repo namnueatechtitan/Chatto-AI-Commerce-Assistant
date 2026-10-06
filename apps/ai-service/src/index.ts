@@ -12,6 +12,7 @@ import { GuardrailService } from "./modules/guardrails";
 import { IntentClassifier } from "./modules/intent-classifier";
 import { LlmReplyService } from "./modules/llm";
 import { MemoryService } from "./modules/memory";
+import { applyMerchantOutputPolicy, resolveMerchantFallback } from "./modules/merchant-policy";
 import { MockAiReplyService } from "./modules/mock-ai-reply";
 import { OpenAiClientStub } from "./modules/openai-client";
 import { PromptManager } from "./modules/prompt-manager";
@@ -467,7 +468,10 @@ async function buildAiChatResponse(body: AiChatRequest) {
       input: { message },
     }),
   );
-  const prompt = promptManager.getPrompt("default");
+  const profile = aiContext?.merchant_settings?.ai_profile;
+  if (aiContext?.merchant_settings && aiContext.merchant_settings.merchant_id !== body.merchant_id)
+    throw new Error("Invalid merchant context identity");
+  const prompt = promptManager.getPrompt("default", profile);
   const context = requireMcpOutput(
     await callMcpTool({
       name: "chatto.build_context",
@@ -488,6 +492,7 @@ async function buildAiChatResponse(body: AiChatRequest) {
   let queryEmbeddingError: string | undefined;
 
   try {
+    if (vectorDocuments.length === 0 || aiContext?.policy_denied) throw new Error("No permitted retrieval context");
     queryEmbedding = requireMcpOutput<{ values: number[] }>(
       await callMcpTool({
         name: "chatto.create_embedding",
@@ -501,7 +506,7 @@ async function buildAiChatResponse(body: AiChatRequest) {
   let vectorSync: unknown;
 
   try {
-    vectorSync = await vectorStoreClient.syncDocuments(
+    vectorSync = aiContext?.vector_sync_allowed === false ? { skipped: "merchant_policy" } : await vectorStoreClient.syncDocuments(
       body.merchant_id,
       documentEmbeddings.documents,
     );
@@ -524,7 +529,7 @@ async function buildAiChatResponse(body: AiChatRequest) {
       },
     }),
   );
-  const customerMemories = requireMcpOutput(
+  const customerMemories = profile?.capabilities.rememberCustomerInterest === false ? [] : requireMcpOutput(
     await callMcpTool({
       name: "chatto.load_customer_memory",
       input: { customer_id: body.customer.id },
@@ -538,14 +543,17 @@ async function buildAiChatResponse(body: AiChatRequest) {
   );
   const fallbackReply = mockAiReplyService.generateReply({
     ...classification,
-    language: resolveReplyLanguage(message, body.ai_options?.language),
+    language: profile?.language ?? resolveReplyLanguage(message, body.ai_options?.language),
     retrievedChunks: retrievedKnowledge.chunks,
     merchantSettings: aiContext?.merchant_settings,
   });
-  const llmReply = await llmReplyService.generateReply({
+  const merchantFallback = resolveMerchantFallback(profile, classification.intent, message, retrievedKnowledge.chunks, !!aiContext?.policy_denied);
+  const llmReply = merchantFallback ? { text: merchantFallback.text, usedExternalProvider: false,
+    provider: "policy", model: null, latencyMs: 0, timedOut: false, error: "merchant_policy_fallback" }
+    : await llmReplyService.generateReply({
     intent: classification.intent,
     customerMessage: message,
-    language: resolveReplyLanguage(message, body.ai_options?.language),
+    language: profile?.language ?? resolveReplyLanguage(message, body.ai_options?.language),
     conversationHistory: aiContext?.conversation_history ?? [],
     fallbackReply: fallbackReply.reply,
     merchantSettings: aiContext?.merchant_settings,
@@ -554,9 +562,9 @@ async function buildAiChatResponse(body: AiChatRequest) {
   });
   const reply = {
     ...fallbackReply,
-    reply: llmReply.text,
+    reply: applyMerchantOutputPolicy(llmReply.text, profile),
     needs_handover:
-      fallbackReply.needs_handover && !llmReply.usedExternalProvider,
+      merchantFallback?.handoverRequired ?? (fallbackReply.needs_handover && !llmReply.usedExternalProvider),
   };
   const evaluation = evaluationService.summarize(reply);
   const embeddingsReady = {

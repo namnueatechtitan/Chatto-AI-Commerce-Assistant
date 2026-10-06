@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
   BookOpenText,
   Bot,
@@ -32,6 +32,8 @@ const navigationItems = [
 
 export function Sidebar({ mobile = false, className }: SidebarProps) {
   const pathname = usePathname();
+  const merchantId = useSearchParams().get("merchantId");
+  const scopedHref = (href: string) => merchantId ? `${href}?merchantId=${encodeURIComponent(merchantId)}` : href;
 
   if (mobile) {
     return (
@@ -48,7 +50,7 @@ export function Sidebar({ mobile = false, className }: SidebarProps) {
           return (
             <Link
               key={item.href}
-              href={item.href}
+              href={scopedHref(item.href)}
               className={cn(
                 "inline-flex items-center gap-2 rounded-full border border-border bg-white px-4 py-2 text-sm font-medium whitespace-nowrap text-slate-600 transition-colors hover:border-primary/30 hover:text-slate-950",
                 isActive && "border-primary/20 bg-primary/10 text-primary",
@@ -97,7 +99,7 @@ export function Sidebar({ mobile = false, className }: SidebarProps) {
           return (
             <Link
               key={item.href}
-              href={item.href}
+              href={scopedHref(item.href)}
               className={cn("sidebar-link flex items-center gap-3", isActive && "sidebar-link-active")}
             >
               <Icon className="size-4" />

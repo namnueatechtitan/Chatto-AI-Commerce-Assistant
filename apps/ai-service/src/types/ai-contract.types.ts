@@ -140,6 +140,7 @@ export interface KnowledgeBaseExportResponse {
 }
 
 export interface MerchantSettingsForAi {
+  ai_profile?: MerchantAiProfile;
   merchant_id: string;
   store_name: string;
   bot_name: string;
@@ -154,6 +155,22 @@ export interface MerchantSettingsForAi {
     human_handover: boolean;
     [key: string]: boolean;
   };
+}
+
+// Normalized contract supplied by the authenticated API; defaults live there.
+export interface MerchantAiProfile {
+  assistantName: string;
+  pronoun: string;
+  tone: "friendly" | "polite" | "professional" | "concise";
+  language: "th" | "en";
+  useEmoji: boolean;
+  responseLength: "short" | "medium" | "detailed";
+  capabilities: {
+    recommendProducts: boolean; checkStock: boolean; compareProducts: boolean; answerFaq: boolean;
+    showPrices: boolean; rememberCustomerInterest: boolean; showPromotions: boolean; recommendRelatedProducts: boolean;
+  };
+  rules: Array<{ id?: string; text: string; sortOrder: number }>;
+  fallbackBehavior: "notify_and_handoff" | "handoff_immediately" | "general_knowledge";
 }
 
 export interface AiKnowledgeDocument {
@@ -177,6 +194,8 @@ export interface VectorDocumentForAi {
 }
 
 export interface AiContextForRequest {
+  policy_denied?: boolean;
+  vector_sync_allowed?: boolean;
   merchant_settings?: MerchantSettingsForAi;
   products?: ProductExportResponse;
   knowledge_base?: KnowledgeBaseExportResponse;

@@ -2,6 +2,7 @@ import { BadGatewayException, Injectable } from "@nestjs/common";
 import { configuredServiceToken } from "../../auth/service-token";
 import { InternalAiService } from "../internal-ai/internal-ai.service";
 import type { AiChatRequest, AiChatResponse } from "./ai-contract.types";
+import { AiPolicyResolver } from "../merchant-ai-settings/ai-policy.resolver";
 
 @Injectable()
 export class AiIntegrationService {
@@ -63,28 +64,32 @@ export class AiIntegrationService {
   private async withMerchantContext(
     request: AiChatRequest,
   ): Promise<AiChatRequest> {
+    const merchantSettings = await this.internalAiService.exportMerchantSettings(request.merchant_id);
+    if (!merchantSettings.ai_profile) throw new BadGatewayException("AI settings are unavailable");
+    const policy = new AiPolicyResolver().resolve(merchantSettings.ai_profile, request.message.text);
     const [
-      merchantSettings,
       products,
       knowledgeBase,
       vectorDocuments,
       conversationHistory,
     ] =
       await Promise.all([
-        this.internalAiService.exportMerchantSettings(request.merchant_id),
-        this.internalAiService.exportProducts(request.merchant_id),
-        this.internalAiService.exportKnowledgeBase(request.merchant_id),
-        this.internalAiService.exportVectorDocuments(request.merchant_id),
-        this.internalAiService.exportConversationHistory(
+        policy.products ? this.internalAiService.exportProducts(request.merchant_id) : { merchant_id: request.merchant_id, products: [] },
+        policy.knowledge ? this.internalAiService.exportKnowledgeBase(request.merchant_id) : { merchant_id: request.merchant_id, knowledge_base: [] },
+        policy.storedVectors ? this.internalAiService.exportVectorDocuments(request.merchant_id) : [],
+        policy.history ? this.internalAiService.exportConversationHistory(
           request.merchant_id,
           request.conversation_id,
           request.message.id,
-        ),
+        ) : [],
       ]);
 
     return {
       ...request,
+      ai_options: { ...request.ai_options, language: merchantSettings.ai_profile.language },
       ai_context: {
+        policy_denied: policy.denied,
+        vector_sync_allowed: policy.storedVectors,
         merchant_settings: merchantSettings,
         products,
         knowledge_base: knowledgeBase,

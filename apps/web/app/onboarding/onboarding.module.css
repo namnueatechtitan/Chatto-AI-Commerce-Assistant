@@ -18,6 +18,24 @@
   background: #eff9f2;
 }
 
+/* All two-column setup pages share one stationary branding panel. The document
+   keeps its native scroll so wheel, keyboard and form focus move the right side. */
+@media (min-width: 768px) {
+  .brandPanel {
+    position: sticky;
+    top: 0;
+    align-self: start;
+    height: 100dvh;
+  }
+
+  .fitViewportBrand { padding-top: clamp(1rem, 5dvh, 4.25rem); }
+  .fitViewportBrand .brand, .fitViewportBrand .brandHeading, .fitViewportBrand .brandDescription { flex-shrink: 0; }
+  .fitViewportBrand .brandHeading { font-size: clamp(1.5rem, 5.4dvh, 3rem); }
+  .fitViewportBrand .brandDescription { margin-top: clamp(0.75rem, 2dvh, 1.25rem); }
+  .fitViewportBrand .heroStage { display: flex; min-height: 0; flex: 1 1 0; align-items: start; justify-content: center; margin-top: clamp(1rem, 3dvh, 2.6875rem); padding-bottom: clamp(1rem, 3dvh, 4.75rem); }
+  .fitViewportBrand .hero { width: auto; height: auto; max-width: 73.86%; max-height: 100%; margin-left: 0; object-fit: contain; }
+}
+
 .brandPanel::before {
   position: absolute;
   z-index: -1;

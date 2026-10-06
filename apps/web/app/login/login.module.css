@@ -540,3 +540,65 @@
     transition: none;
   }
 }
+
+/* Keep the full illustration in the viewport while the login side scrolls.
+   Height-aware spacing leaves real space for the mascot on short screens. */
+@media (min-width: 768px) {
+  .illustrationPanel {
+    position: sticky;
+    top: 0;
+    align-self: start;
+    height: 100dvh;
+    padding-top: clamp(1rem, 3dvh, 4.3125rem);
+  }
+
+  .brand {
+    width: min(15.25rem, 27dvh);
+    flex-shrink: 0;
+  }
+
+  .welcome {
+    flex-shrink: 0;
+    margin-top: clamp(0.5rem, 1.5dvh, 0.8125rem);
+  }
+
+  .welcomeBadge {
+    min-height: clamp(1.5rem, 3.5dvh, 2.625rem);
+    font-size: clamp(0.875rem, 2.5dvh, 1.375rem);
+    line-height: 1.3;
+  }
+
+  .welcomeHeading {
+    font-size: clamp(1.5rem, 6.5dvh, 3.75rem);
+    line-height: 1.25;
+  }
+
+  .welcomeDescription {
+    font-size: clamp(0.75rem, 1.6dvh, 1rem);
+    line-height: 1.5;
+  }
+
+  .benefits {
+    flex-shrink: 0;
+    margin-top: clamp(0.75rem, 2.5dvh, 4.25rem);
+  }
+
+  .heroStage {
+    min-height: 0;
+    flex: 1 1 0;
+    margin-top: clamp(0.75rem, 2dvh, 5.1875rem);
+    padding-bottom: 1rem;
+  }
+
+  .hero {
+    width: auto;
+    height: auto;
+    max-width: 90%;
+    max-height: 100%;
+    object-fit: contain;
+  }
+
+  .authPanel {
+    min-height: 100dvh;
+  }
+}

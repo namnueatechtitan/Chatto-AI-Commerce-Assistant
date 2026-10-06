@@ -1,0 +1,54 @@
+'use strict';
+// Isolated browser fixtures, never PostgreSQL/LINE/LLM evidence.
+module.exports=async({assert,evaluate,send,navigate,ready,pause,merchant,secondMerchant,setReadiness,setActivationFailure,setAiEnabled,setMessages,setMessageFailure,getMessageRequests})=>{
+ const query='?merchantId='+merchant.id;
+ const click=async selector=>{await evaluate(`document.querySelector(${JSON.stringify(selector)}).click();true`);await pause(80);};
+ const fill=async(selector,value)=>{await evaluate(`(()=>{const e=document.querySelector(${JSON.stringify(selector)});Object.getOwnPropertyDescriptor(${selector==='#chat-draft'?'HTMLTextAreaElement':'HTMLInputElement'}.prototype,'value').set.call(e,${JSON.stringify(value)});e.dispatchEvent(new Event('input',{bubbles:true}));return true;})()`);await pause(80);};
+ const hydrated=()=>ready(()=>evaluate("Object.keys(document.querySelector('#messages-merchant')??{}).some(k=>k.startsWith('__reactProps$'))"),'merchant selector hydration');
+ const selectMerchant=async id=>{await hydrated();await evaluate(`(()=>{const e=document.querySelector('#messages-merchant');e.value=${JSON.stringify(id)};e.dispatchEvent(new Event('change',{bubbles:true}));return true;})()`);};
+ const stopped=()=>ready(()=>evaluate("document.querySelector('header')?.innerText.includes('Chatto AI หยุดการตอบอัตโนมัติ')"),'real OFF pill');
+ await send('Emulation.setDeviceMetricsOverride',{width:1440,height:1024,deviceScaleFactor:1,mobile:false});
+ setReadiness({store:true,line:true,context:true,activation:false});setAiEnabled(merchant.id,false);setAiEnabled(secondMerchant.id,false);
+ await navigate('/dashboard');await hydrated();
+ assert.equal(await evaluate("document.querySelector('#messages-merchant').value"),'');
+ const unselectedRequests=getMessageRequests().length;await pause(150);assert.equal(getMessageRequests().length,unselectedRequests);
+ assert.ok(await evaluate("document.body.innerText.includes('เลือกร้านค้าก่อนดูข้อความล่าสุด')"));
+ const a=[{id:'a-first',customerName:'Customer A One',message:'A scoped message one',timestamp:'2026-06-06T03:38:00Z',unread:true,channel:'LINE'},{id:'a-second',customerName:'Customer A Two',message:'A scoped message two',timestamp:'2026-06-06T03:37:00Z',unread:true,channel:'LINE'}];
+ const b=[{id:'b-first',customerName:'Customer B Only',message:'B scoped message only',timestamp:'2026-06-06T03:38:00Z',unread:true,channel:'LINE'}];
+ setMessages(merchant.id,a);setMessages(secondMerchant.id,b);await selectMerchant(merchant.id);await stopped();
+ await ready(()=>evaluate("document.body.innerText.includes('A scoped message one')"),'A messages');
+ assert.equal(await evaluate("document.querySelector('header strong').textContent"),'Responsive Test User');
+ assert.ok(await evaluate("document.querySelector('header').innerText.includes('Owner')&&!document.body.innerText.includes('Prayut ChanOcha')"));
+ assert.equal(await evaluate("document.querySelector('#chat-draft').disabled"),true,'real message cannot fake human ownership');
+ await click('button[aria-pressed="false"][class*=conversationRow]');await ready(()=>evaluate("document.querySelector('section[aria-label=\"ข้อความที่เลือก\"]').innerText.includes('Customer A Two')"),'real message selection');
+ await fill('input[aria-label="ค้นหาลูกค้าหรือข้อความ"]','Customer A One');assert.equal(await evaluate("document.querySelectorAll('button[class*=conversationRow]').length"),1);
+ await fill('input[aria-label="ค้นหาลูกค้าหรือข้อความ"]','');
+ await click('button[aria-label="เปิดเมนูร้านค้า"]');await ready(()=>evaluate("!!document.querySelector('[role=dialog][aria-label=\"เมนูร้านค้า\"]')"),'menu drawer');
+ assert.ok(await evaluate(`[...document.querySelectorAll('[role=dialog] a')].every(a=>new URL(a.href).searchParams.get('merchantId')===${JSON.stringify(merchant.id)})`));
+ await send('Input.dispatchKeyEvent',{type:'keyDown',key:'Escape',code:'Escape',windowsVirtualKeyCode:27});await ready(()=>evaluate("!document.querySelector('[role=dialog][aria-label=\"เมนูร้านค้า\"]')"),'Escape closes drawer');
+ await evaluate(`globalThis.tenantLeak=false;globalThis.observer=new MutationObserver(()=>{if(document.querySelector('#messages-merchant')?.value===${JSON.stringify(secondMerchant.id)}&&document.body.innerText.includes('A scoped message'))globalThis.tenantLeak=true;});observer.observe(document.body,{childList:true,subtree:true,characterData:true});true`);
+ await selectMerchant(secondMerchant.id);await ready(()=>evaluate("document.body.innerText.includes('B scoped message only')"),'B scoped messages');
+ assert.ok(!await evaluate('globalThis.tenantLeak'));assert.ok(!await evaluate("document.body.innerText.includes('A scoped message')"));assert.equal(getMessageRequests().at(-1),secondMerchant.id);await evaluate('observer.disconnect();true');
+ setAiEnabled(secondMerchant.id,true);await navigate('/dashboard?merchantId='+secondMerchant.id);await ready(()=>evaluate("document.querySelector('header').innerText.includes('Chatto AI กำลังทำงานอยู่')"),'real ON pill');
+ setAiEnabled(secondMerchant.id,false);await navigate('/dashboard?merchantId='+secondMerchant.id);await stopped();
+ setMessages(secondMerchant.id,[]);await navigate('/dashboard?merchantId='+secondMerchant.id);await ready(()=>evaluate("document.body.innerText.includes('ยังไม่มีข้อความจากลูกค้า')"),'real empty state');
+ setMessageFailure(503);await navigate('/dashboard?merchantId='+secondMerchant.id);await ready(()=>evaluate("document.body.innerText.includes('ไม่สามารถโหลดข้อความได้')"),'message API error');
+ assert.ok(await evaluate("!!document.querySelector('h1')&&document.body.innerText.includes('AI Context')"),'section error keeps Dashboard usable');
+ setMessageFailure(0);await evaluate("[...document.querySelectorAll('button')].find(b=>b.textContent==='ลองใหม่').click();true");await ready(()=>evaluate("document.body.innerText.includes('ยังไม่มีข้อความจากลูกค้า')"),'retry recovers');
+ setActivationFailure(503);await navigate('/dashboard'+query);await ready(()=>evaluate("document.body.innerText.includes('โหลดสถานะร้านไม่สำเร็จ')"),'readiness error');
+ assert.ok(!await evaluate("document.querySelector('header').innerText.includes('Chatto AI กำลังทำงานอยู่')"));setActivationFailure(0);
+ await navigate('/dashboard'+query+'&preview=1');await ready(()=>evaluate("!!document.querySelector('#chat-draft')"),'explicit preview');
+ assert.ok(await evaluate("document.body.innerText.includes('ไม่ส่งข้อความไป LINE')&&document.querySelector('#chat-draft').disabled"));
+ await evaluate("[...document.querySelectorAll('button')].find(b=>b.textContent==='รับช่วงต่อ').click();true");await ready(()=>evaluate("!document.querySelector('#chat-draft').disabled"),'local preview handover');
+ await fill('#chat-draft','Preview draft, not a delivery');await click('button[type=submit]');
+ assert.ok(await evaluate("document.body.innerText.includes('ตัวอย่างเท่านั้น ยังไม่ได้ส่งข้อความ')"));
+ for(const width of [390,320]){
+  await send('Emulation.setDeviceMetricsOverride',{width,height:900,deviceScaleFactor:1,mobile:false});await navigate('/dashboard'+query+'&preview=1');
+  await ready(()=>evaluate("!!document.querySelector('button[class*=conversationRow]')"),'mobile list');
+  assert.equal(await evaluate("document.querySelector('section[aria-label=\"ข้อความที่เลือก\"]').getBoundingClientRect().height"),0,'mobile does not squeeze chat next to list');
+  await click('button[class*=conversationRow]');await ready(()=>evaluate("document.querySelector('section[aria-label=\"ข้อความที่เลือก\"]').getBoundingClientRect().height>0"),'mobile detail');
+  assert.ok(await evaluate('document.documentElement.scrollWidth<=innerWidth+1'));
+  await click('button[aria-label="กลับไปรายการข้อความ"]');assert.ok(await evaluate("document.querySelector('section[aria-label=\"รายการข้อความลูกค้า\"]').getBoundingClientRect().height>0"));
+ }
+ console.log('PASS Dashboard membership/user/role, ON/OFF readiness, selection/search, real read-only composer, preview handover/draft, empty/error/retry, tenant switch without stale messages, menu context/Escape, and mobile list/detail. No provider/database writes.');
+};

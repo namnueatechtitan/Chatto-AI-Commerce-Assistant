@@ -69,9 +69,11 @@ test('Phase B disposable PostgreSQL: tenant constraints, encrypted lifecycle, au
     assert.equal(response.status, 200); return response.json();
   };
   const current = (who) => line.read(who.user.id, who.store.id).then(r => r.current);
-  await t.test('all eight migrations applied; seven FKs are validated and PKs retained', async () => {
+  await t.test('all current migrations applied; seven tenant FKs are validated and PKs retained', async () => {
     const history = await prisma.$queryRawUnsafe("SELECT count(*)::int AS count FROM _prisma_migrations WHERE finished_at IS NOT NULL AND rolled_back_at IS NULL");
-    assert.equal(history[0].count, 8);
+    const fs = require('node:fs'), path = require('node:path');
+    const migrations = path.resolve(__dirname, '../prisma/migrations');
+    assert.equal(history[0].count, fs.readdirSync(migrations).filter(dir => fs.existsSync(path.join(migrations, dir, 'migration.sql'))).length);
     const constraints = await prisma.$queryRawUnsafe("SELECT count(*)::int AS count FROM pg_constraint WHERE conname LIKE '%tenant%fkey' AND convalidated");
     assert.equal(constraints[0].count, 7);
     const keys = await prisma.$queryRawUnsafe("SELECT count(*)::int AS count FROM pg_constraint WHERE contype='p' AND conrelid IN ('channels'::regclass,'customers'::regclass,'conversations'::regclass,'products'::regclass)");
@@ -214,9 +216,12 @@ test('Phase B disposable PostgreSQL: tenant constraints, encrypted lifecycle, au
   await t.test('UUID casing cannot bypass serialization/revision protection', async () => {
     const f = await merchant('F'), draft = { ...input, externalChannelId: '7777777777' };
     await configure(f, draft);
+    // Identical credentials are intentionally a no-op. Race a genuine synthetic
+    // credential change so revision protection is actually exercised.
+    const changed = { ...draft, channelSecret: randomBytes(16).toString('hex'), expectedRevision: 1 };
     const responses = await Promise.all([
-      request(f, route(f.store), 'PUT', { ...draft, expectedRevision: 1 }),
-      request(f, route({ id: f.store.id.toUpperCase() }), 'PUT', { ...draft, expectedRevision: 1 }),
+      request(f, route(f.store), 'PUT', changed),
+      request(f, route({ id: f.store.id.toUpperCase() }), 'PUT', changed),
     ]);
     assert.deepEqual(responses.map(r => r.status).sort(), [200, 409]);
     assert.equal((await current(f)).revision, 2);

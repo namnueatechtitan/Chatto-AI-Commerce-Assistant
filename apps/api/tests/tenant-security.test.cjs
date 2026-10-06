@@ -104,6 +104,8 @@ test('AI integration fails closed before exports and rejects mismatched response
   t.after(() => { global.fetch = originalFetch; original === undefined ? delete process.env.AI_SERVICE_TOKEN : process.env.AI_SERVICE_TOKEN = original; });
   let exports = 0;
   const context = Object.fromEntries(['exportMerchantSettings', 'exportProducts', 'exportKnowledgeBase', 'exportVectorDocuments', 'exportConversationHistory'].map((method) => [method, async () => { exports++; return []; }]));
+  context.exportMerchantSettings = async merchantId => { exports++; return { merchant_id: merchantId,
+    ai_profile: require('../dist/modules/merchant-ai-settings/merchant-ai-settings.types').DEFAULT_MERCHANT_AI_SETTINGS }; };
   const service = new AiIntegrationService(context);
   const request = { request_id: randomUUID(), merchant_id: randomUUID(), conversation_id: randomUUID(), customer: { id: randomUUID() }, message: { id: randomUUID(), text: 'Fixture', timestamp: new Date().toISOString() }, channel: 'line' };
   delete process.env.AI_SERVICE_TOKEN;

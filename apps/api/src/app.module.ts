@@ -36,6 +36,7 @@ import { VectorDocumentsModule } from "./modules/vector-documents.module";
 import { AiIntegrationModule } from "./modules/ai-integration/ai-integration.module";
 import { InternalAiModule } from "./modules/internal-ai/internal-ai.module";
 import { MerchantLineModule } from "./modules/merchant-line/merchant-line.module";
+import { MerchantActivationModule } from "./modules/merchant-activation/merchant-activation.module";
 import { validateProductionServiceCredentials } from "./auth/service-token-policy";
 
 @Module({
@@ -58,6 +59,7 @@ import { validateProductionServiceCredentials } from "./auth/service-token-polic
     OnboardingModule,
     StoreInformationModule,
     MerchantLineModule,
+    MerchantActivationModule,
     CatalogImportsModule,
     RolesModule,
     PermissionsModule,

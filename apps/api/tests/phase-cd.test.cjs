@@ -85,10 +85,12 @@ test('outbound generation and channel evidence survive reservation and final del
   for (const scenario of scenarios) await t.test(scenario.name, async () => {
     const job = { merchantId: randomUUID(), channelId: randomUUID(), customerId: randomUUID(), conversationId: randomUUID(),
       messageId: randomUUID(), eventId: 'line_' + randomBytes(32).toString('hex'), revision: 7 };
+    const epoch = new Date(); job.activationEpoch = epoch.toISOString();
     const event = { id: randomUUID(), rawPayload: { revision: job.revision, phase: 'received' } };
     const inbound = { id: job.messageId, content: 'Synthetic customer message', metadata: { line: { sourceWebhookEventId: job.eventId } } };
     const writes = [], providerCalls = [], failures = [];
     const db = {
+      aiSetting: { findFirst: async () => ({ aiActivatedAt: epoch }) },
       lineWebhookEvent: { findFirst: async () => event, update: async ({ data }) => Object.assign(event, data) },
       message: { findFirst: async () => inbound,
         create: async ({ data }) => { writes.push(structuredClone(data.metadata)); return { ...data, id: randomUUID() }; },

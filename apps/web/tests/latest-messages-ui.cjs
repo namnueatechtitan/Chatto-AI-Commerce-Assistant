@@ -112,7 +112,7 @@ async function ready(check, label) {
   await ready(() => evaluate("document.body.innerText.includes('Merchant A message 25')"), 'A reloaded');
   fixture.delay = 0;
   await selectMerchant(fixture.merchants.empty.id);
-  await ready(() => evaluate("document.body.innerText.includes('ยังไม่มีข้อความเข้ามา')"), 'empty merchant');
+  await ready(() => evaluate("document.body.innerText.includes('ยังไม่มีข้อความจากลูกค้า')"), 'empty merchant');
   assert.equal(await evaluate("document.body.innerText.includes('Merchant A message 25') || document.body.innerText.includes('Merchant B message 41')"), false);
   console.log('PASS A/B cache separation, in-flight switching and empty merchant.');
 

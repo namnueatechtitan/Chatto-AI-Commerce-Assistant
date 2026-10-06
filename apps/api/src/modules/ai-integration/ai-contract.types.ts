@@ -1,3 +1,4 @@
+import type { MerchantAiSettings } from "../merchant-ai-settings/merchant-ai-settings.types";
 export type ChattoChannel = "line" | "web_chat" | "messenger";
 
 export type AiIntent =
@@ -140,6 +141,7 @@ export interface KnowledgeBaseExportResponse {
 }
 
 export interface MerchantSettingsForAi {
+  ai_profile?: MerchantAiSettings;
   merchant_id: string;
   store_name: string;
   bot_name: string;
@@ -188,6 +190,8 @@ export interface VectorDocumentSyncResponse {
 }
 
 export interface AiContextForRequest {
+  policy_denied?: boolean;
+  vector_sync_allowed?: boolean;
   merchant_settings?: MerchantSettingsForAi;
   products?: ProductExportResponse;
   knowledge_base?: KnowledgeBaseExportResponse;

@@ -1,11 +1,12 @@
 import type { ReactNode } from "react";
 import { redirect } from "next/navigation";
+import { Noto_Sans_Thai } from "next/font/google";
 import { getCurrentUser } from "../../lib/auth";
 import { getMyMerchants } from "../../lib/merchants";
 
-import { Sidebar } from "../../components/dashboard/sidebar";
-import { TopNavbar } from "../../components/dashboard/top-navbar";
+import { DashboardShell } from "../../components/dashboard/dashboard-shell";
 import { DashboardProviders } from "./providers";
+const thai = Noto_Sans_Thai({ subsets: ["thai"], display: "swap", variable: "--font-dashboard-thai" });
 
 export default async function DashboardLayout({
   children,
@@ -18,16 +19,7 @@ export default async function DashboardLayout({
   if (memberships.length === 0) redirect("/onboarding");
   return (
     <DashboardProviders key={user.id} userId={user.id}>
-      <div className="dashboard-shell desktop:grid desktop:grid-cols-[15.5rem_minmax(0,1fr)]">
-        <Sidebar />
-        <div className="min-w-0">
-          <TopNavbar user={user} />
-          <div className="border-b border-border bg-white px-4 py-3 desktop:hidden">
-            <Sidebar mobile />
-          </div>
-          <main className="px-4 pb-8 pt-6 sm:px-6 lg:px-8">{children}</main>
-        </div>
-      </div>
+      <div className={thai.variable}><DashboardShell user={user} memberships={memberships}>{children}</DashboardShell></div>
     </DashboardProviders>
   );
 }

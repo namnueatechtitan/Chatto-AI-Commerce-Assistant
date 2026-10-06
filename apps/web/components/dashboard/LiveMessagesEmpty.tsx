@@ -7,7 +7,7 @@ export function LiveMessagesEmpty() {
         <Inbox className="size-6" />
       </div>
       <div className="mt-4 text-base font-semibold text-slate-950">
-        ยังไม่มีข้อความเข้ามา
+        ยังไม่มีข้อความจากลูกค้า
       </div>
       <p className="mt-2 max-w-xl text-sm leading-6 text-slate-500">
         เมื่อลูกค้าส่งข้อความผ่าน LINE OA ข้อความจะปรากฏที่นี่แบบเรียลไทม์

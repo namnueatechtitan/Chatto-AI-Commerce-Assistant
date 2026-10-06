@@ -29,7 +29,7 @@ test("authorization requires active membership and Owner for writes, and multipl
   const onboarding=new OnboardingService({}, {findForUser:async()=>[{merchant:store,role:{name:"Owner"}},{merchant:{...store,id:foreignId},role:{name:"Owner"}}]});
   const result=await onboarding.status(userId);assert.equal(result.merchant,null);assert.equal(result.progress,33);assert.equal(result.memberships.length,2);
   let owners=[{user:{id:userId}}];
-  const shared=new OnboardingService({$queryRawUnsafe:async()=>[{id:'canonical-line-platform'}],channel:{findFirst:async()=>null},aiSetting:{findUnique:async()=>null},product:{findFirst:async()=>null},knowledgeBaseDocument:{findMany:async()=>[]}}, {findForUser:async()=>[{merchant:store,role:{name:'Staff'}}],findOwners:async()=>owners});
+  const shared=new OnboardingService({$queryRawUnsafe:async()=>[{id:'canonical-line-platform'}],channel:{findMany:async()=>[]},aiSetting:{findUnique:async()=>null},product:{count:async()=>0},knowledgeBaseDocument:{count:async()=>0}}, {findForUser:async()=>[{merchant:store,role:{name:'Staff'}}],findOwners:async()=>owners});
   assert.equal((await shared.status(userId,merchantId)).progress,50,'read-only members see readiness of an owned store');owners=[];assert.equal((await shared.status(userId,merchantId)).progress,33);
 });
 

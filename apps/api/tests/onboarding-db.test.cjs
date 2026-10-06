@@ -37,15 +37,18 @@ test("PostgreSQL records determine progress, store isolation, first-store retrie
 
       const platform = await tx.platform.findUnique({ where: { code: "line" } }) ?? await tx.platform.create({ data: { code: "line", name: "LINE", status: "active" } });
       const channel = await tx.channel.create({ data: {
-        merchantId: store.id, platformId: platform.id, channelName: "Integration test", externalChannelId: randomUUID(),
-        status: "CONNECTED", isConnected: true,
+        merchantId: store.id, platformId: platform.id, channelName: "Integration test", externalChannelId: "7200000001",
+        status: "CONFIGURED", isConnected: false,
       } });
       assert.equal((await onboarding.status(user.id, store.id)).progress, 50, "flags without credentials do not complete LINE setup");
-      await tx.channel.update({ where: { id: channel.id }, data: { accessTokenEncrypted: "test-only-placeholder", channelSecretEncrypted: "test-only-placeholder" } });
-      assert.equal((await onboarding.status(user.id, store.id)).progress, 67);
+      await tx.channel.update({ where: { id: channel.id }, data: { accessTokenEncrypted: "test-only-placeholder", channelSecretEncrypted: "test-only-placeholder",
+        status: "WEBHOOK_PENDING", credentialRevision: 1, credentialsVerifiedAt: new Date(), lineBotUserId: "U"+"e".repeat(32), lineClaimedAt: new Date() } });
+      assert.equal((await onboarding.status(user.id, store.id)).progress, 50, "credentials alone do not complete webhook verification");
+      await tx.channel.update({ where: { id: channel.id }, data: { status: "CONNECTED", isConnected: true, webhookVerifiedAt: new Date(), credentialRevision: 2 } });
+      assert.equal((await onboarding.status(user.id, store.id)).progress, 67, "AI context has not been saved yet");
       await tx.aiSetting.create({ data: { merchantId: store.id, botName: "Test Chatto", language: "th" } });
       const document = await tx.knowledgeBaseDocument.create({ data: { merchantId: store.id, type: "faq", title: "Test FAQ", content: "  " } });
-      assert.equal((await onboarding.status(user.id, store.id)).progress, 67);
+      assert.equal((await onboarding.status(user.id, store.id)).progress, 83, "optional FAQ does not block saved AI settings");
       await tx.knowledgeBaseDocument.update({ where: { id: document.id }, data: { content: "Store FAQ for integration testing" } });
       assert.equal((await onboarding.status(user.id, store.id)).progress, 83);
       await tx.merchant.update({ where: { id: store.id }, data: { status: "ACTIVE" } });
@@ -62,7 +65,7 @@ test("PostgreSQL records determine progress, store isolation, first-store retrie
       await tx.authSession.create({ data: { userId: user.id, tokenHash: hashToken(nextToken), expiresAt: new Date(Date.now() + 60000) } });
       const nextProfile = await sessions.profile(nextToken);
       assert.equal((await onboarding.status(nextProfile.user.id, store.id)).progress, 83);
-      await tx.channel.update({ where: { id: channel.id }, data: { status: "INVALID_TOKEN" } });
+      await tx.channel.update({ where: { id: channel.id }, data: { status: "INVALID_TOKEN", isConnected: false } });
       assert.equal((await onboarding.status(user.id, store.id)).progress, 50, "a disconnected prerequisite locks later steps again");
       throw rollback;
     }, { timeout: 30000 }), (error) => error === rollback);

@@ -29,45 +29,42 @@ test("all six progress values are rounded from confirmed prerequisites", () => {
   assert.deepEqual(locked.steps.map((step) => step.state), ["completed", "completed", "completed", "current", "pending", "pending"]);
 });
 
-test("status queries only an accessible store and requires knowledge plus configuration", async () => {
+test("status is tenant-scoped; saved configuration completes Step 5 without optional products/FAQ", async () => {
   const queries = [];
-  let product = null;
-  let documents = [];
-  let settings = { botName: "Chatto", language: "th" };
+  let settings = { botName: "Chatto", language: "th", tone: "friendly", fallbackBehavior: "NOTIFY_AND_HANDOFF", aiEnabled: false, aiActivatedAt: null };
+  const channel = { id: "channel", status: "CONNECTED", isConnected: true, credentialRevision: 1,
+    externalChannelId: "7000000001", accessTokenEncrypted: "synthetic", channelSecretEncrypted: "synthetic",
+    credentialsVerifiedAt: new Date(), webhookVerifiedAt: new Date(), lineClaimedAt: new Date(), lineBotUserId: "U"+"a".repeat(32) };
   const prisma = {
     $queryRawUnsafe: async () => [{ id: "canonical-line-platform" }],
-    channel: { findFirst: async (query) => { queries.push(query); return { id: "channel" }; } },
+    channel: { findMany: async (query) => { queries.push(query); return [channel]; } },
     aiSetting: { findUnique: async (query) => { queries.push(query); return settings; } },
-    product: { findFirst: async (query) => { queries.push(query); return product; } },
-    knowledgeBaseDocument: { findMany: async (query) => { queries.push(query); return documents; } },
+    product: { count: async (query) => { queries.push(query); return 0; } },
+    knowledgeBaseDocument: { count: async (query) => { queries.push(query); return 0; } },
   };
   const service = new OnboardingService(prisma, { findForUser: async (id) => {
     assert.equal(id, user.id);
     return [{ merchant: store, role: { name: "Owner" } }];
   } });
-  const empty = await service.status(user.id, store.id);
-  assert.equal(empty.progress, 67);
-  documents = [{ content: "  " }];
-  assert.equal((await service.status(user.id, store.id)).progress, 67);
-  documents = [{ content: "Shop FAQ" }];
   const ready = await service.status(user.id, store.id);
   assert.equal(ready.progress, 83);
   assert.equal(ready.steps[5].state, "current");
   assert.equal(ready.complete, false);
-  assert.equal(ready.capabilities.activation, false);
+  assert.equal(ready.capabilities.activation, true);
   assert.equal(ready.role, "Owner");
   settings = null;
-  product = { id: "product" };
   assert.equal((await service.status(user.id, store.id)).progress, 67);
-  settings = { botName: "Chatto", language: "th" };
+  settings = { botName: "Chatto", language: "th", tone: "friendly", fallbackBehavior: "NOTIFY_AND_HANDOFF", aiEnabled: true, aiActivatedAt: new Date() };
+  assert.equal((await service.status(user.id, store.id)).progress, 100);
+  settings.aiEnabled = false;
+  assert.equal((await service.status(user.id, store.id)).progress, 83, "paused AI does not complete Step 6");
+  settings.aiActivatedAt = null;
   assert.equal((await service.status(user.id, store.id)).progress, 83);
   for (const query of queries) assert.equal(query.where.merchantId, store.id);
   const channelQuery = queries[0];
-  assert.equal(channelQuery.where.status, "CONNECTED");
-  assert.equal(channelQuery.where.isConnected, true);
+  assert.deepEqual(channelQuery.where.status, { notIn: ["DISCONNECTED", "DISABLED"] });
   assert.equal(channelQuery.where.platformId, "canonical-line-platform");
-  assert.deepEqual(channelQuery.where.credentialRevision, { gt: 0 });
-  assert.deepEqual(channelQuery.select, { id: true });
+  assert.equal(channelQuery.select.id, true);
   const count = queries.length;
   await assert.rejects(service.status(user.id, otherStore.id), (error) => error.getStatus() === 404);
   assert.equal(queries.length, count, "inaccessible stores are rejected before readiness queries");

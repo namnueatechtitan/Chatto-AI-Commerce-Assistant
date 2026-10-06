@@ -47,7 +47,9 @@ test('isolated PostgreSQL: sessions, tenant reads/writes, immutable vectors and 
   const users = {};
   for (const name of ['a', 'b', 'multi', 'staff']) users[name] = await prisma.user.create({ data: { name, globalRole: 'merchant_user' } });
   const merchants = new MerchantsService(prisma), sessions = new AuthSessionService(prisma);
-  const information = new StoreInformationService(prisma, merchants), internal = new InternalAiService(prisma);
+  const information = new StoreInformationService(prisma, merchants);
+  const settings = new (require('../dist/modules/merchant-ai-settings/merchant-ai-settings.service').MerchantAiSettingsService)(prisma, information);
+  const internal = new InternalAiService(prisma, settings);
   const basic = { shopName: 'Fixture A', businessCategory: 'flowers', operatingHours: '09:00–18:00', faqs: [] };
   const a = (await information.create(users.a.id, { ...basic, requestId: randomUUID() })).merchant;
   const b = (await information.create(users.b.id, { ...basic, shopName: 'Fixture B', requestId: randomUUID() })).merchant;

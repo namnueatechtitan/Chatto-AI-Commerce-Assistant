@@ -1,4 +1,5 @@
 import type { RecentOrder } from "../../lib/mock-data";
+import styles from "./merchant-dashboard.module.css";
 import { Badge } from "../ui/Badge";
 import {
   Card,
@@ -10,6 +11,7 @@ import {
 interface RecentOrdersCardProps {
   orders: RecentOrder[];
   className?: string;
+  preview?: boolean;
 }
 
 const statusVariantMap: Record<RecentOrder["status"], "success" | "warning" | "danger"> = {
@@ -27,7 +29,9 @@ const statusLabelMap: Record<RecentOrder["status"], string> = {
 export function RecentOrdersCard({
   orders,
   className,
+  preview = false,
 }: RecentOrdersCardProps) {
+  if (preview) return <Card className={`${styles.card} ${className ?? ""}`}><div className={styles.cardHeading}><h2>คำสั่งซื้อล่าสุด</h2><span className={styles.previewLabel}>ข้อมูลตัวอย่าง</span></div><div className={styles.orderTable}><table><caption className={styles.srOnly}>คำสั่งซื้อตัวอย่าง ไม่ใช่คำสั่งซื้อของร้านจริง</caption><tbody>{orders.map(order => <tr key={order.id}><td>{order.id}</td><td>{order.customer}</td><td>{order.amount}</td><td><span className={`${styles.badge} ${order.status === "paid" ? styles.connected : order.status === "pending" ? styles.warning : styles.cancelled}`}>{statusLabelMap[order.status]}</span></td></tr>)}</tbody></table><p className={styles.muted}>ระบบคำสั่งซื้อยังไม่พร้อมใช้งาน</p></div></Card>;
   return (
     <Card className={className}>
       <CardHeader className="flex flex-row items-start justify-between gap-4 pb-3">

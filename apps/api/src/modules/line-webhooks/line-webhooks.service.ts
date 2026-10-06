@@ -7,6 +7,7 @@ import type { AiChatResponse } from "../ai-integration/ai-contract.types";
 import { buildAiChatRequest } from "../ai-integration/ai-chat-request.mapper";
 import { LineProviderAdapter } from "../merchant-line/line-provider.adapter";
 import { LineChannelRuntimeService, TrustedLineChannel } from "./line-channel-runtime.service";
+import { activeAiEpoch } from "../merchant-activation/activation-readiness";
 import type { LineWebhookEvent, LineWebhookHandleResult, LineWebhookTextMessageEvent } from "./types/line-webhook.types";
 
 interface LineJob extends TrustedLineChannel {
@@ -14,6 +15,7 @@ interface LineJob extends TrustedLineChannel {
   customerId: string;
   conversationId: string;
   messageId: string;
+  activationEpoch: string;
 }
 
 // Qualify provider IDs by channel in the existing global unique column.
@@ -125,7 +127,12 @@ export class LineWebhooksService {
           data: { processedAt: new Date(), rawPayload: { version: 1, revision: context.revision, phase: "human_or_blocked" } } });
         return null;
       }
-      return { ...context, eventId, customerId: customer.id, conversationId: conversation.id, messageId: message.id };
+      const activationEpoch = await activeAiEpoch(db, context.merchantId);
+      if (!activationEpoch) {
+        await this.markAiDisabled(db, context, eventId);
+        return null;
+      }
+      return { ...context, eventId, customerId: customer.id, conversationId: conversation.id, messageId: message.id, activationEpoch };
     });
   }
 
@@ -153,11 +160,20 @@ export class LineWebhooksService {
       used_external_provider: generation.used_external_provider, fallback_used: generation.fallback_used };
   }
 
+  private markAiDisabled(db: Prisma.TransactionClient, context: TrustedLineChannel, eventId: string) {
+    return db.lineWebhookEvent.update({ where: { webhookEventId: eventId, merchantId: context.merchantId, channelId: context.channelId },
+      data: { processedAt: new Date(), rawPayload: { version: 1, revision: context.revision, phase: "ai_disabled" } } });
+  }
+
   private async respond(job: LineJob, input: LineWebhookTextMessageEvent): Promise<void> {
     try {
       const claimed = await this.runtime.locked(job, async db => {
         const { event, message } = await this.ownedJob(db, job);
         if ((event.rawPayload as { phase?: unknown }).phase !== "received") return null;
+        if (await activeAiEpoch(db, job.merchantId) !== job.activationEpoch) {
+          await this.markAiDisabled(db, job, job.eventId);
+          return null;
+        }
         await db.lineWebhookEvent.update({ where: { id: event.id, merchantId: job.merchantId },
           data: { rawPayload: { version: 1, revision: job.revision, phase: "ai_started" } } });
         return message;
@@ -173,6 +189,11 @@ export class LineWebhooksService {
       const aiMetadata = { requestId: response.request_id, generation: this.generationMetadata(response.generation) };
       const outbound = await this.runtime.locked(job, async db => {
         await this.ownedJob(db, job);
+        // Pause during an in-flight LLM call suppresses both reservation and delivery.
+        if (await activeAiEpoch(db, job.merchantId) !== job.activationEpoch) {
+          await this.markAiDisabled(db, job, job.eventId);
+          return null;
+        }
         const message = await db.message.create({ data: { merchantId: job.merchantId, conversationId: job.conversationId,
           senderType: "AI", messageType: "TEXT", content: response.reply.text.slice(0, 5000),
           metadata: { line: { ...lineMetadata, delivery: "reserved" }, ai: aiMetadata } } });
@@ -182,9 +203,16 @@ export class LineWebhooksService {
           data: { rawPayload: { version: 1, revision: job.revision, phase: "reply_reserved" } } });
         return message;
       });
+      if (!outbound) return;
       await this.runtime.locked(job, async (db, channel) => {
         const { event } = await this.ownedJob(db, job);
         if ((event.rawPayload as { phase?: unknown }).phase !== "reply_reserved") return;
+        if (await activeAiEpoch(db, job.merchantId) !== job.activationEpoch) {
+          await db.message.update({ where: { id: outbound.id, merchantId: job.merchantId },
+            data: { metadata: { line: { ...lineMetadata, delivery: "suppressed" }, ai: aiMetadata } } });
+          await this.markAiDisabled(db, job, job.eventId);
+          return;
+        }
         const delivery = await this.provider.reply(this.runtime.accessToken(channel), input.replyToken, outbound.content);
         // Definitive provider authentication failure invalidates this revision's
         // readiness. Keep the ownership reservation until explicit disconnect.

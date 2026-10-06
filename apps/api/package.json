@@ -5,6 +5,10 @@
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only src/main.ts",
     "build": "tsc -p tsconfig.build.json",
+    "test:ai-settings": "npm run build && node --test tests/merchant-ai-settings.test.cjs",
+    "test:ai-settings:db": "npm run build && node --test tests/merchant-ai-settings-db.test.cjs",
+    "test:activation": "npm run build && node --test tests/merchant-activation.test.cjs",
+    "test:activation:db": "npm run build && node scripts/test-activation-db.cjs --regression",
     "test:auth": "npm run build && node --test tests/auth.test.cjs",
     "test:onboarding": "npm run build && node --test tests/onboarding.test.cjs",
     "test:messages": "npm run build && node --test tests/latest-messages.test.cjs",

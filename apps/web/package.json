@@ -11,7 +11,9 @@
     "test:line": "node --test tests/merchant-line-api.test.cjs",
     "test:messages:ui": "node tests/latest-messages-ui.cjs",
     "typecheck": "tsc --noEmit",
-    "test:responsive:ui": "node tests/responsive-ui.cjs"
+    "test:responsive:ui": "node tests/responsive-ui.cjs",
+    "test:ai-context:ui": "node tests/ai-context-ui.cjs",
+    "test:dashboard:ui": "node tests/dashboard-owner-ui.cjs"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.81.5",

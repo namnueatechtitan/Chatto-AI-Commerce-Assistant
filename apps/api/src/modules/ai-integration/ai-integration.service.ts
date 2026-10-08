@@ -3,6 +3,7 @@ import { configuredServiceToken } from "../../auth/service-token";
 import { InternalAiService } from "../internal-ai/internal-ai.service";
 import type { AiChatRequest, AiChatResponse } from "./ai-contract.types";
 import { AiPolicyResolver } from "../merchant-ai-settings/ai-policy.resolver";
+import { performance } from "node:perf_hooks";
 
 @Injectable()
 export class AiIntegrationService {
@@ -18,14 +19,20 @@ export class AiIntegrationService {
 
   async chat(request: AiChatRequest): Promise<AiChatResponse> {
     const serviceToken = configuredServiceToken("AI_SERVICE_TOKEN");
-    const enrichedRequest = await this.withMerchantContext(request);
+    const startedAt = Date.now();
+    const startedTick = performance.now();
     const controller = new AbortController();
+    const expired = () => controller.signal.aborted || performance.now() - startedTick >= this.aiServiceTimeoutMs;
     const timeout = setTimeout(
       () => controller.abort(),
       this.aiServiceTimeoutMs,
     );
 
     try {
+      const enrichedRequest = await this.withCancellation(this.withMerchantContext(request, controller.signal), controller.signal);
+      const contextExportMs = Date.now() - startedAt;
+      if (expired()) { controller.abort(); throw new Error("AI deadline expired"); }
+      enrichedRequest.execution = { deadline_at_ms: startedAt + this.aiServiceTimeoutMs - 1000 };
       const response = await fetch(`${this.aiServiceBaseUrl}/mcp/chat`, {
         method: "POST",
         signal: controller.signal,
@@ -43,13 +50,15 @@ export class AiIntegrationService {
       }
 
       const result = await response.json() as AiChatResponse | null;
+      if (expired()) { controller.abort(); throw new Error("AI deadline expired"); }
       if (!result || result.request_id !== request.request_id || result.merchant_id !== request.merchant_id ||
           result.conversation_id !== request.conversation_id || typeof result.reply?.text !== "string") {
         throw new BadGatewayException("Invalid AI service response");
       }
+      if (result.generation) result.generation.context_export_ms = contextExportMs;
       return result;
     } catch (error) {
-      if (error instanceof Error && error.name === "AbortError") {
+      if (controller.signal.aborted || (error instanceof Error && error.name === "AbortError")) {
         throw new Error(
           `AI service timed out after ${this.aiServiceTimeoutMs}ms`,
         );
@@ -63,8 +72,10 @@ export class AiIntegrationService {
 
   private async withMerchantContext(
     request: AiChatRequest,
+    signal: AbortSignal,
   ): Promise<AiChatRequest> {
     const merchantSettings = await this.internalAiService.exportMerchantSettings(request.merchant_id);
+    if (signal.aborted) throw new Error("AI deadline expired");
     if (!merchantSettings.ai_profile) throw new BadGatewayException("AI settings are unavailable");
     const policy = new AiPolicyResolver().resolve(merchantSettings.ai_profile, request.message.text);
     const [
@@ -97,6 +108,15 @@ export class AiIntegrationService {
         conversation_history: conversationHistory,
       },
     };
+  }
+
+  private withCancellation<T>(work: Promise<T>, signal: AbortSignal): Promise<T> {
+    return new Promise<T>((resolve, reject) => {
+      const abort = () => reject(new Error("AI deadline expired"));
+      signal.addEventListener("abort", abort, { once: true });
+      if (signal.aborted) abort();
+      work.then(resolve, reject).finally(() => signal.removeEventListener("abort", abort));
+    });
   }
 
   private resolveTimeoutMs(name: string, fallback: number): number {

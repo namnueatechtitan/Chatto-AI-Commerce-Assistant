@@ -119,6 +119,7 @@ export class RagService {
     );
 
     return {
+      merchant_id: document.merchant_id,
       source_type: document.source_type,
       source_id: document.source_id,
       title: this.getTitle(metadata, document.source_id),

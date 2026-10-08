@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Check } from "lucide-react";
+import { Check, Pencil } from "lucide-react";
 import type { OnboardingStep, OnboardingStepId } from "../../lib/onboarding";
 import styles from "../../app/onboarding/onboarding.module.css";
 
@@ -31,6 +31,9 @@ export function OnboardingStepItem({ step, index, merchantId }: { step: Onboardi
     <div className={styles.stepCopy}>
       <h3>{step.id === "store" && step.state === "completed" && href ? <Link href={href} style={{ color: "inherit", textDecoration: "none" }} aria-label="แก้ไขข้อมูลร้านค้า">{title}</Link> : title}</h3>
       <p>{description}</p>
+      {step.id === "store" && step.state === "completed" && merchantId && href && <Link className={styles.stepEdit} href={href}>
+        <Pencil size={14} aria-hidden="true" />แก้ไขข้อมูลร้านค้า
+      </Link>}
     </div>
     {step.state === "current" && href
       ? <Link className={`${styles.statusBadge} ${styles.stepAction}`} href={href} aria-label={`เริ่มการตั้งค่า: ${title}`}>เริ่มการตั้งค่า</Link>

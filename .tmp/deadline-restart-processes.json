@@ -1,0 +1,16 @@
+﻿[
+    {
+        "OldWorkerPid":  42988,
+        "OldWatcherPid":  15772,
+        "Service":  "api",
+        "WorkingDirectory":  "C:\\Users\\User\\Chatto-AI-Commerce-Assistant\\apps\\api",
+        "LauncherPid":  50860
+    },
+    {
+        "OldWorkerPid":  23576,
+        "OldWatcherPid":  1260,
+        "Service":  "ai",
+        "WorkingDirectory":  "C:\\Users\\User\\Chatto-AI-Commerce-Assistant\\apps\\ai-service",
+        "LauncherPid":  49036
+    }
+]

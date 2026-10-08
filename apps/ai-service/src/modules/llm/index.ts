@@ -39,11 +39,12 @@ export class LlmReplyService {
         text: input.fallbackReply,
         usedExternalProvider: false,
         latencyMs: 0,
-        error: "OpenAI provider is reserved for future activation",
+        requestAttempted: false, errorCategory: "provider_disabled", error: "provider_disabled",
       };
     }
 
     return {
+      requestAttempted: false,
       provider: "mock",
       model: null,
       text: input.fallbackReply,

@@ -2,6 +2,7 @@ import type {
   GenerateLlmReplyInput,
   GenerateLlmReplyResult,
 } from "./llm.types";
+import { cancellationCategory, operationControl } from "../../request-budget";
 
 interface GeminiContentPart {
   text?: string;
@@ -68,79 +69,56 @@ export class GeminiClient {
     input: GenerateLlmReplyInput,
   ): Promise<GenerateLlmReplyResult> {
     const startedAt = Date.now();
-
-    if (!this.isConfigured()) {
-      return {
-        provider: "gemini",
-        model: this.model,
-        text: input.fallbackReply,
-        usedExternalProvider: false,
-        latencyMs: Date.now() - startedAt,
-        error: "GEMINI_API_KEY is not configured",
-      };
-    }
-
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
-
+    let requestAttempted = false;
+    let httpStatus: number | undefined;
+    const failure = (category: NonNullable<GenerateLlmReplyResult["errorCategory"]>): GenerateLlmReplyResult => ({
+      provider: "gemini", model: this.model, text: input.fallbackReply,
+      usedExternalProvider: false, requestAttempted, httpStatus,
+      latencyMs: Date.now() - startedAt, timedOut: category === "timeout" || category === "deadline_exceeded",
+      errorCategory: category, error: category,
+    });
+    if (input.control?.signal?.aborted) return failure(cancellationCategory(input.control.signal));
+    if (input.control?.timeoutMs !== undefined && input.control.timeoutMs < 1000)
+      return failure("deadline_exceeded");
+    if (!this.isConfigured()) return failure("not_configured");
+    const control = operationControl(input.control?.timeoutMs ?? this.timeoutMs, input.control?.signal);
     try {
+      const body = JSON.stringify({ model: this.model, system_instruction: input.systemInstruction,
+        input: this.buildUserInput(input), generation_config: { thinking_level: "minimal" } });
+      requestAttempted = true;
       const response = await fetch(this.endpoint, {
-        method: "POST",
-        signal: controller.signal,
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": this.apiKey,
-        },
-        body: JSON.stringify({
-          model: this.model,
-          system_instruction: input.systemInstruction,
-          input: this.buildUserInput(input),
-          generation_config: {
-            thinking_level: "minimal",
-          },
-        }),
+        method: "POST", signal: control.signal,
+        headers: { "Content-Type": "application/json", "x-goog-api-key": this.apiKey },
+        body,
       });
-
-      const payload = (await response.json().catch(() => ({}))) as GeminiInteractionResponse;
-
+      httpStatus = response.status;
+      if (control.signal.aborted) { await response.body?.cancel().catch(() => undefined); return failure(cancellationCategory(control.signal)); }
       if (!response.ok) {
-        return {
-          provider: "gemini",
-          model: this.model,
-          text: input.fallbackReply,
-          usedExternalProvider: false,
-          latencyMs: Date.now() - startedAt,
-          error: payload.error?.message ?? response.statusText,
-        };
+        await response.body?.cancel().catch(() => undefined);
+        return failure(response.status === 401 || response.status === 403 ? "authentication"
+          : response.status === 429 ? "rate_limit" : "http_error");
       }
-
-      const text = extractGeminiText(payload);
-
-      return {
-        provider: "gemini",
-        model: this.model,
-        text: text || input.fallbackReply,
-        usedExternalProvider: Boolean(text),
-        latencyMs: Date.now() - startedAt,
-        error: text
-          ? undefined
-          : `Gemini returned no model output (status: ${payload.status ?? "unknown"})`,
-      };
+      let payload: GeminiInteractionResponse;
+      try {
+        const parsed: unknown = await response.json();
+        if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return failure("invalid_response");
+        payload = parsed as GeminiInteractionResponse;
+        if ((payload.output_text !== undefined && typeof payload.output_text !== "string") ||
+          (payload.steps !== undefined && !Array.isArray(payload.steps))) return failure("invalid_response");
+      } catch {
+        return failure(control.signal.aborted ? cancellationCategory(control.signal) : "invalid_response");
+      }
+      if (control.signal.aborted) return failure(cancellationCategory(control.signal));
+      let text: string;
+      try { text = extractGeminiText(payload); }
+      catch { return failure("invalid_response"); }
+      if (!text) return failure("empty_output");
+      return { provider: "gemini", model: this.model, text, usedExternalProvider: true,
+        requestAttempted: true, httpStatus, latencyMs: Date.now() - startedAt, timedOut: false };
     } catch (error) {
-      const timedOut = error instanceof Error && error.name === "AbortError";
-
-      return {
-        provider: "gemini",
-        model: this.model,
-        text: input.fallbackReply,
-        usedExternalProvider: false,
-        latencyMs: Date.now() - startedAt,
-        timedOut,
-        error: error instanceof Error ? error.message : String(error),
-      };
-    } finally {
-      clearTimeout(timeout);
-    }
+      return failure(control.signal.aborted ? cancellationCategory(control.signal)
+        : (error instanceof Error && error.name === "AbortError") ? "timeout" : "network_error");
+    } finally { control.dispose(); }
   }
 
   private buildUserInput(input: GenerateLlmReplyInput): string {

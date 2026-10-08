@@ -100,6 +100,7 @@ export class InternalAiService {
             size: variant.size ?? undefined,
             price,
             currency: variant.currency ?? "THB",
+            stock_known: variant.stockOnHand != null && variant.stockReserved != null,
             stock_qty: stockQty,
             reserved_qty: reservedQty,
             available_qty: availableQty(stockQty, reservedQty),

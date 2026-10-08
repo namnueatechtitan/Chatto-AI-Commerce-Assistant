@@ -1,0 +1,81 @@
+{
+  "branch": "feature/multi-tenant",
+  "liveSourceFilesUnchanged": 149,
+  "modifiedFiles": [
+    "apps/api/src/modules/ai-integration/ai-contract.types.ts",
+    "apps/api/src/modules/ai-integration/ai-integration.service.ts",
+    "apps/api/src/modules/line-webhooks/line-webhooks.service.ts",
+    "apps/api/tests/deadline-pipeline.test.cjs",
+    "apps/ai-service/src/index.ts",
+    "apps/ai-service/src/modules/embeddings/index.ts",
+    "apps/ai-service/src/modules/llm/gemini-client.ts",
+    "apps/ai-service/src/modules/llm/llm.types.ts",
+    "apps/ai-service/src/modules/vector-store/index.ts",
+    "apps/ai-service/src/request-budget.ts",
+    "apps/ai-service/src/types/ai-contract.types.ts",
+    "apps/ai-service/scripts/deadline-pipeline.test.cjs"
+  ],
+  "patchSha256": "55ae1f508f0b010d690bf25023e9a95254983713fde7ed5ca7cacb1ddd710ea1",
+  "files": [
+    {
+      "file": "apps/api/src/modules/ai-integration/ai-contract.types.ts",
+      "baselineSha256": "c4c47acf4098d4582e98c85bb2cb4404f5435442d2a3dd0504d8f124703317a4",
+      "updatedSha256": "1fc24c648abd5d101fc3bb54cd8e02b936fcbc32e3d1755b0b40411a8e9eddcc"
+    },
+    {
+      "file": "apps/api/src/modules/ai-integration/ai-integration.service.ts",
+      "baselineSha256": "9d57c22ac4b861044cd2a3611e3f834840e7bca918e581fc0f2609872dddff4f",
+      "updatedSha256": "300f1a99ad1370c39ed3e8d1cc22537ba7cb78e14f70a25470522036758b9dd8"
+    },
+    {
+      "file": "apps/api/src/modules/line-webhooks/line-webhooks.service.ts",
+      "baselineSha256": "b1d858dbc385a431b10ed121e7c5c578974a672eafdb0755c2e4841f4acdae2a",
+      "updatedSha256": "76cb0cbb31825417e2db4fbc4cf0d22d019a876067c40b536be1439d3ef25529"
+    },
+    {
+      "file": "apps/api/tests/deadline-pipeline.test.cjs",
+      "baselineSha256": null,
+      "updatedSha256": "f61237f71a29a6b7bb806be2051b08e4ec26aa626e93fdae21463f343b3b9628"
+    },
+    {
+      "file": "apps/ai-service/src/index.ts",
+      "baselineSha256": "ef56b2d90d7fb87e3e7895b04afeee68bdcf8f11274e3766ed0f133476dd4ba0",
+      "updatedSha256": "e1a661444abedd4133b9f47209d8b9d8a9d244b77573ccc8e9d44db27fb48ac6"
+    },
+    {
+      "file": "apps/ai-service/src/modules/embeddings/index.ts",
+      "baselineSha256": "75157969c89abc73b582cd273e1930f8398a49054748e8fddcf8e597756ab0d7",
+      "updatedSha256": "5a7b7d6cc1bee0487bb11177a19557b024159604c3c918de1d558aee0080c8a7"
+    },
+    {
+      "file": "apps/ai-service/src/modules/llm/gemini-client.ts",
+      "baselineSha256": "b36e416a4b51ce2f04b95a7ee643fb0dc1226b03eb0f24d55bfa0f50d65ffbc6",
+      "updatedSha256": "19c3c642f699d934d06e01d53fec7ec38af085741f376458fa2d9c5e3a10254f"
+    },
+    {
+      "file": "apps/ai-service/src/modules/llm/llm.types.ts",
+      "baselineSha256": "a3f4aa1035aeaec00179f63937bf0b1d4804eb4508a026f788d54ec1c63c3f19",
+      "updatedSha256": "d0bff97924f8874f5d8ddf89efcabe5fda6dcef7631cc1ba0cca8baa7fca86ec"
+    },
+    {
+      "file": "apps/ai-service/src/modules/vector-store/index.ts",
+      "baselineSha256": "b440ba1f1c7a493e0b8c63a30572465e7a66fe8299ff002e08ed1d1b54b4f95e",
+      "updatedSha256": "3f28d33e9ae852bde171ffc4184c12487370f7fe50fb0fe8683c4ff3a522d2f9"
+    },
+    {
+      "file": "apps/ai-service/src/request-budget.ts",
+      "baselineSha256": null,
+      "updatedSha256": "01ec4689b1e13cab0b17848e3cd0745b970980dfb89be6d37af4e21ca61fc861"
+    },
+    {
+      "file": "apps/ai-service/src/types/ai-contract.types.ts",
+      "baselineSha256": "20a0bb6992a495c9ffe61599e686e2cad12440b69386eee480e3e66c168b8af8",
+      "updatedSha256": "b024f9ac5af4cd6c4702efa96adf036b931cda3147ac27059d1a36570ae5ebde"
+    },
+    {
+      "file": "apps/ai-service/scripts/deadline-pipeline.test.cjs",
+      "baselineSha256": null,
+      "updatedSha256": "3f254f3a73dd9a04f7638c878cd0272e7115b979bb7e6d68ae23adebdf61f3f7"
+    }
+  ]
+}

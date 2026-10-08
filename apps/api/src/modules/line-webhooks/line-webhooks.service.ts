@@ -149,15 +149,43 @@ export class LineWebhooksService {
   }
 
   private generationMetadata(generation: AiChatResponse["generation"]): Prisma.InputJsonObject | null {
-    if (!generation || !["mock", "gemini", "openai"].includes(generation.provider) ||
+    if (!generation || !["mock", "gemini", "openai", "policy"].includes(generation.provider) ||
       typeof generation.used_external_provider !== "boolean" || typeof generation.fallback_used !== "boolean") return null;
-    // Retain only provider evidence. Never persist arbitrary provider errors,
-    // debug payloads, or an unrecognized value masquerading as a model name.
     const modelPattern = generation.provider === "gemini" ? /^gemini-[a-zA-Z0-9._-]{1,100}$/
       : generation.provider === "openai" ? /^(?:gpt-|chatgpt-|o[1-9])[a-zA-Z0-9._-]{1,100}$/ : null;
-    return { provider: generation.provider,
+    const result: Record<string, Prisma.InputJsonValue | null> = { provider: generation.provider,
       model: typeof generation.model === "string" && modelPattern?.test(generation.model) ? generation.model : null,
       used_external_provider: generation.used_external_provider, fallback_used: generation.fallback_used };
+    const categories = ["not_configured", "timeout", "authentication", "rate_limit", "http_error",
+      "empty_output", "invalid_response", "network_error", "merchant_policy", "provider_disabled", "deadline_exceeded", "cancelled"];
+    for (const field of ["error_category", "fallback_reason"] as const) {
+      const value = generation[field];
+      if (typeof value === "string" && categories.includes(value)) result[field] = value;
+    }
+    for (const field of ["provider_request_attempted", "provider_success", "timed_out"] as const) {
+      if (typeof generation[field] === "boolean") result[field] = generation[field];
+    }
+    const integer = (value: unknown, maximum: number): value is number =>
+      typeof value === "number" && Number.isInteger(value) && value >= 0 && value <= maximum;
+    if (integer(generation.latency_ms, 3_600_000)) result.latency_ms = generation.latency_ms;
+    for (const field of ["pipeline_latency_ms", "context_export_ms"] as const)
+      if (integer(generation[field], 3_600_000)) result[field] = generation[field]!;
+    if (generation.stage_timings && typeof generation.stage_timings === "object") {
+      const timings: Record<string, Prisma.InputJsonValue> = {};
+      for (const stage of ["document_embedding", "query_embedding", "vector_sync", "retrieval", "generation"] as const) {
+        const value = generation.stage_timings[stage];
+        if (value && integer(value.latency_ms, 3_600_000) &&
+          ["completed", "skipped", "timed_out", "cancelled", "failed"].includes(value.outcome))
+          timings[stage] = { latency_ms: value.latency_ms, outcome: value.outcome };
+      }
+      result.stage_timings = timings;
+    }
+    if (integer(generation.retrieved_chunk_count, 100)) result.retrieved_chunk_count = generation.retrieved_chunk_count;
+    if (integer(generation.provider_http_status, 599) && generation.provider_http_status >= 100)
+      result.provider_http_status = generation.provider_http_status;
+    if (["merchant_policy", "trusted_catalog", "deterministic", "none"].includes(generation.fallback_source ?? ""))
+      result.fallback_source = generation.fallback_source!;
+    return result;
   }
 
   private markAiDisabled(db: Prisma.TransactionClient, context: TrustedLineChannel, eventId: string) {

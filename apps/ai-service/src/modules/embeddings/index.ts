@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { cancellationCategory, operationControl, type RequestControl } from "../../request-budget";
 
 import type { VectorDocumentForAi } from "../../types/ai-contract.types";
 
@@ -47,23 +48,27 @@ export class EmbeddingsService {
     return this.dimensions;
   }
 
-  async embedQuery(text: string): Promise<EmbeddingResult> {
+  async embedQuery(text: string, control?: RequestControl): Promise<EmbeddingResult> {
     return this.embedText(
       `task: search result | query: ${text.trim()}`,
       "RETRIEVAL_QUERY",
+      undefined,
+      control,
     );
   }
 
-  async embedDocument(text: string, title: string): Promise<EmbeddingResult> {
+  async embedDocument(text: string, title: string, control?: RequestControl): Promise<EmbeddingResult> {
     return this.embedText(
       `title: ${title.trim() || "none"} | text: ${text.trim()}`,
       "RETRIEVAL_DOCUMENT",
       title,
+      control,
     );
   }
 
   async enrichDocuments(
     documents: VectorDocumentForAi[],
+    control?: RequestControl,
   ): Promise<DocumentEmbeddingResult> {
     let generated = 0;
     let reused = 0;
@@ -81,10 +86,13 @@ export class EmbeddingsService {
 
           const title = this.getTitle(document);
 
+          if (control?.signal?.aborted) return document;
+
           try {
             const embedding = await this.embedDocument(
               document.chunk_text,
               title,
+              control,
             );
             generated += 1;
 
@@ -131,7 +139,9 @@ export class EmbeddingsService {
     text: string,
     taskType: EmbeddingTaskType,
     title?: string,
+    control?: RequestControl,
   ): Promise<EmbeddingResult> {
+    if (control?.signal?.aborted) throw new Error(cancellationCategory(control.signal));
     if (!this.isConfigured()) {
       throw new Error("GEMINI_API_KEY is not configured for embeddings");
     }
@@ -145,6 +155,14 @@ export class EmbeddingsService {
         dimensions: cached.length,
         values: [...cached],
       };
+    }
+
+    // Request-scoped cancellation must not abort another request's shared promise.
+    if (control) {
+      const values = await this.requestEmbedding(text, taskType, title, control);
+      this.cache.set(cacheKey, values);
+      this.trimCache();
+      return { model: this.model, dimensions: values.length, values: [...values] };
     }
 
     let pending = this.inFlight.get(cacheKey);
@@ -175,17 +193,18 @@ export class EmbeddingsService {
     text: string,
     taskType: EmbeddingTaskType,
     title?: string,
+    requestControl?: RequestControl,
   ): Promise<number[]> {
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
+    const control = operationControl(Math.min(this.timeoutMs, requestControl?.timeoutMs ?? this.timeoutMs), requestControl?.signal);
     const modelPath = `models/${this.model}`;
 
     try {
+      if (control.signal.aborted) throw new Error(cancellationCategory(control.signal));
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/${modelPath}:embedContent`,
         {
           method: "POST",
-          signal: controller.signal,
+          signal: control.signal,
           headers: {
             "Content-Type": "application/json",
             "x-goog-api-key": this.apiKey,
@@ -203,26 +222,33 @@ export class EmbeddingsService {
         },
       );
       const payload = (await response.json().catch(() => ({}))) as GeminiEmbeddingResponse;
+      if (control.signal.aborted) throw new Error(cancellationCategory(control.signal));
 
       if (!response.ok) {
+        if (requestControl) throw new Error(response.status === 401 || response.status === 403 ? "authentication"
+          : response.status === 429 ? "rate_limit" : "http_error");
         throw new Error(payload.error?.message ?? response.statusText);
       }
 
       const values = payload.embedding?.values;
 
       if (!Array.isArray(values) || values.length === 0) {
+        if (requestControl) throw new Error("empty_output");
         throw new Error("Gemini returned an empty embedding");
       }
 
       return normalizeVector(values);
     } catch (error) {
+      if (control.signal.aborted) throw new Error(cancellationCategory(control.signal));
+      if (requestControl) throw new Error(error instanceof Error &&
+        ["authentication", "rate_limit", "http_error", "empty_output"].includes(error.message) ? error.message : "network_error");
       if (error instanceof Error && error.name === "AbortError") {
         throw new Error(`Gemini embedding timed out after ${this.timeoutMs}ms`);
       }
 
       throw error;
     } finally {
-      clearTimeout(timeout);
+      control.dispose();
     }
   }
 

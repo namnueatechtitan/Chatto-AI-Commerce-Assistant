@@ -1,0 +1,52 @@
+[
+  {
+    "app": "ai-service",
+    "label": "build",
+    "exit": 0,
+    "summary": []
+  },
+  {
+    "app": "ai-service",
+    "label": "typecheck",
+    "exit": 0,
+    "summary": []
+  },
+  {
+    "app": "ai-service",
+    "label": "regression",
+    "exit": 0,
+    "summary": [
+      "# tests 59",
+      "# pass 59",
+      "# fail 0",
+      "# cancelled 0",
+      "# skipped 0",
+      "# duration_ms 7138.0751"
+    ]
+  },
+  {
+    "app": "api",
+    "label": "build",
+    "exit": 0,
+    "summary": []
+  },
+  {
+    "app": "api",
+    "label": "typecheck",
+    "exit": 0,
+    "summary": []
+  },
+  {
+    "app": "api",
+    "label": "regression",
+    "exit": 0,
+    "summary": [
+      "# tests 78",
+      "# pass 78",
+      "# fail 0",
+      "# cancelled 0",
+      "# skipped 0",
+      "# duration_ms 2371.9552"
+    ]
+  }
+]

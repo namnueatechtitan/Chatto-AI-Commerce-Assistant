@@ -2,6 +2,8 @@ import cors from "cors";
 import express, { type Request, type Response } from "express";
 import fs from "node:fs";
 import path from "node:path";
+import { performance } from "node:perf_hooks";
+import { operationControl, RequestBudget, type StageName, type StageOutcome } from "./request-budget";
 import { requireServiceToken } from "./service-auth";
 import { validateProductionServiceCredentials } from "./service-token-policy";
 
@@ -294,7 +296,9 @@ function buildVectorDocumentsFromContext(
     const contentUnchanged =
       stored?.metadata?.content_hash === document.metadata?.content_hash;
 
-    if (!stored || !contentUnchanged || !Array.isArray(stored.embedding)) {
+    if (!stored || stored.merchant_id !== document.merchant_id || stored.source_id !== document.source_id ||
+      stored.source_type !== document.source_type || stored.status.toLowerCase() !== "active" ||
+      !contentUnchanged || !Array.isArray(stored.embedding)) {
       return document;
     }
 
@@ -365,6 +369,7 @@ function isAiChatRequest(body: Partial<AiChatRequest>): body is AiChatRequest {
     typeof body.merchant_id === "string" &&
     typeof body.channel === "string" &&
     typeof body.conversation_id === "string" &&
+    (body.execution === undefined || (Number.isSafeInteger(body.execution?.deadline_at_ms) && body.execution.deadline_at_ms > 0)) &&
     Boolean(body.customer) &&
     typeof body.customer?.id === "string" &&
     Boolean(body.message) &&
@@ -459,7 +464,7 @@ function requireMcpOutput<TOutput>(result: McpToolResult): TOutput {
   return result.output as TOutput;
 }
 
-async function buildAiChatResponse(body: AiChatRequest) {
+async function buildAiChatResponse(body: AiChatRequest, budget: RequestBudget) {
   const message = body.message.text;
   const aiContext = body.ai_context;
   const classification = requireMcpOutput<{ intent: string; confidence: number }>(
@@ -484,38 +489,53 @@ async function buildAiChatResponse(body: AiChatRequest) {
       },
     }),
   );
-  const vectorDocuments = buildVectorDocumentsFromContext(aiContext);
-  const documentEmbeddings = await embeddingsService.enrichDocuments(
-    vectorDocuments,
-  );
-  let queryEmbedding: number[] | undefined;
-  let queryEmbeddingError: string | undefined;
-
-  try {
-    if (vectorDocuments.length === 0 || aiContext?.policy_denied) throw new Error("No permitted retrieval context");
-    queryEmbedding = requireMcpOutput<{ values: number[] }>(
-      await callMcpTool({
-        name: "chatto.create_embedding",
-        input: { text: message },
-      }),
-    ).values;
-  } catch (error) {
-    queryEmbeddingError = error instanceof Error ? error.message : String(error);
+  const vectorDocuments = buildVectorDocumentsFromContext(aiContext).filter(document =>
+    document.merchant_id === body.merchant_id && document.status.toLowerCase() === "active");
+  const contextAllowed = vectorDocuments.length > 0 && !aiContext?.policy_denied &&
+    !["small_talk", "language_preference", "empty_message"].includes(classification.intent);
+  async function preparation<T>(name: StageName, capMs: number, skipped: T,
+    work: (signal: AbortSignal, timeoutMs: number) => Promise<T>): Promise<T> {
+    const startedAt = performance.now();
+    const timeoutMs = contextAllowed ? budget.preprocessingMs(capMs) : 0;
+    if (timeoutMs < 50) { budget.record(name, startedAt, "skipped"); return skipped; }
+    const control = operationControl(timeoutMs, budget.signal);
+    let outcome: StageOutcome = "completed";
+    try { return await work(control.signal, timeoutMs); }
+    catch { outcome = control.signal.aborted ? (budget.signal.reason === "cancelled" ? "cancelled" : "timed_out") : "failed"; return skipped; }
+    finally {
+      if (control.signal.aborted) outcome = budget.signal.reason === "cancelled" ? "cancelled" : "timed_out";
+      budget.record(name, startedAt, outcome); control.dispose();
+    }
   }
-
-  let vectorSync: unknown;
-
-  try {
-    vectorSync = aiContext?.vector_sync_allowed === false ? { skipped: "merchant_policy" } : await vectorStoreClient.syncDocuments(
-      body.merchant_id,
-      documentEmbeddings.documents,
-    );
-  } catch (error) {
-    vectorSync = {
-      error: error instanceof Error ? error.message : String(error),
-    };
-  }
-
+  const documentEmbeddings = await preparation("document_embedding", 750,
+    { documents: vectorDocuments, generated: 0, reused: 0, errors: [] as string[] },
+    (signal, timeoutMs) => embeddingsService.enrichDocuments(vectorDocuments, { signal, timeoutMs }));
+  if (documentEmbeddings.errors.length && budget.stages.document_embedding?.outcome === "completed")
+    budget.stages.document_embedding.outcome = "failed";
+  const queryEmbedding = documentEmbeddings.documents.some(document =>
+    Array.isArray(document.embedding) && document.embedding.length === embeddingsService.getDimensions())
+    ? await preparation<number[] | undefined>("query_embedding", 1500, undefined,
+      async (signal, timeoutMs) => (await embeddingsService.embedQuery(message, { signal, timeoutMs })).values)
+    : undefined;
+  if (!budget.stages.query_embedding) budget.record("query_embedding", performance.now(), "skipped");
+  const queryEmbeddingError = queryEmbedding ? undefined : "embedding_unavailable";
+  const managedDocuments = documentEmbeddings.documents.filter(document =>
+    document.merchant_id === body.merchant_id && document.metadata?.managed_by === "chatto-live-chunker");
+  const storedDocuments = (aiContext?.vector_documents ?? []).filter(document =>
+    document.merchant_id === body.merchant_id && document.status.toLowerCase() === "active");
+  const needsSync = managedDocuments.some(document => {
+    const stored = storedDocuments.find(row => row.id === document.id && row.source_id === document.source_id && row.source_type === document.source_type);
+    return !stored || stored.metadata?.content_hash !== document.metadata?.content_hash ||
+      stored.metadata?.embedding_model !== document.metadata?.embedding_model ||
+      stored.metadata?.embedding_dimensions !== document.metadata?.embedding_dimensions ||
+      !Array.isArray(stored.embedding) || stored.embedding.length !== embeddingsService.getDimensions();
+  });
+  let vectorSync: unknown = { skipped: aiContext?.vector_sync_allowed === false ? "merchant_policy" : "unchanged" };
+  if (needsSync && aiContext?.vector_sync_allowed !== false) {
+    vectorSync = await preparation<unknown>("vector_sync", 500, { skipped: "budget_or_failure" },
+      (signal, timeoutMs) => vectorStoreClient.syncDocuments(body.merchant_id, documentEmbeddings.documents, { signal, timeoutMs }));
+  } else budget.record("vector_sync", performance.now(), "skipped");
+  const retrievalStartedAt = performance.now();
   const retrievedKnowledge = requireMcpOutput<RagRetrieveResult>(
     await callMcpTool({
       name: "chatto.retrieve_knowledge",
@@ -529,6 +549,7 @@ async function buildAiChatResponse(body: AiChatRequest) {
       },
     }),
   );
+  budget.record("retrieval", retrievalStartedAt, "completed");
   const customerMemories = profile?.capabilities.rememberCustomerInterest === false ? [] : requireMcpOutput(
     await callMcpTool({
       name: "chatto.load_customer_memory",
@@ -543,13 +564,17 @@ async function buildAiChatResponse(body: AiChatRequest) {
   );
   const fallbackReply = mockAiReplyService.generateReply({
     ...classification,
+    merchantId: body.merchant_id, customerMessage: message, products: aiContext?.products,
+    policyDenied: !!aiContext?.policy_denied,
     language: profile?.language ?? resolveReplyLanguage(message, body.ai_options?.language),
     retrievedChunks: retrievedKnowledge.chunks,
     merchantSettings: aiContext?.merchant_settings,
   });
   const merchantFallback = resolveMerchantFallback(profile, classification.intent, message, retrievedKnowledge.chunks, !!aiContext?.policy_denied);
+  const generationStartedAt = performance.now();
   const llmReply = merchantFallback ? { text: merchantFallback.text, usedExternalProvider: false,
-    provider: "policy", model: null, latencyMs: 0, timedOut: false, error: "merchant_policy_fallback" }
+    provider: "policy", model: null, latencyMs: 0, timedOut: false, error: "merchant_policy",
+    requestAttempted: false, errorCategory: "merchant_policy", httpStatus: undefined }
     : await llmReplyService.generateReply({
     intent: classification.intent,
     customerMessage: message,
@@ -559,7 +584,10 @@ async function buildAiChatResponse(body: AiChatRequest) {
     merchantSettings: aiContext?.merchant_settings,
     retrievedChunks: retrievedKnowledge.chunks,
     systemInstruction: prompt.systemPrompt,
+    control: { signal: budget.signal, timeoutMs: budget.generationMs() },
   });
+  budget.record("generation", generationStartedAt, merchantFallback ? "skipped" : llmReply.usedExternalProvider ? "completed"
+    : llmReply.errorCategory === "cancelled" ? "cancelled" : llmReply.timedOut ? "timed_out" : "failed");
   const reply = {
     ...fallbackReply,
     reply: applyMerchantOutputPolicy(llmReply.text, profile),
@@ -597,9 +625,18 @@ async function buildAiChatResponse(body: AiChatRequest) {
       model: llmReply.model,
       used_external_provider: llmReply.usedExternalProvider,
       fallback_used: !llmReply.usedExternalProvider,
-      fallback_reason: llmReply.usedExternalProvider ? undefined : llmReply.error,
+      fallback_reason: llmReply.usedExternalProvider ? undefined : llmReply.errorCategory ?? "provider_disabled",
+      provider_request_attempted: llmReply.requestAttempted ?? false,
+      provider_success: llmReply.usedExternalProvider,
+      error_category: llmReply.errorCategory,
+      provider_http_status: llmReply.httpStatus,
+      retrieved_chunk_count: retrievedKnowledge.chunks.length,
+      fallback_source: llmReply.usedExternalProvider ? "none" : merchantFallback ? "merchant_policy"
+        : fallbackReply.fallback_source ?? "deterministic",
       latency_ms: llmReply.latencyMs,
-      timed_out: llmReply.timedOut,
+      pipeline_latency_ms: budget.elapsedMs(),
+      stage_timings: budget.stages,
+      timed_out: llmReply.timedOut ?? false,
     },
     actions: [],
     handover_required: reply.needs_handover,
@@ -774,16 +811,21 @@ app.post("/mcp/chat", requireServiceToken, async (request, response) => {
     return;
   }
 
+  const budget = new RequestBudget(body.execution?.deadline_at_ms);
+  const disconnected = () => { if (!response.writableEnded) budget.cancel(); };
+  response.once("close", disconnected);
+  request.once("aborted", disconnected);
   try {
-    response.json(await buildAiChatResponse(body));
-  } catch (error) {
-    response.status(500).json({
-      error: {
-        code: "AI_PIPELINE_FAILED",
-        message: error instanceof Error ? error.message : String(error),
-        request_id: body.request_id,
-      },
+    const result = await buildAiChatResponse(body, budget);
+    if (!response.destroyed && !budget.signal.aborted && budget.remainingMs() > 0) response.json(result);
+  } catch {
+    if (!response.destroyed && !budget.signal.aborted) response.status(500).json({
+      error: { code: "AI_PIPELINE_FAILED", message: "AI pipeline failed.", request_id: body.request_id },
     });
+  } finally {
+    response.removeListener("close", disconnected);
+    request.removeListener("aborted", disconnected);
+    budget.dispose();
   }
 });
 
@@ -882,16 +924,21 @@ app.post("/ai/chat", requireServiceToken, async (request, response) => {
     return;
   }
 
+  const budget = new RequestBudget(body.execution?.deadline_at_ms);
+  const disconnected = () => { if (!response.writableEnded) budget.cancel(); };
+  response.once("close", disconnected);
+  request.once("aborted", disconnected);
   try {
-    response.json(await buildAiChatResponse(body));
-  } catch (error) {
-    response.status(500).json({
-      error: {
-        code: "AI_PIPELINE_FAILED",
-        message: error instanceof Error ? error.message : String(error),
-        request_id: body.request_id,
-      },
+    const result = await buildAiChatResponse(body, budget);
+    if (!response.destroyed && !budget.signal.aborted && budget.remainingMs() > 0) response.json(result);
+  } catch {
+    if (!response.destroyed && !budget.signal.aborted) response.status(500).json({
+      error: { code: "AI_PIPELINE_FAILED", message: "AI pipeline failed.", request_id: body.request_id },
     });
+  } finally {
+    response.removeListener("close", disconnected);
+    request.removeListener("aborted", disconnected);
+    budget.dispose();
   }
 });
 

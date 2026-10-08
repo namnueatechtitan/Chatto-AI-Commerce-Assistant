@@ -25,7 +25,7 @@ export function buildProductKnowledgeDocument(product: ProductForAi): AiKnowledg
         variant.size ? `Size: ${variant.size}.` : undefined,
         variant.sku ? `SKU: ${variant.sku}.` : undefined,
         moneyText(variant.price, variant.currency),
-        `Available quantity: ${variant.available_qty}.`,
+        variant.stock_known === false ? "Stock: not specified." : `Available quantity: ${variant.available_qty}.`,
       ]),
     )
     .join(" ");

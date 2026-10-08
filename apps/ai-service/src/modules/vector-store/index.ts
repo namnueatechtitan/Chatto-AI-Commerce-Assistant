@@ -1,5 +1,6 @@
 import type { VectorDocumentForAi } from "../../types/ai-contract.types";
 import { configuredServiceToken } from "../../service-auth";
+import { cancellationCategory, operationControl, type RequestControl } from "../../request-budget";
 
 export interface VectorSyncResult {
   merchant_id: string;
@@ -15,6 +16,7 @@ export class VectorStoreClient {
   async syncDocuments(
     merchantId: string,
     documents: VectorDocumentForAi[],
+    requestControl?: RequestControl,
   ): Promise<VectorSyncResult> {
     const managedDocuments = documents.filter(
       (document) =>
@@ -30,15 +32,15 @@ export class VectorStoreClient {
 
     const token = configuredServiceToken("INTERNAL_SERVICE_TOKEN");
 
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
+    const control = operationControl(Math.min(this.timeoutMs, requestControl?.timeoutMs ?? this.timeoutMs), requestControl?.signal);
 
     try {
+      if (control.signal.aborted) throw new Error(cancellationCategory(control.signal));
       const response = await fetch(
         `${this.baseUrl.replace(/\/$/u, "")}/internal/ai/vector-documents/sync`,
         {
           method: "POST",
-          signal: controller.signal,
+          signal: control.signal,
           headers: {
             Authorization: `Bearer ${token}`,
             "Content-Type": "application/json",
@@ -57,15 +59,18 @@ export class VectorStoreClient {
         );
       }
 
-      return (await response.json()) as VectorSyncResult;
+      const result = (await response.json()) as VectorSyncResult;
+      if (control.signal.aborted) throw new Error(cancellationCategory(control.signal));
+      return result;
     } catch (error) {
+      if (control.signal.aborted) throw new Error(cancellationCategory(control.signal));
       if (error instanceof Error && error.name === "AbortError") {
         throw new Error(`Vector sync timed out after ${this.timeoutMs}ms`);
       }
 
       throw error;
     } finally {
-      clearTimeout(timeout);
+      control.dispose();
     }
   }
 }

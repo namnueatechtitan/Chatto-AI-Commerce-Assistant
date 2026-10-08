@@ -1,0 +1,50 @@
+{
+  "reviewedSourceMatch": true,
+  "protectedFilesUnchanged": 366,
+  "backendCatalogExport": {
+    "httpStatus": 200,
+    "merchantScoped": true,
+    "products": 1,
+    "variants": 30
+  },
+  "syntheticRuntimePolicyProbe": {
+    "httpStatus": 200,
+    "provider": "policy",
+    "providerRequestAttempted": false,
+    "stageTimings": {
+      "document_embedding": {
+        "latency_ms": 0,
+        "outcome": "skipped"
+      },
+      "query_embedding": {
+        "latency_ms": 0,
+        "outcome": "skipped"
+      },
+      "vector_sync": {
+        "latency_ms": 0,
+        "outcome": "skipped"
+      },
+      "retrieval": {
+        "latency_ms": 0,
+        "outcome": "completed"
+      },
+      "generation": {
+        "latency_ms": 0,
+        "outcome": "skipped"
+      }
+    },
+    "pipelineLatencyMs": 2,
+    "fallbackSource": "merchant_policy"
+  },
+  "timing": {
+    "preparationCapMs": 2999.9333,
+    "generationCapMs": 15000,
+    "aiReserveMs": 500,
+    "apiReserveMs": 1000
+  },
+  "ngrok": {
+    "url": "https://resort-spendable-shush.ngrok-free.dev",
+    "target": "http://[::1]:4000",
+    "publicHealthStatus": 200
+  }
+}

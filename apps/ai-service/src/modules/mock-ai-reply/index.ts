@@ -1,3 +1,4 @@
+import { trustedCatalogFallback, type CatalogFallbackInput } from "./trusted-catalog";
 import type { AiResponse } from "../../types/ai-response";
 import type {
   MerchantSettingsForAi,
@@ -13,13 +14,13 @@ export const mockAiResponse: AiResponse = {
 };
 
 export class MockAiReplyService {
-  generateReply(input: {
+  generateReply(input: CatalogFallbackInput & {
     intent: string;
     confidence: number;
     language?: string;
     retrievedChunks?: RagRetrievedChunk[];
     merchantSettings?: MerchantSettingsForAi;
-  }): AiResponse {
+  }): AiResponse & { fallback_source?: "trusted_catalog" | "deterministic" } {
     const chunks = input.retrievedChunks ?? [];
     const botName = input.merchantSettings?.bot_name ?? "Chatto";
     const isThai = input.language === "th";
@@ -37,6 +38,10 @@ export class MockAiReplyService {
       };
     }
 
+    const catalogReply = trustedCatalogFallback(input);
+    if (catalogReply) return { ...mockAiResponse, intent: input.intent, confidence: input.confidence,
+      reply: catalogReply, needs_handover: false, suggested_action: null, fallback_source: "trusted_catalog" };
+
     if (input.intent === "unknown") {
       return {
         ...mockAiResponse,
@@ -50,7 +55,8 @@ export class MockAiReplyService {
       };
     }
 
-    const reply = this.buildContextReply(botName, chunks, isThai);
+    const reply = input.products && ["product_question", "product_search", "recommendation"].includes(input.intent)
+      ? null : this.buildContextReply(botName, chunks, isThai);
 
     return {
       ...mockAiResponse,

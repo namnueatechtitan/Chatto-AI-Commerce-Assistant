@@ -1,0 +1,738 @@
+diff --git a/apps/ai-service/scripts/fallback-diagnostics.test.cjs b/apps/ai-service/scripts/fallback-diagnostics.test.cjs
+new file mode 100644
+index 0000000..f934079
+--- /dev/null
++++ b/apps/ai-service/scripts/fallback-diagnostics.test.cjs
+@@ -0,0 +1,218 @@
++const assert = require("node:assert/strict");
++const test = require("node:test");
++const { MockAiReplyService } = require("../dist/modules/mock-ai-reply");
++const { GeminiClient } = require("../dist/modules/llm/gemini-client");
++const { RagService } = require("../dist/modules/rag");
++const { buildProductKnowledgeDocument } = require("../dist/modules/rag/vector-document.builder");
++const { resolveMerchantFallback } = require("../dist/modules/merchant-policy");
++const { IntentClassifier } = require("../dist/modules/intent-classifier");
++
++const profile = {rules:[],assistantName:"Chatto",pronoun:"I",tone:"friendly",useEmoji:false,responseLength:"medium",language:"th",fallbackBehavior:"notify_and_handoff",capabilities:{
++  showPrices:true,checkStock:true,showPromotions:true,answerFaq:true,recommendProducts:true,
++  compareProducts:true,recommendRelatedProducts:true,rememberCustomerInterest:true}};
++function fixture(stockKnown=false) {
++  const product={id:"p1",merchant_id:"a",name:"เสื้อยืด Yuepaochatto",status:"active",price:null,
++    currency:"THB",image_urls:[],updated_at:"2026-10-08",variants:[]};
++  for(const color of ["Black / ดำ","White / ขาว","Gray / เทา","Navy / กรมท่า","Cream / ครีม"])
++    for(const size of ["S","M","L","XL","2XL","3XL"])
++      product.variants.push({id:color+size,product_id:"p1",variant_name:color+size,color,size,
++        price:null,currency:"THB",stock_known:stockKnown,stock_qty:0,reserved_qty:0,available_qty:0,status:"active"});
++  return {merchantId:"a",products:{merchant_id:"a",products:[product]},
++    retrievedChunks:[{merchant_id:"a",source_type:"product",source_id:"p1",chunk_text:"",score:0.5,
++      lexical_score:0.5,intent_score:0,metadata:{},title:product.name}],
++    merchantSettings:{merchant_id:"a",bot_name:"Chatto",default_language:"th",ai_profile:profile},
++    confidence:0.65,intent:"unknown",language:"th"};
++}
++function fallback(message,input=fixture()) {
++  return new MockAiReplyService().generateReply({...input,customerMessage:message});
++}
++for (const message of ["ร้านนายขายอะไร","อยากได้เสื้อยืดสีดำ","มีเสื้อสีดำไซส์ M ไหม"]) {
++  test("natural product question uses scoped structured evidence: "+message,()=>{
++    const result=fallback(message);
++    assert.equal(result.fallback_source,"trusted_catalog");
++    assert.match(result.reply,/เสื้อยืด/);
++    assert.doesNotMatch(result.reply,/ยังไม่เข้าใจ|พร้อมจำหน่าย/);
++  });
++}
++test("unknown intent with relevant evidence is conservative about a color-size pair",()=>{
++  const result=fallback("มีเสื้อสีดำไซส์ M ไหม");
++  assert.match(result.reply,/Black \/ ดำ \/ M/);
++  assert.doesNotMatch(result.reply,/\/ XL/);
++  assert.match(result.reply,/ไม่มีข้อมูลสต็อกที่ยืนยันได้/);
++});
++test("unknown without evidence and unrelated evidence retain safe fallback",()=>{
++  const input=fixture();input.retrievedChunks=[];
++  assert.match(fallback("อยากได้เสื้อยืดสีดำ",input).reply,/ยังไม่เข้าใจ/);
++  assert.match(fallback("เครื่องยนต์รถยนต์ทำงานอย่างไร").reply,/ยังไม่เข้าใจ/);
++  assert.match(fallback("เสื้อยืดจัดส่งพรุ่งนี้ไหม").reply,/ยังไม่เข้าใจ/);
++});
++test("NULL and documented zero stock remain distinct",()=>{
++  assert.match(fallback("มีเสื้อสีดำไซส์ M ไหม").reply,/ไม่มีข้อมูลสต็อก/);
++  assert.match(fallback("มีเสื้อสีดำไซส์ M ไหม",fixture(true)).reply,/ระบุเป็น 0/);
++  const doc=buildProductKnowledgeDocument(fixture().products.products[0]);
++  assert.match(doc.content,/Stock: not specified/);
++  assert.doesNotMatch(doc.content,/Available quantity: 0/);
++});
++test("missing price is not fabricated",()=>{
++  const result=fallback("เสื้อยืดสีดำราคาเท่าไหร่");
++  assert.match(result.reply,/ไม่มีราคาที่ระบุ/);
++  assert.doesNotMatch(result.reply,/0 THB/);
++});
++test("overlapping names do not authorize another merchant's data",()=>{
++  for(const mode of ["export","row","chunk"]){
++    const input=fixture();
++    if(mode==="export")input.products.merchant_id="b";
++    if(mode==="row")input.products.products[0].merchant_id="b";
++    if(mode==="chunk")input.retrievedChunks[0].merchant_id="b";
++    assert.notEqual(fallback("อยากได้เสื้อยืดสีดำ",input).fallback_source,"trusted_catalog");
++  }
++});
++test("retrieval rejects cross-merchant candidates and missing tenant",()=>{
++  const doc={merchant_id:"b",source_type:"product",source_id:"p1",chunk_text:"เสื้อยืดสีดำ",
++    status:"active",metadata:{title:"เสื้อยืด"},embedding:null};
++  assert.equal(new RagService().retrieve({merchant_id:"a",query:"เสื้อยืดสีดำ",documents:[doc]}).chunks.length,0);
++  assert.equal(new RagService().retrieve({query:"เสื้อยืดสีดำ",documents:[doc]}).chunks.length,0);
++});
++test("policy denial and disabled facts prevent catalog fallback",()=>{
++  const input=fixture();input.policyDenied=true;
++  assert.notEqual(fallback("อยากได้เสื้อยืดสีดำ",input).fallback_source,"trusted_catalog");
++  assert.ok(resolveMerchantFallback(profile,"unknown","อยากได้เสื้อยืดสีดำ",input.retrievedChunks,true));
++  input.policyDenied=false;
++  input.merchantSettings={...input.merchantSettings,ai_profile:{...profile,capabilities:{...profile.capabilities,showPrices:false}}};
++  assert.notEqual(fallback("อยากได้เสื้อยืดสีดำ",input).fallback_source,"trusted_catalog");
++});
++test("small talk is unchanged even when product context exists",()=>{
++  const result=fallback("สวัสดี",{...fixture(),intent:"small_talk"});
++  assert.match(result.reply,/สวัสดี/);assert.doesNotMatch(result.reply,/เสื้อยืด/);
++});
++test("invalid variant ownership and ambiguous product matches fail closed",()=>{
++  const input=fixture();input.products.products[0].variants.forEach(v=>v.product_id="foreign");
++  assert.notEqual(fallback("อยากได้เสื้อยืดสีดำ",input).fallback_source,"trusted_catalog");
++  const ambiguous=fixture();const p={...ambiguous.products.products[0],id:"p2"};
++  ambiguous.products.products.push(p);ambiguous.retrievedChunks.push({...ambiguous.retrievedChunks[0],source_id:"p2"});
++  assert.notEqual(fallback("อยากได้เสื้อยืดสีดำ",ambiguous).fallback_source,"trusted_catalog");
++});
++async function mockedProvider(fetcher,fn) {
++  const savedFetch=global.fetch,savedKey=process.env.GEMINI_API_KEY;
++  process.env.GEMINI_API_KEY="unit-test-key";global.fetch=fetcher;
++  try {await fn(new GeminiClient());}
++  finally {global.fetch=savedFetch;if(savedKey===undefined)delete process.env.GEMINI_API_KEY;else process.env.GEMINI_API_KEY=savedKey;}
++}
++const request={intent:"unknown",customerMessage:"private customer message",language:"th",
++  conversationHistory:[],fallbackReply:"safe fallback",retrievedChunks:[],systemInstruction:"private prompt"};
++for(const [status,category] of [[401,"authentication"],[403,"authentication"],[429,"rate_limit"],[500,"http_error"]]){
++  test("Gemini HTTP "+status+" is sanitized as "+category,async()=>{
++    await mockedProvider(async()=>new Response("sensitive provider body",{status}),async client=>{
++      const result=await client.generateReply(request);
++      assert.equal(result.errorCategory,category);assert.equal(result.httpStatus,status);
++      assert.equal(result.requestAttempted,true);assert.equal(result.text,"safe fallback");
++      assert.doesNotMatch(JSON.stringify(result),/sensitive provider|private customer|private prompt|unit-test-key/);
++    });
++  });
++}
++test("Gemini timeout is classified without raw error text",async()=>{
++  await mockedProvider(async()=>{const e=new Error("sensitive error");e.name="AbortError";throw e;},async client=>{
++    const r=await client.generateReply(request);assert.equal(r.errorCategory,"timeout");assert.equal(r.timedOut,true);
++    assert.equal(r.error,"timeout");
++  });
++});
++test("Gemini network failure is sanitized",async()=>{
++  await mockedProvider(async()=>{throw new Error("secret URL");},async client=>{
++    assert.equal((await client.generateReply(request)).errorCategory,"network_error");
++  });
++});
++for(const [payload,category] of [[{},"empty_output"],[{output_text:123},"invalid_response"],["wrong","invalid_response"]]){
++  test("Gemini "+category+" classification",async()=>{
++    await mockedProvider(async()=>new Response(JSON.stringify(payload)),async client=>{
++      assert.equal((await client.generateReply(request)).errorCategory,category);
++    });
++  });
++}
++test("Gemini malformed JSON is invalid_response",async()=>{
++  await mockedProvider(async()=>new Response("not JSON"),async client=>{
++    assert.equal((await client.generateReply(request)).errorCategory,"invalid_response");
++  });
++});
++test("Gemini successful generation uses output and records success",async()=>{
++  await mockedProvider(async()=>new Response(JSON.stringify({output_text:"usable answer"})),async client=>{
++    const r=await client.generateReply(request);
++    assert.equal(r.text,"usable answer");assert.equal(r.usedExternalProvider,true);
++    assert.equal(r.requestAttempted,true);assert.equal(r.httpStatus,200);assert.equal(r.errorCategory,undefined);
++  });
++});
++test("provider timeout integrates with evidence-aware fallback",async()=>{
++  const input=fixture(),message="มีเสื้อสีดำไซส์ M ไหม";
++  const intent=new IntentClassifier().classify(message);
++  const reply=new MockAiReplyService().generateReply({...input,...intent,customerMessage:message});
++  await mockedProvider(async()=>{const e=new Error();e.name="AbortError";throw e;},async client=>{
++    const r=await client.generateReply({...request,customerMessage:message,fallbackReply:reply.reply});
++    assert.equal(r.errorCategory,"timeout");assert.equal(r.text,reply.reply);
++    assert.match(r.text,/Black \/ ดำ \/ M/);
++  });
++});
++
++test("actual HTTP orchestration preserves catalog fallback and diagnostics on mocked rate limits",async t=>{
++  const net=require("node:net"),path=require("node:path"),{spawn}=require("node:child_process");
++  const listener=net.createServer();await new Promise(r=>listener.listen(0,"127.0.0.1",r));
++  const port=listener.address().port;await new Promise(r=>listener.close(r));
++  const entry=path.resolve(__dirname,"../dist/index.js");
++  const preload='global.fetch=async(url)=>{if(String(url).includes(":embedContent"))return new Response(JSON.stringify({embedding:{values:[1,0]}}));if(String(url).endsWith("/interactions"))return new Response("private provider body",{status:429});throw new Error("Unexpected network call blocked");};require('+JSON.stringify(entry)+');';
++  const child=spawn(process.execPath,["-e",preload],{cwd:__dirname,windowsHide:true,stdio:"ignore",
++    env:{...process.env,NODE_ENV:"test",AI_SERVICE_PORT:String(port),AI_SERVICE_TOKEN:"test-only-service",
++      AI_LLM_PROVIDER:"gemini",GEMINI_API_KEY:"synthetic-test-key",INTERNAL_SERVICE_TOKEN:"",
++      OPENAI_API_KEY:"",GEMINI_API_BASE_URL:"https://mock.invalid/interactions"}});
++  t.after(()=>child.kill());
++  const base="http://127.0.0.1:"+port;
++  for(let i=0;i<100;i++){if(await fetch(base+"/health").then(r=>r.ok).catch(()=>false))break;await new Promise(r=>setTimeout(r,25));}
++  for(const message of ["ร้านนายขายอะไร","อยากได้เสื้อยืดสีดำ","มีเสื้อสีดำไซส์ M ไหม"]){
++    const f=fixture();
++    const body={request_id:"request",merchant_id:"a",channel:"line",conversation_id:"conversation",
++      customer:{id:"customer"},message:{id:"message",text:message,timestamp:new Date().toISOString()},
++      ai_context:{merchant_settings:f.merchantSettings,products:f.products,
++        knowledge_base:{merchant_id:"a",knowledge_base:[]},vector_documents:[],conversation_history:[],
++        vector_sync_allowed:false,policy_denied:false}};
++    const response=await fetch(base+"/mcp/chat",{method:"POST",headers:{Authorization:"Bearer test-only-service",
++      "Content-Type":"application/json"},body:JSON.stringify(body)});
++    assert.equal(response.status,200);
++    const result=await response.json();
++    assert.equal(result.generation.error_category,"rate_limit");
++    assert.equal(result.generation.provider_http_status,429);
++    assert.equal(result.generation.provider_request_attempted,true);
++    assert.equal(result.generation.provider_success,false);
++    assert.equal(result.generation.fallback_source,"trusted_catalog");
++    assert.ok(result.generation.retrieved_chunk_count>0);
++    assert.match(result.reply.text,/เสื้อยืด/);
++    assert.doesNotMatch(JSON.stringify(result.generation),/private provider body|synthetic-test-key/);
++    body.ai_context.policy_denied=true;
++    const denied=await fetch(base+"/mcp/chat",{method:"POST",headers:{Authorization:"Bearer test-only-service",
++      "Content-Type":"application/json"},body:JSON.stringify(body)}).then(r=>r.json());
++    assert.equal(denied.generation.fallback_source,"merchant_policy");
++    assert.equal(denied.generation.provider_request_attempted,false);
++  }
++});
++
++test("unsupported color or size requests do not confirm other variants",()=>{
++  assert.notEqual(fallback("อยากได้เสื้อยืดสีแดง").fallback_source,"trusted_catalog");
++  assert.notEqual(fallback("มีเสื้อสีดำไซส์ 4XL ไหม").fallback_source,"trusted_catalog");
++});
++test("missing Gemini configuration records no provider attempt",async t=>{
++  const key=process.env.GEMINI_API_KEY,fetcher=global.fetch;
++  delete process.env.GEMINI_API_KEY;
++  global.fetch=async()=>{assert.fail("No provider call expected");};
++  t.after(()=>{global.fetch=fetcher;if(key===undefined)delete process.env.GEMINI_API_KEY;else process.env.GEMINI_API_KEY=key;});
++  const result=await new GeminiClient().generateReply(request);
++  assert.equal(result.requestAttempted,false);
++  assert.equal(result.errorCategory,"not_configured");
++});
++test("configured timeout aborts a mocked pending request",async t=>{
++  const oldTimeout=process.env.GEMINI_TIMEOUT_MS;
++  process.env.GEMINI_TIMEOUT_MS="1000";
++  t.after(()=>{if(oldTimeout===undefined)delete process.env.GEMINI_TIMEOUT_MS;else process.env.GEMINI_TIMEOUT_MS=oldTimeout;});
++  await mockedProvider((_url,init)=>new Promise((_resolve,reject)=>{
++    init.signal.addEventListener("abort",()=>reject(new Error("private transport error")),{once:true});
++  }),async client=>{
++    const result=await client.generateReply(request);
++    assert.equal(result.errorCategory,"timeout");assert.equal(result.timedOut,true);
++    assert.ok(result.latencyMs>=900);assert.equal(result.requestAttempted,true);
++  });
++});
+diff --git a/apps/ai-service/src/index.ts b/apps/ai-service/src/index.ts
+index 053b0bc..58e37ea 100644
+--- a/apps/ai-service/src/index.ts
++++ b/apps/ai-service/src/index.ts
+@@ -543,13 +543,16 @@ async function buildAiChatResponse(body: AiChatRequest) {
+   );
+   const fallbackReply = mockAiReplyService.generateReply({
+     ...classification,
++    merchantId: body.merchant_id, customerMessage: message, products: aiContext?.products,
++    policyDenied: !!aiContext?.policy_denied,
+     language: profile?.language ?? resolveReplyLanguage(message, body.ai_options?.language),
+     retrievedChunks: retrievedKnowledge.chunks,
+     merchantSettings: aiContext?.merchant_settings,
+   });
+   const merchantFallback = resolveMerchantFallback(profile, classification.intent, message, retrievedKnowledge.chunks, !!aiContext?.policy_denied);
+   const llmReply = merchantFallback ? { text: merchantFallback.text, usedExternalProvider: false,
+-    provider: "policy", model: null, latencyMs: 0, timedOut: false, error: "merchant_policy_fallback" }
++    provider: "policy", model: null, latencyMs: 0, timedOut: false, error: "merchant_policy",
++    requestAttempted: false, errorCategory: "merchant_policy", httpStatus: undefined }
+     : await llmReplyService.generateReply({
+     intent: classification.intent,
+     customerMessage: message,
+@@ -597,9 +600,16 @@ async function buildAiChatResponse(body: AiChatRequest) {
+       model: llmReply.model,
+       used_external_provider: llmReply.usedExternalProvider,
+       fallback_used: !llmReply.usedExternalProvider,
+-      fallback_reason: llmReply.usedExternalProvider ? undefined : llmReply.error,
++      fallback_reason: llmReply.usedExternalProvider ? undefined : llmReply.errorCategory ?? "provider_disabled",
++      provider_request_attempted: llmReply.requestAttempted ?? false,
++      provider_success: llmReply.usedExternalProvider,
++      error_category: llmReply.errorCategory,
++      provider_http_status: llmReply.httpStatus,
++      retrieved_chunk_count: retrievedKnowledge.chunks.length,
++      fallback_source: llmReply.usedExternalProvider ? "none" : merchantFallback ? "merchant_policy"
++        : fallbackReply.fallback_source ?? "deterministic",
+       latency_ms: llmReply.latencyMs,
+-      timed_out: llmReply.timedOut,
++      timed_out: llmReply.timedOut ?? false,
+     },
+     actions: [],
+     handover_required: reply.needs_handover,
+diff --git a/apps/ai-service/src/modules/llm/gemini-client.ts b/apps/ai-service/src/modules/llm/gemini-client.ts
+index 003f79f..59c923d 100644
+--- a/apps/ai-service/src/modules/llm/gemini-client.ts
++++ b/apps/ai-service/src/modules/llm/gemini-client.ts
+@@ -68,79 +68,51 @@ export class GeminiClient {
+     input: GenerateLlmReplyInput,
+   ): Promise<GenerateLlmReplyResult> {
+     const startedAt = Date.now();
+-
+-    if (!this.isConfigured()) {
+-      return {
+-        provider: "gemini",
+-        model: this.model,
+-        text: input.fallbackReply,
+-        usedExternalProvider: false,
+-        latencyMs: Date.now() - startedAt,
+-        error: "GEMINI_API_KEY is not configured",
+-      };
+-    }
+-
++    let requestAttempted = false;
++    let httpStatus: number | undefined;
++    const failure = (category: NonNullable<GenerateLlmReplyResult["errorCategory"]>): GenerateLlmReplyResult => ({
++      provider: "gemini", model: this.model, text: input.fallbackReply,
++      usedExternalProvider: false, requestAttempted, httpStatus,
++      latencyMs: Date.now() - startedAt, timedOut: category === "timeout",
++      errorCategory: category, error: category,
++    });
++    if (!this.isConfigured()) return failure("not_configured");
+     const controller = new AbortController();
+     const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
+-
+     try {
++      const body = JSON.stringify({ model: this.model, system_instruction: input.systemInstruction,
++        input: this.buildUserInput(input), generation_config: { thinking_level: "minimal" } });
++      requestAttempted = true;
+       const response = await fetch(this.endpoint, {
+-        method: "POST",
+-        signal: controller.signal,
+-        headers: {
+-          "Content-Type": "application/json",
+-          "x-goog-api-key": this.apiKey,
+-        },
+-        body: JSON.stringify({
+-          model: this.model,
+-          system_instruction: input.systemInstruction,
+-          input: this.buildUserInput(input),
+-          generation_config: {
+-            thinking_level: "minimal",
+-          },
+-        }),
++        method: "POST", signal: controller.signal,
++        headers: { "Content-Type": "application/json", "x-goog-api-key": this.apiKey },
++        body,
+       });
+-
+-      const payload = (await response.json().catch(() => ({}))) as GeminiInteractionResponse;
+-
++      httpStatus = response.status;
+       if (!response.ok) {
+-        return {
+-          provider: "gemini",
+-          model: this.model,
+-          text: input.fallbackReply,
+-          usedExternalProvider: false,
+-          latencyMs: Date.now() - startedAt,
+-          error: payload.error?.message ?? response.statusText,
+-        };
++        await response.body?.cancel().catch(() => undefined);
++        return failure(response.status === 401 || response.status === 403 ? "authentication"
++          : response.status === 429 ? "rate_limit" : "http_error");
+       }
+-
+-      const text = extractGeminiText(payload);
+-
+-      return {
+-        provider: "gemini",
+-        model: this.model,
+-        text: text || input.fallbackReply,
+-        usedExternalProvider: Boolean(text),
+-        latencyMs: Date.now() - startedAt,
+-        error: text
+-          ? undefined
+-          : `Gemini returned no model output (status: ${payload.status ?? "unknown"})`,
+-      };
++      let payload: GeminiInteractionResponse;
++      try {
++        const parsed: unknown = await response.json();
++        if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return failure("invalid_response");
++        payload = parsed as GeminiInteractionResponse;
++        if ((payload.output_text !== undefined && typeof payload.output_text !== "string") ||
++          (payload.steps !== undefined && !Array.isArray(payload.steps))) return failure("invalid_response");
++      } catch {
++        return failure(controller.signal.aborted ? "timeout" : "invalid_response");
++      }
++      let text: string;
++      try { text = extractGeminiText(payload); }
++      catch { return failure("invalid_response"); }
++      if (!text) return failure("empty_output");
++      return { provider: "gemini", model: this.model, text, usedExternalProvider: true,
++        requestAttempted: true, httpStatus, latencyMs: Date.now() - startedAt, timedOut: false };
+     } catch (error) {
+-      const timedOut = error instanceof Error && error.name === "AbortError";
+-
+-      return {
+-        provider: "gemini",
+-        model: this.model,
+-        text: input.fallbackReply,
+-        usedExternalProvider: false,
+-        latencyMs: Date.now() - startedAt,
+-        timedOut,
+-        error: error instanceof Error ? error.message : String(error),
+-      };
+-    } finally {
+-      clearTimeout(timeout);
+-    }
++      return failure(controller.signal.aborted || (error instanceof Error && error.name === "AbortError") ? "timeout" : "network_error");
++    } finally { clearTimeout(timeout); }
+   }
+ 
+   private buildUserInput(input: GenerateLlmReplyInput): string {
+diff --git a/apps/ai-service/src/modules/llm/index.ts b/apps/ai-service/src/modules/llm/index.ts
+index f9e1b5d..74bbe8d 100644
+--- a/apps/ai-service/src/modules/llm/index.ts
++++ b/apps/ai-service/src/modules/llm/index.ts
+@@ -39,11 +39,12 @@ export class LlmReplyService {
+         text: input.fallbackReply,
+         usedExternalProvider: false,
+         latencyMs: 0,
+-        error: "OpenAI provider is reserved for future activation",
++        requestAttempted: false, errorCategory: "provider_disabled", error: "provider_disabled",
+       };
+     }
+ 
+     return {
++      requestAttempted: false,
+       provider: "mock",
+       model: null,
+       text: input.fallbackReply,
+diff --git a/apps/ai-service/src/modules/llm/llm.types.ts b/apps/ai-service/src/modules/llm/llm.types.ts
+index 49a8632..2903893 100644
+--- a/apps/ai-service/src/modules/llm/llm.types.ts
++++ b/apps/ai-service/src/modules/llm/llm.types.ts
+@@ -25,4 +25,9 @@ export interface GenerateLlmReplyResult {
+   latencyMs: number;
+   timedOut?: boolean;
+   error?: string;
++  requestAttempted?: boolean;
++  errorCategory?: GenerationErrorCategory;
++  httpStatus?: number;
+ }
++
++export type GenerationErrorCategory = "not_configured" | "timeout" | "authentication" | "rate_limit" | "http_error" | "empty_output" | "invalid_response" | "network_error" | "merchant_policy" | "provider_disabled";
+diff --git a/apps/ai-service/src/modules/mock-ai-reply/index.ts b/apps/ai-service/src/modules/mock-ai-reply/index.ts
+index 00ecbe1..db62848 100644
+--- a/apps/ai-service/src/modules/mock-ai-reply/index.ts
++++ b/apps/ai-service/src/modules/mock-ai-reply/index.ts
+@@ -1,3 +1,4 @@
++import { trustedCatalogFallback, type CatalogFallbackInput } from "./trusted-catalog";
+ import type { AiResponse } from "../../types/ai-response";
+ import type {
+   MerchantSettingsForAi,
+@@ -13,13 +14,13 @@ export const mockAiResponse: AiResponse = {
+ };
+ 
+ export class MockAiReplyService {
+-  generateReply(input: {
++  generateReply(input: CatalogFallbackInput & {
+     intent: string;
+     confidence: number;
+     language?: string;
+     retrievedChunks?: RagRetrievedChunk[];
+     merchantSettings?: MerchantSettingsForAi;
+-  }): AiResponse {
++  }): AiResponse & { fallback_source?: "trusted_catalog" | "deterministic" } {
+     const chunks = input.retrievedChunks ?? [];
+     const botName = input.merchantSettings?.bot_name ?? "Chatto";
+     const isThai = input.language === "th";
+@@ -37,6 +38,10 @@ export class MockAiReplyService {
+       };
+     }
+ 
++    const catalogReply = trustedCatalogFallback(input);
++    if (catalogReply) return { ...mockAiResponse, intent: input.intent, confidence: input.confidence,
++      reply: catalogReply, needs_handover: false, suggested_action: null, fallback_source: "trusted_catalog" };
++
+     if (input.intent === "unknown") {
+       return {
+         ...mockAiResponse,
+@@ -50,7 +55,8 @@ export class MockAiReplyService {
+       };
+     }
+ 
+-    const reply = this.buildContextReply(botName, chunks, isThai);
++    const reply = input.products && ["product_question", "product_search", "recommendation"].includes(input.intent)
++      ? null : this.buildContextReply(botName, chunks, isThai);
+ 
+     return {
+       ...mockAiResponse,
+diff --git a/apps/ai-service/src/modules/mock-ai-reply/trusted-catalog.ts b/apps/ai-service/src/modules/mock-ai-reply/trusted-catalog.ts
+new file mode 100644
+index 0000000..560cc10
+--- /dev/null
++++ b/apps/ai-service/src/modules/mock-ai-reply/trusted-catalog.ts
+@@ -0,0 +1,77 @@
++import type { MerchantSettingsForAi, ProductExportResponse, RagRetrievedChunk } from "../../types/ai-contract.types";
++
++export interface CatalogFallbackInput {
++  intent?: string;
++  merchantId?: string;
++  customerMessage?: string;
++  products?: ProductExportResponse;
++  retrievedChunks?: RagRetrievedChunk[];
++  merchantSettings?: MerchantSettingsForAi;
++  policyDenied?: boolean;
++}
++
++const normalize = (text: string) => text.normalize("NFKC").toLowerCase().trim();
++const words = (text: string) => Array.from(new Intl.Segmenter("th", { granularity: "word" }).segment(normalize(text)))
++  .filter(part => part.isWordLike).map(part => part.segment);
++const hasTerm = (query: string, term: string) => /[a-z0-9]/i.test(term)
++  ? new RegExp("(^|[^a-z0-9])" + term.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "($|[^a-z0-9])", "i").test(query)
++  : query.includes(term);
++
++/** Only structured, active catalog rows linked to same-tenant retrieved sources are evidence.
++ * Free-text chunks, arbitrary scores and chunk count alone cannot authorize a factual answer. */
++export function trustedCatalogFallback(input: CatalogFallbackInput): string | null {
++  const { merchantId, products, merchantSettings } = input;
++  if (!merchantId || !input.customerMessage || !products || products.merchant_id !== merchantId ||
++    merchantSettings?.merchant_id !== merchantId || input.policyDenied) return null;
++  const caps = merchantSettings.ai_profile?.capabilities;
++  if (caps && (!caps.showPrices || !caps.checkStock || !caps.showPromotions)) return null;
++  if (input.intent && !["unknown", "product_question", "product_search", "recommendation"].includes(input.intent)) return null;
++  const query = normalize(input.customerMessage);
++  // These facts have no structured support in the product export.
++  if (/ship|deliver|payment|refund|return|discount|promo|material|fabric|logo|where|why|ส่ง|ชำระ|คืนสินค้า|ส่วนลด|โปรโมชั่น|ทำจาก|เนื้อผ้า|โลโก้|ที่ไหน|รับประกัน|ยกเว้น|ไม่เอา/iu.test(query)) return null;
++  const browse = /what.*(?:sell|products)|catalog|ขายอะไร|สินค้า.*อะไร|มีสินค้าอะไร/iu.test(query);
++  const sources = new Set((input.retrievedChunks ?? [])
++    .filter(chunk => chunk.merchant_id === merchantId && chunk.source_type === "product")
++    .map(chunk => chunk.source_id));
++  const queryWords = words(query);
++  const candidates = products.products.filter(product => product.merchant_id === merchantId &&
++    product.status === "active" && sources.has(product.id) &&
++    (browse || words(product.name).some(word => word.length >= 2 && queryWords.includes(word))));
++  if (!candidates.length) return null;
++  const thai = merchantSettings.ai_profile?.language === "th" || merchantSettings.default_language === "th";
++  if (browse) return thai ? "รายการสินค้าในแคตตาล็อกที่ตรวจพบ: " + candidates.map(p => p.name).join(", ") +
++    " (ยังไม่ใช่การยืนยันสต็อก)" : "Retrieved catalog listings: " + candidates.map(p => p.name).join(", ") +
++    " (not an inventory confirmation).";
++  if (candidates.length !== 1) return null; // Ambiguous product: ask rather than choose.
++  const product = candidates[0];
++  const variants = product.variants.filter(v => v.product_id === product.id && v.status === "active");
++  if (!variants.length) return null;
++  const colors = [...new Set(variants.flatMap(v => v.color ? [v.color] : []))];
++  const sizes = [...new Set(variants.flatMap(v => v.size ? [v.size] : []))];
++  const requestedColors = colors.filter(color => color.split("/").some(alias => hasTerm(query, normalize(alias))));
++  const requestedSizes = sizes.filter(size => hasTerm(query, normalize(size)));
++  if (!requestedColors.length && !requestedSizes.length && !/color|size|want|looking for|price|stock|สี|ไซส์|ขนาด|อยากได้|ต้องการ|ราคา|สต็อก/iu.test(query)) return null;
++  if (/สี|colou?r/iu.test(query) && !requestedColors.length &&
++    !/กี่สี|สีอะไร|สีไหน|colou?rs/iu.test(query)) return null;
++  if (/ไซส์|ขนาด|size/iu.test(query) && !requestedSizes.length &&
++    !/ไซส์อะไร|ไซส์ไหน|ขนาดอะไร|กี่ไซส์|sizes/iu.test(query)) return null;
++  const selected = variants.filter(v => (!requestedColors.length || !!v.color && requestedColors.includes(v.color)) &&
++    (!requestedSizes.length || !!v.size && requestedSizes.includes(v.size)));
++  if (!selected.length) return thai ? "ไม่พบคู่สีและไซส์นี้ในแคตตาล็อกที่ตรวจพบ" :
++    "No matching color-size combination was found in the retrieved catalog.";
++  const details = requestedColors.length || requestedSizes.length
++    ? [...new Set(selected.map(v => [v.color, v.size].filter(Boolean).join(" / ")))].join(", ")
++    : (thai ? "สี: " : "Colors: ") + colors.join(", ") + (thai ? "; ไซส์: " : "; sizes: ") + sizes.join(", ");
++  let answer = product.name + (thai ? " — รายการในแคตตาล็อก: " : " — catalog listing: ") + details;
++  if (/price|cost|ราคา|กี่บาท/iu.test(query)) {
++    const prices = [...new Set(selected.map(v => v.price))];
++    answer += prices.length === 1 && prices[0] !== null && new Set(selected.map(v => v.currency)).size === 1
++      ? (thai ? "; ราคาที่ระบุ: " : "; documented price: ") + prices[0] + " " + selected[0].currency
++      : (thai ? "; ยังไม่มีราคาที่ระบุชัดเจน" : "; price is not specified unambiguously");
++  }
++  const stockKnown = selected.every(v => v.stock_known === true);
++  answer += !stockKnown ? (thai ? "; ยังไม่มีข้อมูลสต็อกที่ยืนยันได้" : "; inventory is unknown")
++    : selected.every(v => v.available_qty === 0) ? (thai ? "; จำนวนพร้อมขายที่ระบุเป็น 0" : "; documented available quantity is zero")
++    : (thai ? "; โปรดตรวจสอบสต็อกกับร้านก่อนสั่งซื้อ" : "; check inventory with the store before ordering");
++  return answer;
++}
+diff --git a/apps/ai-service/src/modules/rag/index.ts b/apps/ai-service/src/modules/rag/index.ts
+index 97d82bd..2a9a2e3 100644
+--- a/apps/ai-service/src/modules/rag/index.ts
++++ b/apps/ai-service/src/modules/rag/index.ts
+@@ -119,6 +119,7 @@ export class RagService {
+     );
+ 
+     return {
++      merchant_id: document.merchant_id,
+       source_type: document.source_type,
+       source_id: document.source_id,
+       title: this.getTitle(metadata, document.source_id),
+diff --git a/apps/ai-service/src/modules/rag/vector-document.builder.ts b/apps/ai-service/src/modules/rag/vector-document.builder.ts
+index f678fb8..9bffaa3 100644
+--- a/apps/ai-service/src/modules/rag/vector-document.builder.ts
++++ b/apps/ai-service/src/modules/rag/vector-document.builder.ts
+@@ -25,7 +25,7 @@ export function buildProductKnowledgeDocument(product: ProductForAi): AiKnowledg
+         variant.size ? `Size: ${variant.size}.` : undefined,
+         variant.sku ? `SKU: ${variant.sku}.` : undefined,
+         moneyText(variant.price, variant.currency),
+-        `Available quantity: ${variant.available_qty}.`,
++        variant.stock_known === false ? "Stock: not specified." : `Available quantity: ${variant.available_qty}.`,
+       ]),
+     )
+     .join(" ");
+diff --git a/apps/ai-service/src/types/ai-contract.types.ts b/apps/ai-service/src/types/ai-contract.types.ts
+index 667a931..b2370a3 100644
+--- a/apps/ai-service/src/types/ai-contract.types.ts
++++ b/apps/ai-service/src/types/ai-contract.types.ts
+@@ -65,6 +65,12 @@ export interface AiChatResponse {
+     fallback_reason?: string;
+     latency_ms: number;
+     timed_out?: boolean;
++    provider_request_attempted?: boolean;
++    provider_success?: boolean;
++    error_category?: string;
++    provider_http_status?: number;
++    retrieved_chunk_count?: number;
++    fallback_source?: "merchant_policy" | "trusted_catalog" | "deterministic" | "none";
+   };
+   actions?: Array<Record<string, unknown>>;
+   handover_required: boolean;
+@@ -84,6 +90,8 @@ export interface ProductVariantForAi {
+   size?: string;
+   price: number | null;
+   currency: string;
++  /** False means the legacy numeric quantities represent unknown stock. */
++  stock_known?: boolean;
+   stock_qty: number;
+   reserved_qty: number;
+   available_qty: number;
+@@ -285,6 +293,7 @@ export interface RagRetrieveRequest {
+ }
+ 
+ export interface RagRetrievedChunk {
++  merchant_id?: string;
+   source_type: string;
+   source_id: string;
+   title: string;
+diff --git a/apps/api/src/modules/ai-integration/ai-contract.types.ts b/apps/api/src/modules/ai-integration/ai-contract.types.ts
+index f64d7f7..ae4787d 100644
+--- a/apps/api/src/modules/ai-integration/ai-contract.types.ts
++++ b/apps/api/src/modules/ai-integration/ai-contract.types.ts
+@@ -66,6 +66,12 @@ export interface AiChatResponse {
+     fallback_reason?: string;
+     latency_ms: number;
+     timed_out?: boolean;
++    provider_request_attempted?: boolean;
++    provider_success?: boolean;
++    error_category?: string;
++    provider_http_status?: number;
++    retrieved_chunk_count?: number;
++    fallback_source?: "merchant_policy" | "trusted_catalog" | "deterministic" | "none";
+   };
+   actions?: Array<Record<string, unknown>>;
+   handover_required: boolean;
+@@ -85,6 +91,8 @@ export interface ProductVariantForAi {
+   size?: string;
+   price: number | null;
+   currency: string;
++  /** False means the legacy numeric quantities represent unknown stock. */
++  stock_known?: boolean;
+   stock_qty: number;
+   reserved_qty: number;
+   available_qty: number;
+diff --git a/apps/api/src/modules/internal-ai/internal-ai.service.ts b/apps/api/src/modules/internal-ai/internal-ai.service.ts
+index 0358f30..e8bffd2 100644
+--- a/apps/api/src/modules/internal-ai/internal-ai.service.ts
++++ b/apps/api/src/modules/internal-ai/internal-ai.service.ts
+@@ -100,6 +100,7 @@ export class InternalAiService {
+             size: variant.size ?? undefined,
+             price,
+             currency: variant.currency ?? "THB",
++            stock_known: variant.stockOnHand != null && variant.stockReserved != null,
+             stock_qty: stockQty,
+             reserved_qty: reservedQty,
+             available_qty: availableQty(stockQty, reservedQty),
+diff --git a/apps/api/src/modules/line-webhooks/line-webhooks.service.ts b/apps/api/src/modules/line-webhooks/line-webhooks.service.ts
+index 694545e..c547d87 100644
+--- a/apps/api/src/modules/line-webhooks/line-webhooks.service.ts
++++ b/apps/api/src/modules/line-webhooks/line-webhooks.service.ts
+@@ -149,15 +149,31 @@ export class LineWebhooksService {
+   }
+ 
+   private generationMetadata(generation: AiChatResponse["generation"]): Prisma.InputJsonObject | null {
+-    if (!generation || !["mock", "gemini", "openai"].includes(generation.provider) ||
++    if (!generation || !["mock", "gemini", "openai", "policy"].includes(generation.provider) ||
+       typeof generation.used_external_provider !== "boolean" || typeof generation.fallback_used !== "boolean") return null;
+-    // Retain only provider evidence. Never persist arbitrary provider errors,
+-    // debug payloads, or an unrecognized value masquerading as a model name.
+     const modelPattern = generation.provider === "gemini" ? /^gemini-[a-zA-Z0-9._-]{1,100}$/
+       : generation.provider === "openai" ? /^(?:gpt-|chatgpt-|o[1-9])[a-zA-Z0-9._-]{1,100}$/ : null;
+-    return { provider: generation.provider,
++    const result: Record<string, Prisma.InputJsonValue | null> = { provider: generation.provider,
+       model: typeof generation.model === "string" && modelPattern?.test(generation.model) ? generation.model : null,
+       used_external_provider: generation.used_external_provider, fallback_used: generation.fallback_used };
++    const categories = ["not_configured", "timeout", "authentication", "rate_limit", "http_error",
++      "empty_output", "invalid_response", "network_error", "merchant_policy", "provider_disabled"];
++    for (const field of ["error_category", "fallback_reason"] as const) {
++      const value = generation[field];
++      if (typeof value === "string" && categories.includes(value)) result[field] = value;
++    }
++    for (const field of ["provider_request_attempted", "provider_success", "timed_out"] as const) {
++      if (typeof generation[field] === "boolean") result[field] = generation[field];
++    }
++    const integer = (value: unknown, maximum: number): value is number =>
++      typeof value === "number" && Number.isInteger(value) && value >= 0 && value <= maximum;
++    if (integer(generation.latency_ms, 3_600_000)) result.latency_ms = generation.latency_ms;
++    if (integer(generation.retrieved_chunk_count, 100)) result.retrieved_chunk_count = generation.retrieved_chunk_count;
++    if (integer(generation.provider_http_status, 599) && generation.provider_http_status >= 100)
++      result.provider_http_status = generation.provider_http_status;
++    if (["merchant_policy", "trusted_catalog", "deterministic", "none"].includes(generation.fallback_source ?? ""))
++      result.fallback_source = generation.fallback_source!;
++    return result;
+   }
+ 
+   private markAiDisabled(db: Prisma.TransactionClient, context: TrustedLineChannel, eventId: string) {
+diff --git a/apps/api/tests/generation-diagnostics.test.cjs b/apps/api/tests/generation-diagnostics.test.cjs
+new file mode 100644
+index 0000000..ccac077
+--- /dev/null
++++ b/apps/api/tests/generation-diagnostics.test.cjs
+@@ -0,0 +1,48 @@
++const assert=require("node:assert/strict");
++const test=require("node:test");
++const {randomUUID}=require("node:crypto");
++const {LineWebhooksService}=require("../dist/modules/line-webhooks/line-webhooks.service");
++const {InternalAiService}=require("../dist/modules/internal-ai/internal-ai.service");
++
++test("webhook retains safe diagnostics in existing JSON metadata",()=>{
++  const service=Object.create(LineWebhooksService.prototype);
++  const input={provider:"gemini",model:"gemini-3.1-flash-lite",used_external_provider:false,fallback_used:true,
++    provider_request_attempted:true,provider_success:false,error_category:"timeout",fallback_reason:"timeout",
++    timed_out:true,provider_http_status:429,latency_ms:10000,retrieved_chunk_count:3,fallback_source:"trusted_catalog"};
++  assert.deepEqual(service.generationMetadata(input),input);
++});
++test("policy diagnostics are persisted without claiming a provider call",()=>{
++  const service=Object.create(LineWebhooksService.prototype);
++  const result=service.generationMetadata({provider:"policy",model:null,used_external_provider:false,
++    fallback_used:true,provider_request_attempted:false,provider_success:false,error_category:"merchant_policy",
++    fallback_reason:"merchant_policy",latency_ms:0,retrieved_chunk_count:0,fallback_source:"merchant_policy"});
++  assert.equal(result.provider_request_attempted,false);
++  assert.equal(result.fallback_reason,"merchant_policy");
++});
++test("arbitrary errors, prompts, secrets and invalid numeric diagnostics cannot be persisted",()=>{
++  const service=Object.create(LineWebhooksService.prototype);
++  const result=service.generationMetadata({provider:"gemini",model:"SECRET token",used_external_provider:false,
++    fallback_used:true,error_category:"secret",fallback_reason:"customer text",latency_ms:Infinity,
++    retrieved_chunk_count:-1,provider_http_status:999,fallback_source:"raw prompt",
++    provider_request_attempted:"secret",prompt:"full prompt",token:"secret"});
++  assert.deepEqual(result,{provider:"gemini",model:null,used_external_provider:false,fallback_used:true});
++});
++test("unknown provider identities cannot introduce metadata",()=>{
++  const service=Object.create(LineWebhooksService.prototype);
++  assert.equal(service.generationMetadata({provider:"untrusted",used_external_provider:false,fallback_used:true}),null);
++});
++test("product export distinguishes unknown inventory from known zero without changing prices",async()=>{
++  const merchantId=randomUUID(),productId=randomUUID();
++  let observed;
++  const product={id:productId,merchantId,name:"Fixture shirt",description:null,category:null,brand:null,
++    status:"ACTIVE",updatedAt:new Date(),images:[],variants:[null,0].map((stock,i)=>({
++      id:randomUUID(),productId,variantName:"M"+i,sku:"test"+i,color:"Black",size:"M",price:null,
++      currency:null,stockOnHand:stock,stockReserved:stock,lowStockThreshold:null,status:"ACTIVE"}))};
++  const service=new InternalAiService({product:{findMany:async query=>{observed=query;return [product];}}},{});
++  const result=await service.exportProducts(merchantId);
++  assert.equal(observed.where.merchantId,merchantId);
++  assert.equal(observed.include.variants.where.merchantId,merchantId);
++  assert.equal(result.products[0].variants[0].stock_known,false);
++  assert.equal(result.products[0].variants[1].stock_known,true);
++  assert.equal(result.products[0].variants[0].price,null);
++});

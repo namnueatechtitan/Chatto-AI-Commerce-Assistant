@@ -1,0 +1,34 @@
+{
+  "identity": {
+    "database": "chatto_phase2",
+    "db_user": "postgres",
+    "server_address": "172.18.0.3/32",
+    "server_port": 5432
+  },
+  "merchant": {
+    "id": "ae1b5a4b-77a8-4d71-9d1d-9f1aa4161662",
+    "shopName": "Yuepaochatto",
+    "status": "TRIAL"
+  },
+  "channel": {
+    "id": "d4e81b0d-946e-47a4-84fc-aea63e3b358f",
+    "merchantId": "ae1b5a4b-77a8-4d71-9d1d-9f1aa4161662",
+    "channelName": "LINE Official Account",
+    "externalChannelId": "2011922166",
+    "status": "CONNECTED",
+    "isConnected": true,
+    "credentialRevision": 3,
+    "credentialsVerifiedAt": "2026-10-08T10:23:42.685Z",
+    "webhookVerifiedAt": "2026-10-08T11:00:42.693Z",
+    "lineClaimedAt": "2026-10-08T10:23:42.685Z"
+  },
+  "setting": {
+    "aiEnabled": true,
+    "aiActivatedAt": "2026-10-08T11:01:05.417Z"
+  },
+  "productCount": 1,
+  "variantCount": 30,
+  "catalogSha256": "1c1f9a2e42622973a5a384544d32f5ff051033ac24629584e06aa8eacb342c3f",
+  "migrationCount": 10,
+  "pendingRecentAiJobs": 0
+}

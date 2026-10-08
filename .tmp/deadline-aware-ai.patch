@@ -1,0 +1,1030 @@
+diff --git a/apps/ai-service/scripts/deadline-pipeline.test.cjs b/apps/ai-service/scripts/deadline-pipeline.test.cjs
+new file mode 100644
+index 0000000..f5d5356
+--- /dev/null
++++ b/apps/ai-service/scripts/deadline-pipeline.test.cjs
+@@ -0,0 +1,199 @@
++const assert = require("node:assert/strict");
++const test = require("node:test");
++const path = require("node:path");
++const net = require("node:net");
++const { spawn } = require("node:child_process");
++const { RequestBudget, operationControl } = require("../dist/request-budget");
++const { GeminiClient } = require("../dist/modules/llm/gemini-client");
++const { EmbeddingsService } = require("../dist/modules/embeddings");
++const { buildProductKnowledgeDocuments, toVectorDocumentRows } = require("../dist/modules/rag/vector-document.builder");
++
++const profile = { assistantName:"Assistant",pronoun:"I",tone:"friendly",language:"th",useEmoji:false,
++  responseLength:"medium",rules:[],fallbackBehavior:"notify_and_handoff",capabilities:{
++    recommendProducts:true,checkStock:true,compareProducts:true,answerFaq:true,showPrices:true,
++    rememberCustomerInterest:true,showPromotions:true,recommendRelatedProducts:true}};
++function fixture(warm = true) {
++ const product={id:"p1",merchant_id:"a",name:"เสื้อยืด",description:"เสื้อยืดสีดำ",price:null,currency:"THB",
++  status:"active",updated_at:"2026-10-08",image_urls:[],variants:[{id:"v1",product_id:"p1",variant_name:"Black M",
++  color:"Black / ดำ",size:"M",price:null,currency:"THB",stock_known:false,stock_qty:0,reserved_qty:0,available_qty:0,status:"active"}]};
++ const products={merchant_id:"a",products:[product]};
++ const vectors=toVectorDocumentRows(buildProductKnowledgeDocuments(products)).map(row=>({
++  id:row.id,merchant_id:row.merchantId,source_type:row.sourceType,source_id:row.sourceId,
++  chunk_text:row.chunkText,status:"active",embedding:[1,...Array(127).fill(0)],
++  metadata:{...row.metadata,embedding_model:"gemini-embedding-2",embedding_dimensions:128}}));
++ return {request_id:"synthetic-request",merchant_id:"a",channel:"line",conversation_id:"conversation",
++  customer:{id:"customer"},message:{id:"message",text:"มีเสื้อสีดำไซส์ M ไหม",timestamp:new Date().toISOString()},
++  ai_context:{merchant_settings:{merchant_id:"a",store_name:"Synthetic",bot_name:"Assistant",
++    default_language:"th",ai_tone:"friendly",rules:[],enabled_features:{},ai_profile:profile},
++    products,knowledge_base:{merchant_id:"a",knowledge_base:[]},vector_documents:warm?vectors:[],
++    conversation_history:[],vector_sync_allowed:true,policy_denied:false}};
++}
++async function server(t,scenario) {
++ const socket=net.createServer();await new Promise(r=>socket.listen(0,"127.0.0.1",r));
++ const port=socket.address().port;await new Promise(r=>socket.close(r));
++ const code = `
++ const scenario=${JSON.stringify(scenario)};
++ const values=[1,...Array(127).fill(0)];
++ const notify=(event)=>process.send?.(event);
++ function stalled(signal,kind){
++  return new Promise((resolve,reject)=>{
++   const abort=()=>{notify({kind,event:"aborted"});const error=new Error("synthetic");error.name="AbortError";reject(error);};
++   if(signal.aborted)abort();else signal.addEventListener("abort",abort,{once:true});
++  });
++ }
++ global.fetch=async(url,init)=>{
++  const body=JSON.parse(init.body||"{}");
++  const kind=String(url).includes(":embedContent") ? (body.content.parts[0].text.startsWith("title:")?"document_embedding":"query_embedding")
++    : String(url).endsWith("/interactions")?"generation"
++    : String(url).endsWith("/sync")?"vector_sync":"unknown";
++  notify({kind,event:"started"});
++  if(kind==="unknown")throw Error("Unexpected external call blocked");
++  if(kind==="generation"){
++    if(scenario==="generation_timeout"||scenario==="disconnect_generation")return stalled(init.signal,kind);
++    if(scenario==="provider_failure")return new Response("synthetic error",{status:429});
++    return new Response(JSON.stringify({output_text:"คำตอบสังเคราะห์จาก Gemini"}));
++  }
++  if((scenario==="query_slow"&&kind==="query_embedding")||
++     (scenario==="document_slow"&&kind==="document_embedding")||
++     (scenario==="sync_slow"&&kind==="vector_sync")||
++     (scenario==="disconnect_embedding"&&kind==="query_embedding"))return stalled(init.signal,kind);
++  if(kind==="vector_sync")return new Response(JSON.stringify({merchant_id:"a",upserted:1,deleted:0}));
++  return new Response(JSON.stringify({embedding:{values}}));
++ };
++ const {GeminiClient}=require(${JSON.stringify(path.resolve(__dirname,"../dist/modules/llm/gemini-client.js"))});
++ const originalGeneration=GeminiClient.prototype.generateReply;
++ GeminiClient.prototype.generateReply=function(input){notify({kind:"generation_budget",timeoutMs:input.control?.timeoutMs});return originalGeneration.call(this,input);};
++ require(${JSON.stringify(path.resolve(__dirname,"../dist/index.js"))});
++ `;
++ const child=spawn(process.execPath,["-e",code],{cwd:__dirname,windowsHide:true,stdio:["ignore","ignore","ignore","ipc"],
++  env:{...process.env,NODE_ENV:"test",AI_SERVICE_PORT:String(port),AI_SERVICE_TOKEN:"synthetic-service",
++   AI_LLM_PROVIDER:"gemini",GEMINI_API_KEY:"synthetic-key",GEMINI_MODEL:"gemini-3.1-flash-lite",
++   GEMINI_EMBEDDING_MODEL:"gemini-embedding-2",GEMINI_EMBEDDING_DIMENSIONS:"128",
++   GEMINI_API_BASE_URL:"https://mock.invalid/interactions",INTERNAL_SERVICE_TOKEN:"synthetic-internal",
++   GEMINI_TIMEOUT_MS:"10000",GEMINI_EMBEDDING_TIMEOUT_MS:"10000",OPENAI_API_KEY:""}});
++ const events=[];child.on("message",event=>events.push(event));
++ t.after(()=>child.kill());
++ const base="http://127.0.0.1:"+port;
++ let healthy=false;
++ for(let i=0;i<100;i++){if(await fetch(base+"/health").then(r=>r.ok).catch(()=>false)){healthy=true;break;}await new Promise(r=>setTimeout(r,20));}
++ assert.ok(healthy,"isolated mocked AI fixture started");
++ return {events,base,send:async(body,signal)=>{
++   const r=await fetch(base+"/mcp/chat",{method:"POST",signal,headers:{Authorization:"Bearer synthetic-service","Content-Type":"application/json"},body:JSON.stringify(body)});
++   assert.equal(r.status,200);return r.json();
++ }};
++}
++test("20s upstream budget reserves overhead and caps preparation and generation",()=>{
++ const budget=new RequestBudget(Date.now()+19000);
++ try {assert.ok(budget.preprocessingMs(10000)<=3000);assert.ok(budget.generationMs()<=15000);assert.ok(budget.remainingMs()<=19000);}
++ finally{budget.dispose();}
++});
++test("expired or insufficient budgets never permit a generation start",async()=>{
++ for(const remaining of [-10,600]){
++  const budget=new RequestBudget(Date.now()+remaining);
++  try{
++   const original=global.fetch;let calls=0;global.fetch=async()=>{calls++;throw Error("must not run")};
++   try{const client=new GeminiClient();const result=await client.generateReply({fallbackReply:"safe",control:{signal:budget.signal,timeoutMs:budget.generationMs()}});
++    assert.equal(result.requestAttempted,false);assert.equal(result.errorCategory,"deadline_exceeded");assert.equal(calls,0);}
++   finally{global.fetch=original;}
++  }finally{budget.dispose();}
++ }
++});
++test("fast retrieval + successful Gemini, fresh indexed embeddings reused, unchanged sync skipped",async t=>{
++ const f=await server(t,"fast"),result=await f.send(fixture());
++ assert.equal(result.generation.provider_success,true);assert.equal(result.generation.model,"gemini-3.1-flash-lite");
++ assert.equal(result.generation.fallback_used,false);assert.ok(result.generation.stage_timings.retrieval);
++ assert.ok(f.events.some(e=>e.kind==="generation_budget"&&e.timeoutMs===15000));
++ t.diagnostic(JSON.stringify({scenario:"fast",pipeline_ms:result.generation.pipeline_latency_ms,stages:result.generation.stage_timings}));
++ assert.equal(result.generation.stage_timings.vector_sync.outcome,"skipped");
++ assert.equal(result.debug.embeddingsReady.reused,1);
++ assert.equal(f.events.filter(e=>e.kind==="document_embedding").length,0);
++ assert.equal(f.events.filter(e=>e.kind==="vector_sync").length,0);
++});
++for(const [scenario,warm,stage,minimum] of [["query_slow",true,"query_embedding",1200],["document_slow",false,"document_embedding",600],["sync_slow",false,"vector_sync",400]]){
++ test("bounded "+scenario+" leaves Gemini budget and continues without retries",async t=>{
++  const f=await server(t,scenario);const result=await f.send(fixture(warm));
++  assert.equal(result.generation.provider_success,true);
++  t.diagnostic(JSON.stringify({scenario,pipeline_ms:result.generation.pipeline_latency_ms,stages:result.generation.stage_timings}));
++  assert.equal(result.generation.stage_timings[stage].outcome,"timed_out");
++  assert.ok(result.generation.stage_timings[stage].latency_ms>=minimum);
++  assert.ok(result.generation.pipeline_latency_ms<4000);
++  assert.equal(f.events.filter(e=>e.kind===stage&&e.event==="started").length,1);
++  assert.ok(f.events.some(e=>e.kind===stage&&e.event==="aborted"));
++  assert.equal(f.events.filter(e=>e.kind==="generation"&&e.event==="started").length,1);
++ });
++}
++test("slow generation returns trusted catalog fallback before its request deadline",async t=>{
++ const f=await server(t,"generation_timeout"),body=fixture();
++ const start=Date.now();body.execution={deadline_at_ms:start+1800};
++ const result=await f.send(body);
++ assert.equal(result.generation.error_category,"timeout");assert.equal(result.generation.timed_out,true);
++ assert.equal(result.generation.fallback_source,"trusted_catalog");assert.equal(result.generation.provider_request_attempted,true);
++ assert.match(result.reply.text,/Black \/ ดำ \/ M/);assert.match(result.reply.text,/ไม่มีข้อมูลสต็อก/);
++ assert.ok(Date.now()-start<1800);assert.equal(result.generation.stage_timings.generation.outcome,"timed_out");
++ t.diagnostic(JSON.stringify({scenario:"generation_timeout",pipeline_ms:result.generation.pipeline_latency_ms,stages:result.generation.stage_timings}));
++});
++test("insufficient time returns catalog fallback with no provider requests",async t=>{
++ const f=await server(t,"fast"),body=fixture();body.execution={deadline_at_ms:Date.now()+800};
++ const result=await f.send(body);
++ assert.equal(result.generation.error_category,"deadline_exceeded");assert.equal(result.generation.provider_request_attempted,false);
++ assert.equal(result.generation.fallback_source,"trusted_catalog");assert.equal(f.events.filter(e=>e.kind!=="generation_budget").length,0);
++});
++for(const [scenario,kind] of [["disconnect_embedding","query_embedding"],["disconnect_generation","generation"]]){
++ test("client disconnection cancels "+kind+" and starts no later provider work",async t=>{
++  const f=await server(t,scenario),controller=new AbortController();
++  const pending=f.send(fixture(),controller.signal);
++  const rejection=assert.rejects(pending,error=>error.name==="AbortError");
++  for(let i=0;i<100&&!f.events.some(e=>e.kind===kind&&e.event==="started");i++)await new Promise(r=>setTimeout(r,10));
++  assert.ok(f.events.some(e=>e.kind===kind&&e.event==="started"));controller.abort();await rejection;
++  for(let i=0;i<100&&!f.events.some(e=>e.kind===kind&&e.event==="aborted");i++)await new Promise(r=>setTimeout(r,10));
++  assert.ok(f.events.some(e=>e.kind===kind&&e.event==="aborted"));
++  const count=f.events.filter(e=>e.kind!=="generation_budget").length;await new Promise(r=>setTimeout(r,100));assert.equal(f.events.filter(e=>e.kind!=="generation_budget").length,count);
++ });
++}
++test("freshness rejects stale or foreign reused embeddings",async t=>{
++ const f=await server(t,"fast");
++ for(const mutation of ["hash","tenant"]){
++  const body=fixture();const row=body.ai_context.vector_documents[0];
++  if(mutation==="hash")row.metadata.content_hash="stale";else row.merchant_id="b";
++  const result=await f.send(body);assert.equal(result.debug.embeddingsReady.reused,0);
++  assert.equal(result.generation.provider_success,true);assert.ok(result.sources.every(s=>s.source_id==="p1"));
++ }
++ assert.equal(f.events.filter(e=>e.kind==="document_embedding"&&e.event==="started").length,1);
++});
++test("provider failure retains NULL stock/missing price and rejects cross-merchant evidence",async t=>{
++ const f=await server(t,"provider_failure"),body=fixture();body.message.text="เสื้อสีดำราคาเท่าไหร่";
++ const result=await f.send(body);
++ assert.equal(result.generation.error_category,"rate_limit");assert.equal(result.generation.fallback_source,"trusted_catalog");
++ assert.match(result.reply.text,/ไม่มีราคาที่ระบุ/);assert.match(result.reply.text,/ไม่มีข้อมูลสต็อก/);assert.doesNotMatch(result.reply.text,/0 THB/);
++ const foreign=fixture();foreign.ai_context.products.products[0].merchant_id="b";foreign.ai_context.vector_documents=[];
++ const denied=await f.send(foreign);assert.equal(denied.generation.provider_request_attempted,false);
++ assert.equal(denied.generation.fallback_source,"merchant_policy");assert.equal(denied.sources.length,0);
++});
++test("policy denial performs no provider, embedding or sync request",async t=>{
++ const f=await server(t,"fast"),body=fixture();body.ai_context.policy_denied=true;
++ const result=await f.send(body);assert.equal(result.generation.provider,"policy");assert.equal(result.generation.provider_request_attempted,false);
++ assert.equal(f.events.filter(e=>e.kind!=="generation_budget").length,0);
++});
++test("cancelled late successful provider output is discarded",async()=>{
++ const original=global.fetch,oldKey=process.env.GEMINI_API_KEY;
++ process.env.GEMINI_API_KEY="synthetic";const parent=new AbortController();let calls=0;
++ global.fetch=async()=>{calls++;parent.abort();return new Response(JSON.stringify({output_text:"late"}));};
++ try{
++  const result=await new GeminiClient().generateReply({fallbackReply:"safe",intent:"unknown",language:"th",customerMessage:"synthetic",
++   systemInstruction:"synthetic",retrievedChunks:[],conversationHistory:[],control:{signal:parent.signal,timeoutMs:15000}});
++  assert.equal(result.text,"safe");assert.equal(result.errorCategory,"cancelled");assert.equal(calls,1);
++ }finally{global.fetch=original;if(oldKey===undefined)delete process.env.GEMINI_API_KEY;else process.env.GEMINI_API_KEY=oldKey;}
++});
++test("cancellation of one identical embedding request does not cancel another",async()=>{
++ const original=global.fetch,oldKey=process.env.GEMINI_API_KEY;process.env.GEMINI_API_KEY="synthetic";
++ global.fetch=async(_url,init)=>new Promise((resolve,reject)=>{
++  const timer=setTimeout(()=>resolve(new Response(JSON.stringify({embedding:{values:[1,0]}}))),30);
++  init.signal.addEventListener("abort",()=>{clearTimeout(timer);reject(Error("cancelled"));},{once:true});
++ });
++ try{
++  const service=new EmbeddingsService(),one=new AbortController(),two=new AbortController();
++  const a=service.embedQuery("synthetic",{signal:one.signal,timeoutMs:1000});
++  const rejected=assert.rejects(a);const b=service.embedQuery("synthetic",{signal:two.signal,timeoutMs:1000});
++  one.abort();await rejected;assert.deepEqual((await b).values,[1,0]);
++ }finally{global.fetch=original;if(oldKey===undefined)delete process.env.GEMINI_API_KEY;else process.env.GEMINI_API_KEY=oldKey;}
++});
+diff --git a/apps/ai-service/src/index.ts b/apps/ai-service/src/index.ts
+index 58e37ea..878b47d 100644
+--- a/apps/ai-service/src/index.ts
++++ b/apps/ai-service/src/index.ts
+@@ -2,6 +2,8 @@ import cors from "cors";
+ import express, { type Request, type Response } from "express";
+ import fs from "node:fs";
+ import path from "node:path";
++import { performance } from "node:perf_hooks";
++import { operationControl, RequestBudget, type StageName, type StageOutcome } from "./request-budget";
+ import { requireServiceToken } from "./service-auth";
+ import { validateProductionServiceCredentials } from "./service-token-policy";
+ 
+@@ -294,7 +296,9 @@ function buildVectorDocumentsFromContext(
+     const contentUnchanged =
+       stored?.metadata?.content_hash === document.metadata?.content_hash;
+ 
+-    if (!stored || !contentUnchanged || !Array.isArray(stored.embedding)) {
++    if (!stored || stored.merchant_id !== document.merchant_id || stored.source_id !== document.source_id ||
++      stored.source_type !== document.source_type || stored.status.toLowerCase() !== "active" ||
++      !contentUnchanged || !Array.isArray(stored.embedding)) {
+       return document;
+     }
+ 
+@@ -365,6 +369,7 @@ function isAiChatRequest(body: Partial<AiChatRequest>): body is AiChatRequest {
+     typeof body.merchant_id === "string" &&
+     typeof body.channel === "string" &&
+     typeof body.conversation_id === "string" &&
++    (body.execution === undefined || (Number.isSafeInteger(body.execution?.deadline_at_ms) && body.execution.deadline_at_ms > 0)) &&
+     Boolean(body.customer) &&
+     typeof body.customer?.id === "string" &&
+     Boolean(body.message) &&
+@@ -459,7 +464,7 @@ function requireMcpOutput<TOutput>(result: McpToolResult): TOutput {
+   return result.output as TOutput;
+ }
+ 
+-async function buildAiChatResponse(body: AiChatRequest) {
++async function buildAiChatResponse(body: AiChatRequest, budget: RequestBudget) {
+   const message = body.message.text;
+   const aiContext = body.ai_context;
+   const classification = requireMcpOutput<{ intent: string; confidence: number }>(
+@@ -484,38 +489,53 @@ async function buildAiChatResponse(body: AiChatRequest) {
+       },
+     }),
+   );
+-  const vectorDocuments = buildVectorDocumentsFromContext(aiContext);
+-  const documentEmbeddings = await embeddingsService.enrichDocuments(
+-    vectorDocuments,
+-  );
+-  let queryEmbedding: number[] | undefined;
+-  let queryEmbeddingError: string | undefined;
+-
+-  try {
+-    if (vectorDocuments.length === 0 || aiContext?.policy_denied) throw new Error("No permitted retrieval context");
+-    queryEmbedding = requireMcpOutput<{ values: number[] }>(
+-      await callMcpTool({
+-        name: "chatto.create_embedding",
+-        input: { text: message },
+-      }),
+-    ).values;
+-  } catch (error) {
+-    queryEmbeddingError = error instanceof Error ? error.message : String(error);
+-  }
+-
+-  let vectorSync: unknown;
+-
+-  try {
+-    vectorSync = aiContext?.vector_sync_allowed === false ? { skipped: "merchant_policy" } : await vectorStoreClient.syncDocuments(
+-      body.merchant_id,
+-      documentEmbeddings.documents,
+-    );
+-  } catch (error) {
+-    vectorSync = {
+-      error: error instanceof Error ? error.message : String(error),
+-    };
++  const vectorDocuments = buildVectorDocumentsFromContext(aiContext).filter(document =>
++    document.merchant_id === body.merchant_id && document.status.toLowerCase() === "active");
++  const contextAllowed = vectorDocuments.length > 0 && !aiContext?.policy_denied &&
++    !["small_talk", "language_preference", "empty_message"].includes(classification.intent);
++  async function preparation<T>(name: StageName, capMs: number, skipped: T,
++    work: (signal: AbortSignal, timeoutMs: number) => Promise<T>): Promise<T> {
++    const startedAt = performance.now();
++    const timeoutMs = contextAllowed ? budget.preprocessingMs(capMs) : 0;
++    if (timeoutMs < 50) { budget.record(name, startedAt, "skipped"); return skipped; }
++    const control = operationControl(timeoutMs, budget.signal);
++    let outcome: StageOutcome = "completed";
++    try { return await work(control.signal, timeoutMs); }
++    catch { outcome = control.signal.aborted ? (budget.signal.reason === "cancelled" ? "cancelled" : "timed_out") : "failed"; return skipped; }
++    finally {
++      if (control.signal.aborted) outcome = budget.signal.reason === "cancelled" ? "cancelled" : "timed_out";
++      budget.record(name, startedAt, outcome); control.dispose();
++    }
+   }
+-
++  const documentEmbeddings = await preparation("document_embedding", 750,
++    { documents: vectorDocuments, generated: 0, reused: 0, errors: [] as string[] },
++    (signal, timeoutMs) => embeddingsService.enrichDocuments(vectorDocuments, { signal, timeoutMs }));
++  if (documentEmbeddings.errors.length && budget.stages.document_embedding?.outcome === "completed")
++    budget.stages.document_embedding.outcome = "failed";
++  const queryEmbedding = documentEmbeddings.documents.some(document =>
++    Array.isArray(document.embedding) && document.embedding.length === embeddingsService.getDimensions())
++    ? await preparation<number[] | undefined>("query_embedding", 1500, undefined,
++      async (signal, timeoutMs) => (await embeddingsService.embedQuery(message, { signal, timeoutMs })).values)
++    : undefined;
++  if (!budget.stages.query_embedding) budget.record("query_embedding", performance.now(), "skipped");
++  const queryEmbeddingError = queryEmbedding ? undefined : "embedding_unavailable";
++  const managedDocuments = documentEmbeddings.documents.filter(document =>
++    document.merchant_id === body.merchant_id && document.metadata?.managed_by === "chatto-live-chunker");
++  const storedDocuments = (aiContext?.vector_documents ?? []).filter(document =>
++    document.merchant_id === body.merchant_id && document.status.toLowerCase() === "active");
++  const needsSync = managedDocuments.some(document => {
++    const stored = storedDocuments.find(row => row.id === document.id && row.source_id === document.source_id && row.source_type === document.source_type);
++    return !stored || stored.metadata?.content_hash !== document.metadata?.content_hash ||
++      stored.metadata?.embedding_model !== document.metadata?.embedding_model ||
++      stored.metadata?.embedding_dimensions !== document.metadata?.embedding_dimensions ||
++      !Array.isArray(stored.embedding) || stored.embedding.length !== embeddingsService.getDimensions();
++  });
++  let vectorSync: unknown = { skipped: aiContext?.vector_sync_allowed === false ? "merchant_policy" : "unchanged" };
++  if (needsSync && aiContext?.vector_sync_allowed !== false) {
++    vectorSync = await preparation<unknown>("vector_sync", 500, { skipped: "budget_or_failure" },
++      (signal, timeoutMs) => vectorStoreClient.syncDocuments(body.merchant_id, documentEmbeddings.documents, { signal, timeoutMs }));
++  } else budget.record("vector_sync", performance.now(), "skipped");
++  const retrievalStartedAt = performance.now();
+   const retrievedKnowledge = requireMcpOutput<RagRetrieveResult>(
+     await callMcpTool({
+       name: "chatto.retrieve_knowledge",
+@@ -529,6 +549,7 @@ async function buildAiChatResponse(body: AiChatRequest) {
+       },
+     }),
+   );
++  budget.record("retrieval", retrievalStartedAt, "completed");
+   const customerMemories = profile?.capabilities.rememberCustomerInterest === false ? [] : requireMcpOutput(
+     await callMcpTool({
+       name: "chatto.load_customer_memory",
+@@ -550,6 +571,7 @@ async function buildAiChatResponse(body: AiChatRequest) {
+     merchantSettings: aiContext?.merchant_settings,
+   });
+   const merchantFallback = resolveMerchantFallback(profile, classification.intent, message, retrievedKnowledge.chunks, !!aiContext?.policy_denied);
++  const generationStartedAt = performance.now();
+   const llmReply = merchantFallback ? { text: merchantFallback.text, usedExternalProvider: false,
+     provider: "policy", model: null, latencyMs: 0, timedOut: false, error: "merchant_policy",
+     requestAttempted: false, errorCategory: "merchant_policy", httpStatus: undefined }
+@@ -562,7 +584,10 @@ async function buildAiChatResponse(body: AiChatRequest) {
+     merchantSettings: aiContext?.merchant_settings,
+     retrievedChunks: retrievedKnowledge.chunks,
+     systemInstruction: prompt.systemPrompt,
++    control: { signal: budget.signal, timeoutMs: budget.generationMs() },
+   });
++  budget.record("generation", generationStartedAt, merchantFallback ? "skipped" : llmReply.usedExternalProvider ? "completed"
++    : llmReply.errorCategory === "cancelled" ? "cancelled" : llmReply.timedOut ? "timed_out" : "failed");
+   const reply = {
+     ...fallbackReply,
+     reply: applyMerchantOutputPolicy(llmReply.text, profile),
+@@ -609,6 +634,8 @@ async function buildAiChatResponse(body: AiChatRequest) {
+       fallback_source: llmReply.usedExternalProvider ? "none" : merchantFallback ? "merchant_policy"
+         : fallbackReply.fallback_source ?? "deterministic",
+       latency_ms: llmReply.latencyMs,
++      pipeline_latency_ms: budget.elapsedMs(),
++      stage_timings: budget.stages,
+       timed_out: llmReply.timedOut ?? false,
+     },
+     actions: [],
+@@ -784,16 +811,21 @@ app.post("/mcp/chat", requireServiceToken, async (request, response) => {
+     return;
+   }
+ 
++  const budget = new RequestBudget(body.execution?.deadline_at_ms);
++  const disconnected = () => { if (!response.writableEnded) budget.cancel(); };
++  response.once("close", disconnected);
++  request.once("aborted", disconnected);
+   try {
+-    response.json(await buildAiChatResponse(body));
+-  } catch (error) {
+-    response.status(500).json({
+-      error: {
+-        code: "AI_PIPELINE_FAILED",
+-        message: error instanceof Error ? error.message : String(error),
+-        request_id: body.request_id,
+-      },
++    const result = await buildAiChatResponse(body, budget);
++    if (!response.destroyed && !budget.signal.aborted && budget.remainingMs() > 0) response.json(result);
++  } catch {
++    if (!response.destroyed && !budget.signal.aborted) response.status(500).json({
++      error: { code: "AI_PIPELINE_FAILED", message: "AI pipeline failed.", request_id: body.request_id },
+     });
++  } finally {
++    response.removeListener("close", disconnected);
++    request.removeListener("aborted", disconnected);
++    budget.dispose();
+   }
+ });
+ 
+@@ -892,16 +924,21 @@ app.post("/ai/chat", requireServiceToken, async (request, response) => {
+     return;
+   }
+ 
++  const budget = new RequestBudget(body.execution?.deadline_at_ms);
++  const disconnected = () => { if (!response.writableEnded) budget.cancel(); };
++  response.once("close", disconnected);
++  request.once("aborted", disconnected);
+   try {
+-    response.json(await buildAiChatResponse(body));
+-  } catch (error) {
+-    response.status(500).json({
+-      error: {
+-        code: "AI_PIPELINE_FAILED",
+-        message: error instanceof Error ? error.message : String(error),
+-        request_id: body.request_id,
+-      },
++    const result = await buildAiChatResponse(body, budget);
++    if (!response.destroyed && !budget.signal.aborted && budget.remainingMs() > 0) response.json(result);
++  } catch {
++    if (!response.destroyed && !budget.signal.aborted) response.status(500).json({
++      error: { code: "AI_PIPELINE_FAILED", message: "AI pipeline failed.", request_id: body.request_id },
+     });
++  } finally {
++    response.removeListener("close", disconnected);
++    request.removeListener("aborted", disconnected);
++    budget.dispose();
+   }
+ });
+ 
+diff --git a/apps/ai-service/src/modules/embeddings/index.ts b/apps/ai-service/src/modules/embeddings/index.ts
+index 8155e3b..918dd02 100644
+--- a/apps/ai-service/src/modules/embeddings/index.ts
++++ b/apps/ai-service/src/modules/embeddings/index.ts
+@@ -1,4 +1,5 @@
+ import { createHash } from "node:crypto";
++import { cancellationCategory, operationControl, type RequestControl } from "../../request-budget";
+ 
+ import type { VectorDocumentForAi } from "../../types/ai-contract.types";
+ 
+@@ -47,23 +48,27 @@ export class EmbeddingsService {
+     return this.dimensions;
+   }
+ 
+-  async embedQuery(text: string): Promise<EmbeddingResult> {
++  async embedQuery(text: string, control?: RequestControl): Promise<EmbeddingResult> {
+     return this.embedText(
+       `task: search result | query: ${text.trim()}`,
+       "RETRIEVAL_QUERY",
++      undefined,
++      control,
+     );
+   }
+ 
+-  async embedDocument(text: string, title: string): Promise<EmbeddingResult> {
++  async embedDocument(text: string, title: string, control?: RequestControl): Promise<EmbeddingResult> {
+     return this.embedText(
+       `title: ${title.trim() || "none"} | text: ${text.trim()}`,
+       "RETRIEVAL_DOCUMENT",
+       title,
++      control,
+     );
+   }
+ 
+   async enrichDocuments(
+     documents: VectorDocumentForAi[],
++    control?: RequestControl,
+   ): Promise<DocumentEmbeddingResult> {
+     let generated = 0;
+     let reused = 0;
+@@ -81,10 +86,13 @@ export class EmbeddingsService {
+ 
+           const title = this.getTitle(document);
+ 
++          if (control?.signal?.aborted) return document;
++
+           try {
+             const embedding = await this.embedDocument(
+               document.chunk_text,
+               title,
++              control,
+             );
+             generated += 1;
+ 
+@@ -131,7 +139,9 @@ export class EmbeddingsService {
+     text: string,
+     taskType: EmbeddingTaskType,
+     title?: string,
++    control?: RequestControl,
+   ): Promise<EmbeddingResult> {
++    if (control?.signal?.aborted) throw new Error(cancellationCategory(control.signal));
+     if (!this.isConfigured()) {
+       throw new Error("GEMINI_API_KEY is not configured for embeddings");
+     }
+@@ -147,6 +157,14 @@ export class EmbeddingsService {
+       };
+     }
+ 
++    // Request-scoped cancellation must not abort another request's shared promise.
++    if (control) {
++      const values = await this.requestEmbedding(text, taskType, title, control);
++      this.cache.set(cacheKey, values);
++      this.trimCache();
++      return { model: this.model, dimensions: values.length, values: [...values] };
++    }
++
+     let pending = this.inFlight.get(cacheKey);
+ 
+     if (!pending) {
+@@ -175,17 +193,18 @@ export class EmbeddingsService {
+     text: string,
+     taskType: EmbeddingTaskType,
+     title?: string,
++    requestControl?: RequestControl,
+   ): Promise<number[]> {
+-    const controller = new AbortController();
+-    const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
++    const control = operationControl(Math.min(this.timeoutMs, requestControl?.timeoutMs ?? this.timeoutMs), requestControl?.signal);
+     const modelPath = `models/${this.model}`;
+ 
+     try {
++      if (control.signal.aborted) throw new Error(cancellationCategory(control.signal));
+       const response = await fetch(
+         `https://generativelanguage.googleapis.com/v1beta/${modelPath}:embedContent`,
+         {
+           method: "POST",
+-          signal: controller.signal,
++          signal: control.signal,
+           headers: {
+             "Content-Type": "application/json",
+             "x-goog-api-key": this.apiKey,
+@@ -203,26 +222,33 @@ export class EmbeddingsService {
+         },
+       );
+       const payload = (await response.json().catch(() => ({}))) as GeminiEmbeddingResponse;
++      if (control.signal.aborted) throw new Error(cancellationCategory(control.signal));
+ 
+       if (!response.ok) {
++        if (requestControl) throw new Error(response.status === 401 || response.status === 403 ? "authentication"
++          : response.status === 429 ? "rate_limit" : "http_error");
+         throw new Error(payload.error?.message ?? response.statusText);
+       }
+ 
+       const values = payload.embedding?.values;
+ 
+       if (!Array.isArray(values) || values.length === 0) {
++        if (requestControl) throw new Error("empty_output");
+         throw new Error("Gemini returned an empty embedding");
+       }
+ 
+       return normalizeVector(values);
+     } catch (error) {
++      if (control.signal.aborted) throw new Error(cancellationCategory(control.signal));
++      if (requestControl) throw new Error(error instanceof Error &&
++        ["authentication", "rate_limit", "http_error", "empty_output"].includes(error.message) ? error.message : "network_error");
+       if (error instanceof Error && error.name === "AbortError") {
+         throw new Error(`Gemini embedding timed out after ${this.timeoutMs}ms`);
+       }
+ 
+       throw error;
+     } finally {
+-      clearTimeout(timeout);
++      control.dispose();
+     }
+   }
+ 
+diff --git a/apps/ai-service/src/modules/llm/gemini-client.ts b/apps/ai-service/src/modules/llm/gemini-client.ts
+index 59c923d..34a1486 100644
+--- a/apps/ai-service/src/modules/llm/gemini-client.ts
++++ b/apps/ai-service/src/modules/llm/gemini-client.ts
+@@ -2,6 +2,7 @@ import type {
+   GenerateLlmReplyInput,
+   GenerateLlmReplyResult,
+ } from "./llm.types";
++import { cancellationCategory, operationControl } from "../../request-budget";
+ 
+ interface GeminiContentPart {
+   text?: string;
+@@ -73,22 +74,25 @@ export class GeminiClient {
+     const failure = (category: NonNullable<GenerateLlmReplyResult["errorCategory"]>): GenerateLlmReplyResult => ({
+       provider: "gemini", model: this.model, text: input.fallbackReply,
+       usedExternalProvider: false, requestAttempted, httpStatus,
+-      latencyMs: Date.now() - startedAt, timedOut: category === "timeout",
++      latencyMs: Date.now() - startedAt, timedOut: category === "timeout" || category === "deadline_exceeded",
+       errorCategory: category, error: category,
+     });
++    if (input.control?.signal?.aborted) return failure(cancellationCategory(input.control.signal));
++    if (input.control?.timeoutMs !== undefined && input.control.timeoutMs < 1000)
++      return failure("deadline_exceeded");
+     if (!this.isConfigured()) return failure("not_configured");
+-    const controller = new AbortController();
+-    const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
++    const control = operationControl(input.control?.timeoutMs ?? this.timeoutMs, input.control?.signal);
+     try {
+       const body = JSON.stringify({ model: this.model, system_instruction: input.systemInstruction,
+         input: this.buildUserInput(input), generation_config: { thinking_level: "minimal" } });
+       requestAttempted = true;
+       const response = await fetch(this.endpoint, {
+-        method: "POST", signal: controller.signal,
++        method: "POST", signal: control.signal,
+         headers: { "Content-Type": "application/json", "x-goog-api-key": this.apiKey },
+         body,
+       });
+       httpStatus = response.status;
++      if (control.signal.aborted) { await response.body?.cancel().catch(() => undefined); return failure(cancellationCategory(control.signal)); }
+       if (!response.ok) {
+         await response.body?.cancel().catch(() => undefined);
+         return failure(response.status === 401 || response.status === 403 ? "authentication"
+@@ -102,8 +106,9 @@ export class GeminiClient {
+         if ((payload.output_text !== undefined && typeof payload.output_text !== "string") ||
+           (payload.steps !== undefined && !Array.isArray(payload.steps))) return failure("invalid_response");
+       } catch {
+-        return failure(controller.signal.aborted ? "timeout" : "invalid_response");
++        return failure(control.signal.aborted ? cancellationCategory(control.signal) : "invalid_response");
+       }
++      if (control.signal.aborted) return failure(cancellationCategory(control.signal));
+       let text: string;
+       try { text = extractGeminiText(payload); }
+       catch { return failure("invalid_response"); }
+@@ -111,8 +116,9 @@ export class GeminiClient {
+       return { provider: "gemini", model: this.model, text, usedExternalProvider: true,
+         requestAttempted: true, httpStatus, latencyMs: Date.now() - startedAt, timedOut: false };
+     } catch (error) {
+-      return failure(controller.signal.aborted || (error instanceof Error && error.name === "AbortError") ? "timeout" : "network_error");
+-    } finally { clearTimeout(timeout); }
++      return failure(control.signal.aborted ? cancellationCategory(control.signal)
++        : (error instanceof Error && error.name === "AbortError") ? "timeout" : "network_error");
++    } finally { control.dispose(); }
+   }
+ 
+   private buildUserInput(input: GenerateLlmReplyInput): string {
+diff --git a/apps/ai-service/src/modules/llm/llm.types.ts b/apps/ai-service/src/modules/llm/llm.types.ts
+index 2903893..e0d9af0 100644
+--- a/apps/ai-service/src/modules/llm/llm.types.ts
++++ b/apps/ai-service/src/modules/llm/llm.types.ts
+@@ -3,10 +3,12 @@ import type {
+   MerchantSettingsForAi,
+   RagRetrievedChunk,
+ } from "../../types/ai-contract.types";
++import type { RequestControl } from "../../request-budget";
+ 
+ export type LlmProviderName = "mock" | "gemini" | "openai";
+ 
+ export interface GenerateLlmReplyInput {
++  control?: RequestControl;
+   intent: string;
+   customerMessage: string;
+   language: string;
+@@ -30,4 +32,4 @@ export interface GenerateLlmReplyResult {
+   httpStatus?: number;
+ }
+ 
+-export type GenerationErrorCategory = "not_configured" | "timeout" | "authentication" | "rate_limit" | "http_error" | "empty_output" | "invalid_response" | "network_error" | "merchant_policy" | "provider_disabled";
++export type GenerationErrorCategory = "not_configured" | "timeout" | "authentication" | "rate_limit" | "http_error" | "empty_output" | "invalid_response" | "network_error" | "merchant_policy" | "provider_disabled" | "deadline_exceeded" | "cancelled";
+diff --git a/apps/ai-service/src/modules/vector-store/index.ts b/apps/ai-service/src/modules/vector-store/index.ts
+index 3d92e11..ff90006 100644
+--- a/apps/ai-service/src/modules/vector-store/index.ts
++++ b/apps/ai-service/src/modules/vector-store/index.ts
+@@ -1,5 +1,6 @@
+ import type { VectorDocumentForAi } from "../../types/ai-contract.types";
+ import { configuredServiceToken } from "../../service-auth";
++import { cancellationCategory, operationControl, type RequestControl } from "../../request-budget";
+ 
+ export interface VectorSyncResult {
+   merchant_id: string;
+@@ -15,6 +16,7 @@ export class VectorStoreClient {
+   async syncDocuments(
+     merchantId: string,
+     documents: VectorDocumentForAi[],
++    requestControl?: RequestControl,
+   ): Promise<VectorSyncResult> {
+     const managedDocuments = documents.filter(
+       (document) =>
+@@ -30,15 +32,15 @@ export class VectorStoreClient {
+ 
+     const token = configuredServiceToken("INTERNAL_SERVICE_TOKEN");
+ 
+-    const controller = new AbortController();
+-    const timeout = setTimeout(() => controller.abort(), this.timeoutMs);
++    const control = operationControl(Math.min(this.timeoutMs, requestControl?.timeoutMs ?? this.timeoutMs), requestControl?.signal);
+ 
+     try {
++      if (control.signal.aborted) throw new Error(cancellationCategory(control.signal));
+       const response = await fetch(
+         `${this.baseUrl.replace(/\/$/u, "")}/internal/ai/vector-documents/sync`,
+         {
+           method: "POST",
+-          signal: controller.signal,
++          signal: control.signal,
+           headers: {
+             Authorization: `Bearer ${token}`,
+             "Content-Type": "application/json",
+@@ -57,15 +59,18 @@ export class VectorStoreClient {
+         );
+       }
+ 
+-      return (await response.json()) as VectorSyncResult;
++      const result = (await response.json()) as VectorSyncResult;
++      if (control.signal.aborted) throw new Error(cancellationCategory(control.signal));
++      return result;
+     } catch (error) {
++      if (control.signal.aborted) throw new Error(cancellationCategory(control.signal));
+       if (error instanceof Error && error.name === "AbortError") {
+         throw new Error(`Vector sync timed out after ${this.timeoutMs}ms`);
+       }
+ 
+       throw error;
+     } finally {
+-      clearTimeout(timeout);
++      control.dispose();
+     }
+   }
+ }
+diff --git a/apps/ai-service/src/request-budget.ts b/apps/ai-service/src/request-budget.ts
+new file mode 100644
+index 0000000..cefff5f
+--- /dev/null
++++ b/apps/ai-service/src/request-budget.ts
+@@ -0,0 +1,56 @@
++import { performance } from "node:perf_hooks";
++
++export type CancellationCategory = "timeout" | "deadline_exceeded" | "cancelled";
++export interface RequestControl { signal?: AbortSignal; timeoutMs?: number }
++export type StageName = "document_embedding" | "query_embedding" | "vector_sync" | "retrieval" | "generation";
++export type StageOutcome = "completed" | "skipped" | "timed_out" | "cancelled" | "failed";
++
++export function cancellationCategory(signal?: AbortSignal): CancellationCategory {
++  return signal?.reason === "deadline_exceeded" ? "deadline_exceeded"
++    : signal?.reason === "timeout" ? "timeout" : "cancelled";
++}
++
++/** Every caller owns and disposes its operation timer and abort listener. */
++export function operationControl(timeoutMs: number, parent?: AbortSignal) {
++  const controller = new AbortController();
++  const abort = () => controller.abort(cancellationCategory(parent));
++  if (parent?.aborted) abort();
++  else parent?.addEventListener("abort", abort, { once: true });
++  const timer = timeoutMs > 0 && Number.isFinite(timeoutMs)
++    ? setTimeout(() => controller.abort("timeout"), timeoutMs) : undefined;
++  if (!timer) controller.abort("deadline_exceeded");
++  return { signal: controller.signal, dispose: () => {
++    if (timer) clearTimeout(timer);
++    parent?.removeEventListener("abort", abort);
++  } };
++}
++
++export class RequestBudget {
++  private readonly startedAt = performance.now();
++  private readonly controller = new AbortController();
++  private readonly durationMs: number;
++  private readonly timer: NodeJS.Timeout;
++  readonly stages: Partial<Record<StageName, { latency_ms: number; outcome: StageOutcome }>> = {};
++  constructor(deadlineAtMs?: number) {
++    // Leave at least 1s outside the AI service for transport and API handling.
++    this.durationMs = Math.max(0, Math.min(19000,
++      deadlineAtMs === undefined ? 19000 : deadlineAtMs - Date.now()));
++    this.timer = setTimeout(() => this.controller.abort("deadline_exceeded"), this.durationMs);
++    if (this.durationMs === 0) this.controller.abort("deadline_exceeded");
++  }
++  get signal(): AbortSignal { return this.controller.signal; }
++  remainingMs(): number {
++    return this.signal.aborted ? 0 : Math.max(0, this.durationMs - (performance.now() - this.startedAt));
++  }
++  preprocessingMs(capMs: number): number {
++    // All optional network preparation shares 3s; protect the 15s generation budget.
++    return Math.max(0, Math.min(capMs, 3000 - (performance.now() - this.startedAt), this.remainingMs() - 15000));
++  }
++  generationMs(): number { return Math.max(0, Math.min(15000, this.remainingMs() - 500)); }
++  record(name: StageName, startedAt: number, outcome: StageOutcome): void {
++    this.stages[name] = { latency_ms: Math.max(0, Math.round(performance.now() - startedAt)), outcome };
++  }
++  elapsedMs(): number { return Math.max(0, Math.round(performance.now() - this.startedAt)); }
++  cancel(): void { this.controller.abort("cancelled"); }
++  dispose(): void { clearTimeout(this.timer); }
++}
+diff --git a/apps/ai-service/src/types/ai-contract.types.ts b/apps/ai-service/src/types/ai-contract.types.ts
+index b2370a3..e30300a 100644
+--- a/apps/ai-service/src/types/ai-contract.types.ts
++++ b/apps/ai-service/src/types/ai-contract.types.ts
+@@ -36,6 +36,7 @@ export interface AiChatRequest {
+     text: string;
+     timestamp: string;
+   };
++  execution?: { deadline_at_ms: number };
+   ai_options?: {
+     language?: string;
+     top_k?: number;
+@@ -64,6 +65,9 @@ export interface AiChatResponse {
+     fallback_used: boolean;
+     fallback_reason?: string;
+     latency_ms: number;
++    pipeline_latency_ms?: number;
++    context_export_ms?: number;
++    stage_timings?: Partial<Record<"document_embedding" | "query_embedding" | "vector_sync" | "retrieval" | "generation", { latency_ms: number; outcome: "completed" | "skipped" | "timed_out" | "cancelled" | "failed" }>>;
+     timed_out?: boolean;
+     provider_request_attempted?: boolean;
+     provider_success?: boolean;
+diff --git a/apps/api/src/modules/ai-integration/ai-contract.types.ts b/apps/api/src/modules/ai-integration/ai-contract.types.ts
+index ae4787d..0c95ab9 100644
+--- a/apps/api/src/modules/ai-integration/ai-contract.types.ts
++++ b/apps/api/src/modules/ai-integration/ai-contract.types.ts
+@@ -37,6 +37,7 @@ export interface AiChatRequest {
+     text: string;
+     timestamp: string;
+   };
++  execution?: { deadline_at_ms: number };
+   ai_options?: {
+     language?: string;
+     top_k?: number;
+@@ -65,6 +66,9 @@ export interface AiChatResponse {
+     fallback_used: boolean;
+     fallback_reason?: string;
+     latency_ms: number;
++    pipeline_latency_ms?: number;
++    context_export_ms?: number;
++    stage_timings?: Partial<Record<"document_embedding" | "query_embedding" | "vector_sync" | "retrieval" | "generation", { latency_ms: number; outcome: "completed" | "skipped" | "timed_out" | "cancelled" | "failed" }>>;
+     timed_out?: boolean;
+     provider_request_attempted?: boolean;
+     provider_success?: boolean;
+diff --git a/apps/api/src/modules/ai-integration/ai-integration.service.ts b/apps/api/src/modules/ai-integration/ai-integration.service.ts
+index a25b5e3..751e3ef 100644
+--- a/apps/api/src/modules/ai-integration/ai-integration.service.ts
++++ b/apps/api/src/modules/ai-integration/ai-integration.service.ts
+@@ -3,6 +3,7 @@ import { configuredServiceToken } from "../../auth/service-token";
+ import { InternalAiService } from "../internal-ai/internal-ai.service";
+ import type { AiChatRequest, AiChatResponse } from "./ai-contract.types";
+ import { AiPolicyResolver } from "../merchant-ai-settings/ai-policy.resolver";
++import { performance } from "node:perf_hooks";
+ 
+ @Injectable()
+ export class AiIntegrationService {
+@@ -18,14 +19,20 @@ export class AiIntegrationService {
+ 
+   async chat(request: AiChatRequest): Promise<AiChatResponse> {
+     const serviceToken = configuredServiceToken("AI_SERVICE_TOKEN");
+-    const enrichedRequest = await this.withMerchantContext(request);
++    const startedAt = Date.now();
++    const startedTick = performance.now();
+     const controller = new AbortController();
++    const expired = () => controller.signal.aborted || performance.now() - startedTick >= this.aiServiceTimeoutMs;
+     const timeout = setTimeout(
+       () => controller.abort(),
+       this.aiServiceTimeoutMs,
+     );
+ 
+     try {
++      const enrichedRequest = await this.withCancellation(this.withMerchantContext(request, controller.signal), controller.signal);
++      const contextExportMs = Date.now() - startedAt;
++      if (expired()) { controller.abort(); throw new Error("AI deadline expired"); }
++      enrichedRequest.execution = { deadline_at_ms: startedAt + this.aiServiceTimeoutMs - 1000 };
+       const response = await fetch(`${this.aiServiceBaseUrl}/mcp/chat`, {
+         method: "POST",
+         signal: controller.signal,
+@@ -43,13 +50,15 @@ export class AiIntegrationService {
+       }
+ 
+       const result = await response.json() as AiChatResponse | null;
++      if (expired()) { controller.abort(); throw new Error("AI deadline expired"); }
+       if (!result || result.request_id !== request.request_id || result.merchant_id !== request.merchant_id ||
+           result.conversation_id !== request.conversation_id || typeof result.reply?.text !== "string") {
+         throw new BadGatewayException("Invalid AI service response");
+       }
++      if (result.generation) result.generation.context_export_ms = contextExportMs;
+       return result;
+     } catch (error) {
+-      if (error instanceof Error && error.name === "AbortError") {
++      if (controller.signal.aborted || (error instanceof Error && error.name === "AbortError")) {
+         throw new Error(
+           `AI service timed out after ${this.aiServiceTimeoutMs}ms`,
+         );
+@@ -63,8 +72,10 @@ export class AiIntegrationService {
+ 
+   private async withMerchantContext(
+     request: AiChatRequest,
++    signal: AbortSignal,
+   ): Promise<AiChatRequest> {
+     const merchantSettings = await this.internalAiService.exportMerchantSettings(request.merchant_id);
++    if (signal.aborted) throw new Error("AI deadline expired");
+     if (!merchantSettings.ai_profile) throw new BadGatewayException("AI settings are unavailable");
+     const policy = new AiPolicyResolver().resolve(merchantSettings.ai_profile, request.message.text);
+     const [
+@@ -99,6 +110,15 @@ export class AiIntegrationService {
+     };
+   }
+ 
++  private withCancellation<T>(work: Promise<T>, signal: AbortSignal): Promise<T> {
++    return new Promise<T>((resolve, reject) => {
++      const abort = () => reject(new Error("AI deadline expired"));
++      signal.addEventListener("abort", abort, { once: true });
++      if (signal.aborted) abort();
++      work.then(resolve, reject).finally(() => signal.removeEventListener("abort", abort));
++    });
++  }
++
+   private resolveTimeoutMs(name: string, fallback: number): number {
+     const configured = Number(process.env[name]);
+ 
+diff --git a/apps/api/src/modules/line-webhooks/line-webhooks.service.ts b/apps/api/src/modules/line-webhooks/line-webhooks.service.ts
+index c547d87..35da78b 100644
+--- a/apps/api/src/modules/line-webhooks/line-webhooks.service.ts
++++ b/apps/api/src/modules/line-webhooks/line-webhooks.service.ts
+@@ -157,7 +157,7 @@ export class LineWebhooksService {
+       model: typeof generation.model === "string" && modelPattern?.test(generation.model) ? generation.model : null,
+       used_external_provider: generation.used_external_provider, fallback_used: generation.fallback_used };
+     const categories = ["not_configured", "timeout", "authentication", "rate_limit", "http_error",
+-      "empty_output", "invalid_response", "network_error", "merchant_policy", "provider_disabled"];
++      "empty_output", "invalid_response", "network_error", "merchant_policy", "provider_disabled", "deadline_exceeded", "cancelled"];
+     for (const field of ["error_category", "fallback_reason"] as const) {
+       const value = generation[field];
+       if (typeof value === "string" && categories.includes(value)) result[field] = value;
+@@ -168,6 +168,18 @@ export class LineWebhooksService {
+     const integer = (value: unknown, maximum: number): value is number =>
+       typeof value === "number" && Number.isInteger(value) && value >= 0 && value <= maximum;
+     if (integer(generation.latency_ms, 3_600_000)) result.latency_ms = generation.latency_ms;
++    for (const field of ["pipeline_latency_ms", "context_export_ms"] as const)
++      if (integer(generation[field], 3_600_000)) result[field] = generation[field]!;
++    if (generation.stage_timings && typeof generation.stage_timings === "object") {
++      const timings: Record<string, Prisma.InputJsonValue> = {};
++      for (const stage of ["document_embedding", "query_embedding", "vector_sync", "retrieval", "generation"] as const) {
++        const value = generation.stage_timings[stage];
++        if (value && integer(value.latency_ms, 3_600_000) &&
++          ["completed", "skipped", "timed_out", "cancelled", "failed"].includes(value.outcome))
++          timings[stage] = { latency_ms: value.latency_ms, outcome: value.outcome };
++      }
++      result.stage_timings = timings;
++    }
+     if (integer(generation.retrieved_chunk_count, 100)) result.retrieved_chunk_count = generation.retrieved_chunk_count;
+     if (integer(generation.provider_http_status, 599) && generation.provider_http_status >= 100)
+       result.provider_http_status = generation.provider_http_status;
+diff --git a/apps/api/tests/deadline-pipeline.test.cjs b/apps/api/tests/deadline-pipeline.test.cjs
+new file mode 100644
+index 0000000..12c64fc
+--- /dev/null
++++ b/apps/api/tests/deadline-pipeline.test.cjs
+@@ -0,0 +1,98 @@
++const assert=require("node:assert/strict");
++const test=require("node:test");
++const {randomUUID}=require("node:crypto");
++const {AiIntegrationService}=require("../dist/modules/ai-integration/ai-integration.service");
++const {LineWebhooksService}=require("../dist/modules/line-webhooks/line-webhooks.service");
++const {DEFAULT_MERCHANT_AI_SETTINGS}=require("../dist/modules/merchant-ai-settings/merchant-ai-settings.types");
++
++function request(){return {request_id:randomUUID(),merchant_id:randomUUID(),conversation_id:randomUUID(),
++ customer:{id:randomUUID()},channel:"line",message:{id:randomUUID(),text:"synthetic shirt",timestamp:new Date().toISOString()}};}
++function context(settingsDelay=0){
++ const exports=[];
++ return {exports,exportMerchantSettings:async merchant_id=>{exports.push("settings");if(settingsDelay)await new Promise(r=>setTimeout(r,settingsDelay));return {merchant_id,ai_profile:DEFAULT_MERCHANT_AI_SETTINGS}},
++ exportProducts:async merchant_id=>{exports.push("products");return {merchant_id,products:[]}},
++ exportKnowledgeBase:async merchant_id=>{exports.push("knowledge");return {merchant_id,knowledge_base:[]}},
++ exportVectorDocuments:async()=>[],exportConversationHistory:async()=>[]};
++}
++async function mocked(t,fetcher){
++ const oldFetch=global.fetch,oldToken=process.env.AI_SERVICE_TOKEN;
++ process.env.AI_SERVICE_TOKEN="synthetic-service";global.fetch=fetcher;
++ t.after(()=>{global.fetch=oldFetch;if(oldToken===undefined)delete process.env.AI_SERVICE_TOKEN;else process.env.AI_SERVICE_TOKEN=oldToken});
++}
++test("API keeps 20s deadline, exports deduct remaining time and propagates absolute deadline",async t=>{
++ const body=request(),ctx=context(10);let captured,signal;
++ await mocked(t,async(_url,init)=>{captured=JSON.parse(init.body);signal=init.signal;return new Response(JSON.stringify({
++  ...body,reply:{text:"synthetic answer"},generation:{provider:"gemini",model:"gemini-3.1-flash-lite",used_external_provider:true,fallback_used:false}}));});
++ const service=new AiIntegrationService(ctx);assert.equal(service.aiServiceTimeoutMs,20000);
++ const start=Date.now(),result=await service.chat(body);
++ assert.ok(captured.execution.deadline_at_ms>=start+18990&&captured.execution.deadline_at_ms<=start+19010);
++ assert.equal(signal.aborted,false);assert.ok(result.generation.context_export_ms>=5);
++ assert.equal(captured.merchant_id,body.merchant_id);assert.equal(captured.ai_context.products.merchant_id,body.merchant_id);
++});
++test("slow context export expires before provider call and cannot launch later work",async t=>{
++ let calls=0;await mocked(t,async()=>{calls++;throw Error("must not run")});
++ const ctx=context(60),service=new AiIntegrationService(ctx);service.aiServiceTimeoutMs=20;
++ await assert.rejects(service.chat(request()),/timed out after 20ms/);
++ await new Promise(r=>setTimeout(r,70));
++ assert.equal(calls,0);assert.deepEqual(ctx.exports,["settings"]);
++});
++test("API deadline aborts AI transport without retry",async t=>{
++ let calls=0,aborted=false;
++ await mocked(t,async(_url,init)=>{calls++;return new Promise((_resolve,reject)=>{
++  init.signal.addEventListener("abort",()=>{aborted=true;const e=Error("synthetic");e.name="AbortError";reject(e)},{once:true});
++ });});
++ const service=new AiIntegrationService(context());service.aiServiceTimeoutMs=25;
++ await assert.rejects(service.chat(request()),/timed out after 25ms/);
++ assert.equal(aborted,true);assert.equal(calls,1);
++});
++test("late provider transport output is rejected even if a mock ignores abort",async t=>{
++ await mocked(t,async(_url,init)=>{await new Promise(r=>setTimeout(r,50));return new Response(JSON.stringify({...JSON.parse(init.body),reply:{text:"late"}}));});
++ const service=new AiIntegrationService(context());service.aiServiceTimeoutMs=20;
++ await assert.rejects(service.chat(request()),/timed out after 20ms/);
++});
++function lineFixture(ai){
++ const epoch=new Date(),body=request();
++ const job={merchantId:body.merchant_id,channelId:randomUUID(),customerId:body.customer.id,conversationId:body.conversation_id,
++  messageId:body.message.id,eventId:body.request_id,revision:2,activationEpoch:epoch.toISOString()};
++ const event={id:randomUUID(),rawPayload:{revision:2,phase:"received"}};
++ let sends=0,reserves=0,prior=Promise.resolve();
++ const db={aiSetting:{findFirst:async()=>({aiActivatedAt:epoch})},
++  lineWebhookEvent:{findFirst:async()=>event,update:async({data})=>Object.assign(event,data)},
++  message:{findFirst:async()=>({content:"synthetic",metadata:{line:{sourceWebhookEventId:job.eventId}}}),
++   create:async({data})=>{reserves++;return {...data,id:randomUUID()}},update:async()=>({})},
++  conversation:{update:async()=>({})}};
++ const runtime={accessToken:()=>"synthetic",
++  locked:(_job,fn)=>{const work=prior.then(()=>fn(db,{id:job.channelId}));prior=work.catch(()=>{});return work;}};
++ const prisma={lineWebhookEvent:{updateMany:async({data})=>{Object.assign(event,data);return {count:1}}}};
++ const service=new LineWebhooksService(prisma,runtime,ai,{reply:async()=>{sends++;return {outcome:"delivered",statusCode:200}}});
++ return {service,job,event,counters:()=>({sends,reserves}),input:{timestamp:Date.now(),replyToken:"synthetic"}};
++}
++test("timed-out AI produces no late LINE reply and no retry for the same event",async t=>{
++ let calls=0;
++ await mocked(t,async(_url,init)=>{calls++;await new Promise(r=>setTimeout(r,50));return new Response(JSON.stringify({...JSON.parse(init.body),reply:{text:"late"}}));});
++ const ai=new AiIntegrationService(context());ai.aiServiceTimeoutMs=20;
++ const f=lineFixture(ai);
++ await f.service.respond(f.job,f.input);await f.service.respond(f.job,f.input);
++ assert.deepEqual(f.counters(),{sends:0,reserves:0});assert.equal(calls,1);assert.equal(f.event.rawPayload.phase,"failed_or_stale");
++});
++test("successful fallback is reserved once and never duplicated on repeated/concurrent event",async()=>{
++ let calls=0;
++ const f=lineFixture({chat:async r=>{calls++;return {...r,reply:{text:"conservative catalog fallback"},
++  generation:{provider:"gemini",model:"gemini-3.1-flash-lite",fallback_used:true,used_external_provider:false,error_category:"deadline_exceeded"}}}});
++ await Promise.all([f.service.respond(f.job,f.input),f.service.respond(f.job,f.input)]);
++ await f.service.respond(f.job,f.input);
++ assert.equal(calls,1);assert.deepEqual(f.counters(),{sends:1,reserves:1});assert.equal(f.event.rawPayload.phase,"delivered");
++});
++test("stage diagnostics persist only bounded numbers and fixed categories",()=>{
++ const service=Object.create(LineWebhooksService.prototype);
++ const result=service.generationMetadata({provider:"gemini",model:"gemini-3.1-flash-lite",fallback_used:true,
++  used_external_provider:false,error_category:"deadline_exceeded",fallback_reason:"deadline_exceeded",
++  pipeline_latency_ms:18000,context_export_ms:40,stage_timings:{
++   query_embedding:{latency_ms:1500,outcome:"timed_out",prompt:"private"},
++   generation:{latency_ms:Infinity,outcome:"completed"},retrieval:{latency_ms:1,outcome:"customer-message"},
++   unknown:{latency_ms:1,outcome:"completed"}}});
++ assert.equal(result.error_category,"deadline_exceeded");
++ assert.deepEqual(result.stage_timings,{query_embedding:{latency_ms:1500,outcome:"timed_out"}});
++ assert.equal(result.context_export_ms,40);
++ assert.doesNotMatch(JSON.stringify(result),/private|customer-message|unknown/);
++});

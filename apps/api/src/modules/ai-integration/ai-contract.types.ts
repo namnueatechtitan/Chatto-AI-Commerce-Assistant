@@ -37,6 +37,7 @@ export interface AiChatRequest {
     text: string;
     timestamp: string;
   };
+  execution?: { deadline_at_ms: number };
   ai_options?: {
     language?: string;
     top_k?: number;
@@ -65,7 +66,16 @@ export interface AiChatResponse {
     fallback_used: boolean;
     fallback_reason?: string;
     latency_ms: number;
+    pipeline_latency_ms?: number;
+    context_export_ms?: number;
+    stage_timings?: Partial<Record<"document_embedding" | "query_embedding" | "vector_sync" | "retrieval" | "generation", { latency_ms: number; outcome: "completed" | "skipped" | "timed_out" | "cancelled" | "failed" }>>;
     timed_out?: boolean;
+    provider_request_attempted?: boolean;
+    provider_success?: boolean;
+    error_category?: string;
+    provider_http_status?: number;
+    retrieved_chunk_count?: number;
+    fallback_source?: "merchant_policy" | "trusted_catalog" | "deterministic" | "none";
   };
   actions?: Array<Record<string, unknown>>;
   handover_required: boolean;
@@ -85,6 +95,8 @@ export interface ProductVariantForAi {
   size?: string;
   price: number | null;
   currency: string;
+  /** False means the legacy numeric quantities represent unknown stock. */
+  stock_known?: boolean;
   stock_qty: number;
   reserved_qty: number;
   available_qty: number;
